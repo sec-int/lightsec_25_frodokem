@@ -1,0 +1,2 @@
+fpga: xc7a35Tcsg324-3
+
