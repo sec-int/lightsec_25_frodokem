@@ -77,6 +77,7 @@ module test();
 `include "test__io.v"
 `include "test__seedA.v"
 `include "test__keccak.v"
+`include "test__mem.v"
 `undef TEST_VARS
 
 
@@ -159,6 +160,7 @@ module test();
 `include "test__io.v"
 `include "test__seedA.v"
 `include "test__keccak.v"
+`include "test__mem.v"
     `DO_RST
     test_name <= "DONE!";
     #3;

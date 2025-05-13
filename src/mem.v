@@ -71,10 +71,20 @@ module bram8(
   input [8-1:0] w_byteEnable,
   input [64*8-1:0] w_value,
 
+  input rst,
   input clk
 );
   genvar col;
   genvar row;
+
+  wire [8-1:0] r_bramEnable__d1;
+  delay #(8) r_bramEnable__ff1 (r_bramEnable, r_bramEnable__d1, rst, clk);
+  wire [8-1:0] r_bramEnable__d2;
+  delay #(8) r_bramEnable__ff2 (r_bramEnable__d1, r_bramEnable__d2, rst, clk);
+  wire [8-1:0] r_byteEnable__d1;
+  delay #(8) r_byteEnable__ff1 (r_byteEnable, r_byteEnable__d1, rst, clk);
+  wire [8-1:0] r_byteEnable__d2;
+  delay #(8) r_byteEnable__ff2 (r_byteEnable__d1, r_byteEnable__d2, rst, clk);
 
   wire [9*8-1:0] r_indexes;
   wire [64*8-1:0] r_rawValue__d2;
@@ -94,7 +104,7 @@ module bram8(
       );
 
       for (row = 0; row < 8; row=row+1) begin
-        assign r_value__d2[col*64+row*8+:8] = r_rawValue__d2[col*64+row*8+:8] & {8{ r_byteEnable[row] & r_bramEnable[col] }};
+        assign r_value__d2[col*64+row*8+:8] = r_rawValue__d2[col*64+row*8+:8] & {8{ r_byteEnable__d2[row] & r_bramEnable__d2[col] }};
       end
     end
   endgenerate
@@ -192,19 +202,19 @@ module mainMem_readConnector(
   assign o_index_next = (o_bus_B_row & (o_index[0+:9] == 9'd335)) ? { o_index[14-1:9] + 1, 9'b0 }
                                                                   : o_index + 14'b1;
 
-  assign o_index_hasNext = (o_bus_B_row ? o_index == {5'd7, 9'd335} : 1'b0)
-                         | (o_bus_B_col ? o_index == 14'd2687 : 1'b0) 
-                         | ((o_bus_C_row | o_quarterBus_U_row) ? o_index == 14'd15 : 1'b0) 
-                         | (o_bus_SSState ? o_index == 14'd24 : 1'b0) 
-                         | (o_bus_RNGState ? o_index == 14'd7 : 1'b0) 
-                         | (o_bus_salt ? o_index == 14'd7 : 1'b0)
-                         | (o_bus_seedSE ? o_index == 14'd7 : 1'b0)
-                         | (o_bus_pkh ? o_index == 14'd3 : 1'b0)
-                         | (o_bus_k ? o_index == 14'd3 : 1'b0)
-                         | ((o_dubBus_B_col | o_halfBus_S_col) ? o_index == 14'd1343 : 1'b0)
-                         | ((o_dubBus_C_col | o_dubBus_C_row) ? o_index == 14'd7 : 1'b0)
-                         | (o_bus_U_twoRows ? o_index == 14'd3 : 1'b0) 
-                         | ((o_paral_B_mat | o_dubBus_S_mat) ? o_index == 14'd335 : 1'b0);
+  assign o_index_hasNext = (o_bus_B_row ? o_index != {5'd7, 9'd335} : 1'b0)
+                         | (o_bus_B_col ? o_index != 14'd2687 : 1'b0) 
+                         | ((o_bus_C_row | o_quarterBus_U_row) ? o_index != 14'd15 : 1'b0) 
+                         | (o_bus_SSState ? o_index != 14'd24 : 1'b0) 
+                         | (o_bus_RNGState ? o_index != 14'd7 : 1'b0) 
+                         | (o_bus_salt ? o_index != 14'd7 : 1'b0)
+                         | (o_bus_seedSE ? o_index != 14'd7 : 1'b0)
+                         | (o_bus_pkh ? o_index != 14'd3 : 1'b0)
+                         | (o_bus_k ? o_index != 14'd3 : 1'b0)
+                         | ((o_dubBus_B_col | o_halfBus_S_col) ? o_index != 14'd1343 : 1'b0)
+                         | ((o_dubBus_C_col | o_dubBus_C_row) ? o_index != 14'd7 : 1'b0)
+                         | (o_bus_U_twoRows ? o_index != 14'd3 : 1'b0) 
+                         | ((o_paral_B_mat | o_dubBus_S_mat) ? o_index != 14'd335 : 1'b0);
 
   wire o_bus_anyCell = o_bus_SSState
                      | o_bus_RNGState
@@ -361,19 +371,19 @@ module mainMem_writeConnector(
                       : (o_bus_S_row & (o_index[0+:11] == 11'd335)) ? { o_index[14-1:11] + 1, 11'b0 }
                                                                     : o_index + 14'b1;
 
-  assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index == {5'd7, 9'd335} : 1'b0)
-                         | (o_bus_B_col ? o_index == 14'd2687 : 1'b0) 
-                         | (o_bus_C_row ? o_index == 14'd15 : 1'b0) 
-                         | (o_bus_SSState ? o_index == 14'd24 : 1'b0) 
-                         | (o_bus_RNGState ? o_index == 14'd7 : 1'b0) 
-                         | (o_bus_salt ? o_index == 14'd7 : 1'b0)
-                         | (o_bus_seedSE ? o_index == 14'd7 : 1'b0)
-                         | (o_bus_pkh ? o_index == 14'd3 : 1'b0)
-                         | (o_bus_k ? o_index == 14'd3 : 1'b0)
-                         | (o_dubBus_B_col ? o_index == 14'd1343 : 1'b0)
-                         | ((o_dubBus_C_col | o_halfBus_U_row) ? o_index == 14'd7 : 1'b0)
-                         | (o_bus_U_twoRows ? o_index == 14'd3 : 1'b0) 
-                         | (o_paral_B_mat ? o_index == 14'd335 : 1'b0);
+  assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index != {5'd7, 9'd335} : 1'b0)
+                         | (o_bus_B_col ? o_index != 14'd2687 : 1'b0) 
+                         | (o_bus_C_row ? o_index != 14'd15 : 1'b0) 
+                         | (o_bus_SSState ? o_index != 14'd24 : 1'b0) 
+                         | (o_bus_RNGState ? o_index != 14'd7 : 1'b0) 
+                         | (o_bus_salt ? o_index != 14'd7 : 1'b0)
+                         | (o_bus_seedSE ? o_index != 14'd7 : 1'b0)
+                         | (o_bus_pkh ? o_index != 14'd3 : 1'b0)
+                         | (o_bus_k ? o_index != 14'd3 : 1'b0)
+                         | (o_dubBus_B_col ? o_index != 14'd1343 : 1'b0)
+                         | ((o_dubBus_C_col | o_halfBus_U_row) ? o_index != 14'd7 : 1'b0)
+                         | (o_bus_U_twoRows ? o_index != 14'd3 : 1'b0) 
+                         | (o_paral_B_mat ? o_index != 14'd335 : 1'b0);
 
   wire o_bus_anyCell = o_bus_SSState
                      | o_bus_RNGState
@@ -504,6 +514,7 @@ module mainMem(
     input w_halfBus_U_row, // 4b1x8
     input [4*8-1:0] w_halfBus,
 
+    input rst,
     input clk
   );
 
@@ -526,6 +537,7 @@ module mainMem(
     .w_bramEnable(b__w_bramEnable),
     .w_byteEnable(b__w_byteEnable),
     .w_value(b__w_value),
+    .rst(rst),
     .clk(clk)
   );
 

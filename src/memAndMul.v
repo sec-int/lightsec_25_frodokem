@@ -143,12 +143,12 @@ module memAndMul__indexHandler(
     input clk
   );
 
-  wire currentCmd_isIn = | currentCmd & `MemAndMulCMD_mask_in;
-  wire currentCmd_isOut = | currentCmd & `MemAndMulCMD_mask_out;
-  wire currentCmd_isInOp = | currentCmd & `MemAndMulCMD_mask_inOp;
-  wire currentCmd_isOpNoMul = | currentCmd & `MemAndMulCMD_mask_opNoMul;
-  wire currentCmd_isOpMul = | currentCmd & `MemAndMulCMD_mask_opMul;
-  wire currentCmd_isOpMul1 = | currentCmd & `MemAndMulCMD_mask_opMul1;
+  wire currentCmd_isIn = | (currentCmd & `MemAndMulCMD_mask_in);
+  wire currentCmd_isOut = | (currentCmd & `MemAndMulCMD_mask_out);
+  wire currentCmd_isInOp = | (currentCmd & `MemAndMulCMD_mask_inOp);
+  wire currentCmd_isOpNoMul = | (currentCmd & `MemAndMulCMD_mask_opNoMul);
+  wire currentCmd_isOpMul = | (currentCmd & `MemAndMulCMD_mask_opMul);
+  wire currentCmd_isOpMul1 = | (currentCmd & `MemAndMulCMD_mask_opMul1);
 
   wire currentCmd_in_isFirstCycle__d1;
   delay currentCmd_in_isFirstCycle__ff (currentCmd_in_isFirstCycle, currentCmd_in_isFirstCycle__d1, rst, clk);
@@ -156,9 +156,9 @@ module memAndMul__indexHandler(
   // index1 is read or the only one or fast
   // index2 is write or             or slow
   wire index1_isLast__d2;
-  wire index1_reset = (currentCmd_isIn ? currentCmd_in_isFirstCycle : 1'b0)
-                    | (currentCmd_isOpNoMul ? currentCmd_in_isFirstCycle : 1'b0)
-                    | (currentCmd_isOpMul ? (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2) : 1'b0);
+  wire index1_reset = (currentCmd_isOut & currentCmd_out_isFirstCycle)
+                    | (currentCmd_isOpNoMul & currentCmd_in_isFirstCycle)
+                    | (currentCmd_isOpMul & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2));
   wire index1__delay_which__d1;
   wire index1__delay_which = index1_reset ? 1'b0 : ~index1__delay_which__d1;
   delay index1__delay_which__ff(index1__delay_which, index1__delay_which__d1, rst, clk);
@@ -172,7 +172,7 @@ module memAndMul__indexHandler(
   delay index1_has_val__ff2 (index1_has_val__d1, index1_has_val__d2, rst, clk);
   wire index1_isLast__d1 = index1_has_val__d1 & ~index1_has_val;
   assign index1_isLast__d2 = index1_has_val__d2 & ~index1_has_val__d1;
-  wire index1_update = currentCmd_isIn
+  wire index1_update = currentCmd_isOut & bus_out_canReceive
                      | (currentCmd[`MemAndMulCMD_op_CeqUminC] & (index1__delay_which == 1'b1))
                      | currentCmd[`MemAndMulCMD_op_CeqU]
                      | (currentCmd_isInOp & bus_inOp_isReady)
@@ -181,17 +181,17 @@ module memAndMul__indexHandler(
   wire [14-1:0] index1_next_input = r_index_next;
   wire index2_has_next;
   wire index2_has_next__d1;
-  wire index2_reset = (currentCmd_isOut ? currentCmd_out_isFirstCycle : 1'b0)
+  wire index2_reset = (currentCmd_isIn & currentCmd_in_isFirstCycle)
                     | (currentCmd_isOpNoMul ? 1'b1 : 1'b0)
-                    | (currentCmd_isOpMul ? currentCmd_out_isFirstCycle : 1'b0);
-  wire index2_update = currentCmd_isOut
+                    | (currentCmd_isOpMul & currentCmd_in_isFirstCycle);
+  wire index2_update = currentCmd_isIn & bus_in_isReady
                      | (currentCmd[`MemAndMulCMD_op_CeqUminC] & (index1__delay_which == 1'b1))
                      | currentCmd[`MemAndMulCMD_op_CeqU]
                      | (currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & bus_inOp_isReady)
                      | (currentCmd_isOpMul & index1_isLast__d1);
-  wire [14-1:0] index2_next_input = currentCmd_isOut ? w_index_next : r_index_next;
+  wire [14-1:0] index2_next_input = currentCmd_isIn ? w_index_next : r_index_next;
 
-  wire r_index__is1 = currentCmd_isIn | currentCmd_isOpNoMul | (currentCmd_isOpMul & index1_has_val);
+  wire r_index__is1 = currentCmd_isOut | currentCmd_isOpNoMul | (currentCmd_isOpMul & index1_has_val);
   wire w_index_op__is1 = currentCmd_isOpNoMul | currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA];
   wire w_index_op__is2_isDelayed = currentCmd_isOpMul1;
 
@@ -221,7 +221,7 @@ module memAndMul__indexHandler(
   wire [14-1:0] index2 = index2_reset ? 14'b0 : index2_next__d1;
   wire [14-1:0] index2_next = index2_update ? index2_next_input : index2;
   delay #(14) index2_next__ff (index2_next, index2_next__d1, rst, clk);
-  assign index2_has_next = index2_reset ? 1'b1 : index2_update ? (currentCmd_isOut ? w_index_hasNext : r_index_hasNext) : index2_has_next__d1;
+  assign index2_has_next = index2_reset ? 1'b1 : index2_update ? (currentCmd_isIn ? w_index_hasNext : r_index_hasNext) : index2_has_next__d1;
   delay index2_has_next__ff(index2_has_next, index2_has_next__d1, rst, clk);
 
   wire [14-1:0] index2__delayed;
@@ -233,20 +233,21 @@ module memAndMul__indexHandler(
   delay #(14) w_index_op__ff2 (w_index_op__a2, w_index_op__a1, rst, clk);
   wire [14-1:0] w_index_op;
   delay #(14) w_index_op__ff1 (w_index_op__a1, w_index_op, rst, clk);
-  assign w_index = currentCmd_isOut ? index2 : w_index_op;
+  assign w_index = currentCmd_isIn ? index2 : w_index_op;
 
   wire currentCmd_op_isLastCycle__a1;
   delay currentCmd_op_isLastCycle__ff2 (currentCmd_op_isLastCycle__a2, currentCmd_op_isLastCycle__a1, rst, clk);
   wire currentCmd_op_isLastCycle;
   delay currentCmd_op_isLastCycle__ff1 (currentCmd_op_isLastCycle__a1, currentCmd_op_isLastCycle, rst, clk);
-  assign currentCmd_in_isLastCycle = currentCmd_isIn ? ~r_index_hasNext : currentCmd_op_isLastCycle;
-  assign currentCmd_out_isLastCycle = currentCmd_isOut ? ~w_index_hasNext : currentCmd_op_isLastCycle;
+  assign currentCmd_in_isLastCycle = currentCmd_isIn ? bus_in_isReady & ~w_index_hasNext : currentCmd_op_isLastCycle;
+  assign currentCmd_out_isLastCycle = currentCmd_isOut ? bus_out_canReceive & ~r_index_hasNext : currentCmd_op_isLastCycle;
 
   wire w_enable_op__a1;
   delay w_enable_op__ff2 (w_enable_op__a2, w_enable_op__a1, rst, clk);
   wire w_enable_op;
   delay w_enable_op__ff1 (w_enable_op__a1, w_enable_op, rst, clk);
-  assign w_enable = currentCmd_isOut | w_enable_op;
+  assign w_enable = currentCmd_isIn & bus_in_isReady
+                  | w_enable_op;
 endmodule
 
 `ATTR_MOD_GLOBAL
@@ -307,7 +308,7 @@ module memAndMul__core(
     .clk(clk)
   );
 
-  wire currentCmd_isOpMul1 = | currentCmd & `MemAndMulCMD_mask_opMul1;
+  wire currentCmd_isOpMul1 = | (currentCmd & `MemAndMulCMD_mask_opMul1);
 
   wire r_dubBus_B_col = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] & r_which_index[2];
   wire r_dubBus_C_col = (currentCmd[`MemAndMulCMD_op_CpleqStimesBT] & r_which_index[2])
@@ -428,6 +429,7 @@ module memAndMul__core(
     .w_paral(w_paral),
     .w_halfBus(w_halfBus),
 
+    .rst(rst),
     .clk(clk)
   );
 
@@ -617,18 +619,18 @@ module memAndMul(
            & ~(currentCmd_out_isLastCycle ? `MemAndMulCMD_mask_conflictOut : `MemAndMulCMD_mask_zero);
   wire [`MemAndMulCMD_FULLSIZE-1:0] prevCmd;
   delay #(`MemAndMulCMD_FULLSIZE) cmd__ff (nextCmd, prevCmd, rst, clk);
-  wire cmdB_conflictIn = | cmdB & `MemAndMulCMD_mask_conflictIn;
-  wire cmdB_conflictOut = | cmdB & `MemAndMulCMD_mask_conflictOut;
-  wire prevCmd_conflictIn = | prevCmd & `MemAndMulCMD_mask_conflictIn;
-  wire prevCmd_conflictOut = | prevCmd & `MemAndMulCMD_mask_conflictOut;  
+  wire cmdB_conflictIn = | (cmdB & `MemAndMulCMD_mask_conflictIn);
+  wire cmdB_conflictOut = | (cmdB & `MemAndMulCMD_mask_conflictOut);
+  wire prevCmd_conflictIn = | (prevCmd & `MemAndMulCMD_mask_conflictIn);
+  wire prevCmd_conflictOut = | (prevCmd & `MemAndMulCMD_mask_conflictOut);
   wire cmdB_wait = (cmdB_conflictIn & prevCmd_conflictIn)
                  | (cmdB_conflictOut & prevCmd_conflictOut);
   assign cmdB_consume = cmdB_hasAny & ~cmdB_wait;
   assign currentCmd = prevCmd
-                    | cmdB_consume ? cmdB : {`MemAndMulCMD_FULLSIZE{1'b0}};
+                    | (cmdB_consume ? cmdB : {`MemAndMulCMD_FULLSIZE{1'b0}});
 
-  wire currentCmd_in_isFirstCycle = | currentCmd & ~prevCmd & `MemAndMulCMD_mask_conflictIn;
-  wire currentCmd_out_isFirstCycle = | currentCmd & ~prevCmd & `MemAndMulCMD_mask_conflictOut;
+  wire currentCmd_in_isFirstCycle = | (currentCmd & ~prevCmd & `MemAndMulCMD_mask_conflictIn);
+  wire currentCmd_out_isFirstCycle = | (currentCmd & ~prevCmd & `MemAndMulCMD_mask_conflictOut);
 
   wire core__bus_inOp_isReady;
   wire [64-1:0] core__bus_inOp;
@@ -656,10 +658,10 @@ module memAndMul(
     .clk(clk)
   );
 
-  wire currentCMD__isOp = | currentCmd & `MemAndMulCMD_mask_op;
-  wire currentCMD__isInOp = | currentCmd & `MemAndMulCMD_mask_inOp;
-  wire currentCMD__isIn = | currentCmd & `MemAndMulCMD_mask_in;
-  wire currentCMD__isOut = | currentCmd & `MemAndMulCMD_mask_out;
+  wire currentCMD__isOp = | (currentCmd & `MemAndMulCMD_mask_op);
+  wire currentCMD__isInOp = | (currentCmd & `MemAndMulCMD_mask_inOp);
+  wire currentCMD__isIn = | (currentCmd & `MemAndMulCMD_mask_in);
+  wire currentCMD__isOut = | (currentCmd & `MemAndMulCMD_mask_out);
   
   memAndMul__outAdapter o(
     .currentCMD__isOut(currentCMD__isOut),
@@ -683,7 +685,7 @@ module memAndMul(
                    | (currentCMD__isInOp & core__bus_inOp_isLast);
   assign core__bus_inOp_isReady = currentCMD__isInOp & in_isReady;
   assign core__bus_inOp = in;
-  assign core__bus_in_isReady = currentCMD__isInOp & in_isReady;
+  assign core__bus_in_isReady = currentCMD__isIn & in_isReady;
   assign core__bus_in = in;
 endmodule
 
