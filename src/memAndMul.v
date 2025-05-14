@@ -386,9 +386,9 @@ module memAndMul__core(
   assign w_bus_cmd[`MainMemCMD_bus_C_row] = intOp_writeCRow;
 
   wire [64-1:0] w_bus__fromOp;
-  wire w_bus__fromOp_enable = w_bus_cmd[`MemAndMulCMD_op_CeqUminC]
-                            | w_bus_cmd[`MemAndMulCMD_op_CeqU]
-                            | w_bus_cmd[`MemAndMulCMD_inOp_addCRowFirst];
+  wire w_bus__fromOp_enable = currentCmd[`MemAndMulCMD_op_CeqUminC]
+                            | currentCmd[`MemAndMulCMD_op_CeqU]
+                            | currentCmd[`MemAndMulCMD_inOp_addCRowFirst];
   wire [64-1:0] w_bus = w_bus__fromOp_enable ? w_bus__fromOp : bus_in;
   wire [16*4-1:0] r_bus__d2;
   assign bus_out__d2 = r_bus__d2;
