@@ -242,8 +242,13 @@ module keccak_iter(
   wire [1600-1:0] statePrev;
   wire [1600-1:0] body__si = {1600{~cmd_start}} & statePrev
                            ^ {1600{cmd_isFirst}} & in_data;
+
+`ifdef USE_NO_KECCAK_PERMUTATION
+  wire [1600-1:0] body__so = body__si;
+`else
   wire [1600-1:0] body__so;
   keccak_fn body(body__si, rc, body__so);
+`endif
 
   wire [1600-1:0] statePost = isTransparent      ? in_data // TODO: does this need to be instantaneous
                             : counter__canReceive ? body__so
@@ -394,8 +399,8 @@ module keccak_busInConverter_padCycle(
 
   wire cDiff__restart;
   delay cDiff__ff(c256__isLast, cDiff__restart, rst, clk);
-  wire cDiff__isReady = cDiff__canReceive & (is256else128 ? out_canReceive : in_isReady);
   wire cDiff__canRestart, cDiff__canReceive, cDiff__canReceive_isLast;
+  wire cDiff__isReady = cDiff__canReceive & (is256else128 ? out_canReceive : in_isReady);
   counter_bus_fixed #(`SHAKE128_R64 - `SHAKE256_R64) cDiff (
     .restart(cDiff__restart),
     .canRestart(cDiff__canRestart),
@@ -1076,6 +1081,14 @@ module keccak(
     input rst,
     input clk
   );
+`ifdef USE_NO_KECCAK
+
+  assign cmd_canReceive = 1'b1;
+  assign in_canReceive = out_canReceive;
+  assign out = in;
+  assign out_isReady = in_isReady;
+
+`else
 
   wire c__canReceive;
   wire c__des128;
@@ -1129,6 +1142,8 @@ module keccak(
     .rst(rst),
     .clk(clk)
   );
+
+`endif
 endmodule
 
 

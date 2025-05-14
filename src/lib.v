@@ -22,8 +22,8 @@
 `ifndef LIB_V
 `define LIB_V
 
-//`define ATTR_MOD_GLOBAL (* DONT_TOUCH = "yes" *)
-`define ATTR_MOD_GLOBAL
+`include "config.v"
+
 
 `ATTR_MOD_GLOBAL
 module delay #(parameter N = 1) (
