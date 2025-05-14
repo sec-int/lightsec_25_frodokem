@@ -342,7 +342,7 @@ module cmd_buffer1 #(parameter CmdSize = 1) (
 
   wire buffer_isUsed__a1 = buffer_isUsed__postConsume | insert;
   wor [CmdSize-1:0] buffer__a1 = buffer__postConsume
-                               | insert ? i : {CmdSize{1'b0}};
+                               | (insert ? i : {CmdSize{1'b0}});
 
   delay #(CmdSize) buffer__ff (buffer__a1, buffer, rst, clk);
   delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
