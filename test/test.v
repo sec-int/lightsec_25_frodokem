@@ -85,7 +85,7 @@ module test();
 `define DO_RST   @(negedge clk) rst <= 1'b1; @(posedge clk) #0.01 rst <= 1'b0;
 `define TEST_UTIL__CMD_SEND(c) \
         #0.1; \
-        cmd <= c; \
+        cmd <= (c); \
         cmd_hasAny <= 1'b1; \
         #0.1; \
         while(~cmd_consume) #1; \
@@ -96,7 +96,7 @@ module test();
 
 `define TEST_UTIL__SEND(v) \
         #0.1; \
-        in <= v; \
+        in <= (v); \
         #0.1; \
         while(~in_canReceive) #1; \
         #0.1; \
@@ -127,8 +127,8 @@ module test();
         out_canReceive <= 1'b1; \
         #0.25; \
         while(~out_isReady) #1; \
-        if(out !== v) begin \
-          $display("%t: Received word %h instead of %h!", $time, out, v); \
+        if(out !== (v)) begin \
+          $display("%t: Received word %h instead of %h!", $time, out, (v)); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk); \
