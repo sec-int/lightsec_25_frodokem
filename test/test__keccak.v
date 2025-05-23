@@ -4,28 +4,18 @@
     fork : test__keccak_single256
       test_name <= "test__keccak_single256";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // send the data to hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd1})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
 
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k, 3'b000, 16'd1, 16'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0000, 16'd1, 1'b1})
 
         // receive hashed data
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd1})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b00})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
       end
 
       begin
@@ -54,28 +44,18 @@
     fork : test__keccak_largeIn256
       test_name <= "test__keccak_largeIn256";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // send the data to hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd22})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd22})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
 
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k, 3'b000, 16'd2, 16'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0001, 16'd2, 1'b1})
         
         // receive hashed data
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd4})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b00})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
       end
 
       begin
@@ -108,28 +88,18 @@
     fork : test__keccak_largeOut256
       test_name <= "test__keccak_largeOut256";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // send the data to hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd4})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
 
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k, 3'b000, 16'd1, 16'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0000, 16'd2, 1'b1})
         
         // receive hashed data
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd31})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b00})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd31})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
       end
 
       begin
@@ -162,39 +132,29 @@
     fork : test__keccak_splitIO128
       test_name <= "test__keccak_splitIO128";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k, 3'b100, 16'd1, 16'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b1000, 16'd1, 1'b1})
 
         // send the data to hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'h43, 1'b1, `KeccakInCMD_sendByte})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'hbd, 1'b1, `KeccakInCMD_sendByte})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'h43, 1'b1, `KeccakInCMD_sendByte})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'hbd, 1'b1, `KeccakInCMD_sendByte})
 
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd1})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b1, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b1, `KeccakInCMD_forward})
 
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd1})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
         
         // receive hashed data
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd1})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b10})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b10})
 
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd1})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b00})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
       end
 
       begin
@@ -227,41 +187,31 @@
     fork : test__keccak_multiple
       test_name <= "test__keccak_multiple";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // send the data to hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd4})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
 
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k, 3'b000, 16'd1, 16'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0000, 16'd2, 1'b1})
         
         // receive hashed data
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd31})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b00})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd31})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
 
         // send the data to hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd4})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
 
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k, 3'b000, 16'd1, 16'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0000, 16'd2, 1'b1})
         
         // receive hashed data
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd31})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_k_out, 2'b00})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd31})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
       end
 
       begin

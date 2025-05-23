@@ -120,36 +120,13 @@ endmodule
 
 `define Outer_MaxWordLen  15
 
-`define OuterInCMD_SIZE  (1+`Outer_MaxWordLen)
+`define OuterInCMD_SIZE  (`Outer_MaxWordLen)
 
-`ATTR_MOD_GLOBAL
-module compactToStd_single(
-  input [4-1:0] in,
-  output [16-1:0] out
-);
-  wire isNeg = in[3];
-  wire [16-1:0] mod = {13'b0, in[3-1:0]};
 
-  assign out = isNeg ? -mod : mod;
-endmodule
-
-`ATTR_MOD_GLOBAL
-module compactToStd(
-    input enable,
-    input [64-1:0] in,
-    output [64-1:0] out
-  );
-  wire [64-1:0] out_sampled;
-  compactToStd_single c0(in[4*0+:4], out_sampled[16*0+:16]);
-  compactToStd_single c1(in[4*1+:4], out_sampled[16*1+:16]);
-  compactToStd_single c2(in[4*2+:4], out_sampled[16*2+:16]);
-  compactToStd_single c3(in[4*3+:4], out_sampled[16*3+:16]);
-  assign out = enable ? out_sampled : in;
-endmodule
 
 `ATTR_MOD_GLOBAL
 module main_adapter_outer_out(
-    input [`OuterInCMD_SIZE-1:0] cmd, //  {sampledToStd:1bit, size:`Outer_MaxWordLen bits}
+    input [`OuterInCMD_SIZE-1:0] cmd, //  {size:`Outer_MaxWordLen bits}  // size of 0 for automatic
     input cmd_isReady,
     output cmd_canReceive,
 
@@ -169,56 +146,43 @@ module main_adapter_outer_out(
   wor ignore = h__out_isLast_out;
   wire cmd_forward = cmd_isReady; // the only primary command
   wire [`Outer_MaxWordLen-1:0] cmd_size = cmd[0+:`Outer_MaxWordLen]; // number of bus messages
-  wire cmd_sampledToStd = cmd[`Outer_MaxWordLen]; // can be sent with the other commands.
 
-  wire isEncode;
-  ff_en_imm isEncode__ff(cmd_forward, cmd_sampledToStd, isEncode, rst, clk);
-  compactToStd reenc(isEncode, h__out, o__out);
+  assign o__out = h__out;
 
+  wire useCounter;
+  wire useCounter__d1;
+  wire useCounter__val = cmd_size == 0;
+  ff_en_imm useCounter__ff1(cmd_forward, useCounter__val, useCounter, rst, clk);
+  delay useCounter__ff2(useCounter, useCounter__d1, rst, clk);
+
+  wire counter__canRestart;
   wire counter__canReceive;
+  wire counter__isReady = h__out_isReady & counter__canReceive;
   counter_bus #(`Outer_MaxWordLen) counter (
     .restart(cmd_forward),
     .numSteps(cmd_size),
-    .canRestart(cmd_canReceive),
+    .canRestart(counter__canRestart),
     .canReceive(counter__canReceive),
     .canReceive_isLast(h__out_isLast_in),
-    .isReady(h__out_isReady),
+    .isReady(counter__isReady),
     .rst(rst),
     .clk(clk)
   );
 
-  assign h__out_canReceive = counter__canReceive & o__out_canReceive;
+  wire noCounterOngoing;
+  ff_rs_next noCounterEnded__ff(h__out_isLast_out, cmd_forward, noCounterOngoing, rst, clk);
+
+  assign cmd_canReceive = useCounter__d1 ? counter__canRestart : ~noCounterOngoing;
+  assign h__out_canReceive = o__out_canReceive & (counter__canReceive | ~useCounter);
   assign o__out_isReady = h__out_isReady;
 endmodule
 
-`define OuterOutCMD_SIZE  (1+`Outer_MaxWordLen)
+`define OuterOutCMD_SIZE  (`Outer_MaxWordLen)
 
-`ATTR_MOD_GLOBAL
-module stdToCompact_single(
-  input [16-1:0] in,
-  output [4-1:0] out
-);
-  assign out[3] = in[15]; // isNeg
-  assign out[2:0] = in[15] ? -in[2:0] : in[2:0];
-endmodule
-
-`ATTR_MOD_GLOBAL
-module stdToCompact(
-    input enable,
-    input [64-1:0] in,
-    output [64-1:0] out
-  );
-  wor [64-1:0] out_sampled = 64'b0;
-  stdToCompact_single s0(in[16*0+:16], out_sampled[4*0+:4]);
-  stdToCompact_single s1(in[16*1+:16], out_sampled[4*1+:4]);
-  stdToCompact_single s2(in[16*2+:16], out_sampled[4*2+:4]);
-  stdToCompact_single s3(in[16*3+:16], out_sampled[4*3+:4]);
-  assign out = enable ? out_sampled : in;
-endmodule
 
 `ATTR_MOD_GLOBAL
 module main_adapter_outer_in(
-    input [`OuterOutCMD_SIZE-1:0] cmd,  //  {sampledFromStd:1bit, size:`Outer_MaxWordLen bits}
+    input [`OuterOutCMD_SIZE-1:0] cmd,  //  {size:`Outer_MaxWordLen bits}   // size of 0 means automatic
     input cmd_isReady,
     output cmd_canReceive,
 
@@ -239,25 +203,35 @@ module main_adapter_outer_in(
 
   wire cmd_forward = cmd_isReady; // the only primary command
   wire [`Outer_MaxWordLen-1:0] cmd_size = cmd[0+:`Outer_MaxWordLen]; // number of bus messages
-  wire cmd_sampledFromStd = cmd[`Outer_MaxWordLen]; // can be sent with the other commands.
 
-  wire isEncode;
-  ff_en_imm isEncode__ff(cmd_forward, cmd_sampledFromStd, isEncode, rst, clk);
-  stdToCompact reenc(isEncode, o__in, h__in);
+  assign h__in = o__in;
 
+
+  wire useCounter;
+  wire useCounter__d1;
+  wire useCounter__val = cmd_size == 0;
+  ff_en_imm useCounter__ff1(cmd_forward, useCounter__val, useCounter, rst, clk);
+  delay useCounter__ff2(useCounter, useCounter__d1, rst, clk);
+
+  wire counter__canRestart;
   wire counter__canReceive;
+  wire counter__isReady = o__in_isReady & counter__canReceive;
   counter_bus #(`Outer_MaxWordLen) counter (
     .restart(cmd_forward),
     .numSteps(cmd_size),
-    .canRestart(cmd_canReceive),
+    .canRestart(counter__canRestart),
     .canReceive(counter__canReceive),
     .canReceive_isLast(h__in_isLast_in),
-    .isReady(o__in_isReady),
+    .isReady(counter__isReady),
     .rst(rst),
     .clk(clk)
   );
 
-  assign o__in_canReceive = counter__canReceive & h__in_canReceive;
+  wire noCounterOngoing;
+  ff_rs_next noCounterEnded__ff(h__in_isLast_out, cmd_forward, noCounterOngoing, rst, clk);
+
+  assign cmd_canReceive = useCounter__d1 ? counter__canRestart : ~noCounterOngoing;
+  assign o__in_canReceive = h__in_canReceive & (counter__canReceive | ~useCounter);
   assign h__in_isReady = o__in_isReady;
 endmodule
 

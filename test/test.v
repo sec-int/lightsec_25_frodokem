@@ -20,7 +20,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-`include "../src/main_core.v"
+`include "main_core_serialCmd.v"
 
 module test();
   function [64-1:0] swapBytes64(input [64-1:0] in); begin
@@ -40,16 +40,15 @@ module test();
   reg done_fail = 1'b0;
   always @(posedge done_fail) $fatal(0, "ERROR! FAIL!");
 
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
+    // o_in:  { size:`Outer_MaxWordLen bits }
+    // o_out: { size:`Outer_MaxWordLen bits }
+    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:2bit } 
     // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
     // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
     // m:     { only command:5bit }
+    // k:     { is128else256:1bit, inState:1bit, outState:1bit, mainIsInElseOut:1bit, mainNumBlocks:9bits, secondaryNumBlocks:1bits }
     // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-  reg [`MainCoreCMD_which_SIZE+`MainCoreCMD_SIZE-1:0] cmd = {`MainCoreCMD_which_SIZE+`MainCoreCMD_SIZE{1'b0}};
+  reg [`MainCoreCMD_which_SIZE+`MainCoreSerialCMD_SIZE-1:0] cmd = {`MainCoreCMD_which_SIZE+`MainCoreSerialCMD_SIZE{1'b0}};
   reg cmd_hasAny = 1'b0;
   wire cmd_consume;
   reg [64-1:0] in = 64'b0;
@@ -59,7 +58,7 @@ module test();
   wire out_isReady;
   reg out_canReceive = 1'b0;
   reg rst = 1'b0;
-  main_core toTest(
+  main_core_serialCmd toTest(
     .cmd(cmd),
     .cmd_hasAny(cmd_hasAny),
     .cmd_consume(cmd_consume),
@@ -90,7 +89,7 @@ module test();
         #0.1; \
         while(~cmd_consume) #1; \
         @(posedge clk); \
-        cmd <= {`MainCoreCMD_which_SIZE+`MainCoreCMD_SIZE{1'b0}}; \
+        cmd <= {`MainCoreCMD_which_SIZE+`MainCoreSerialCMD_SIZE{1'b0}}; \
         cmd_hasAny <= 1'b0;
 
 

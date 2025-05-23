@@ -23,8 +23,6 @@
 `include "frodoMul.v"
 `include "mem.v"
 
-// TODO: separate the output of 1344 times seedA by allowing read_seedA command in parallel
-
 
 `ATTR_MOD_GLOBAL
 module encode(
@@ -79,41 +77,44 @@ endmodule
 `define MemAndMulCMD_inOp_CpleqStimesInB 5'd6 /* BRAM.C = BRAM.C + BRAM.S' *' _B */
 `define MemAndMulCMD_inOp_addCRowFirst 5'd7 /* BRAM.C = BRAM.C + _C */
 
-`define MemAndMulCMD_in_BRowFirst 5'd8
-`define MemAndMulCMD_in_BColFirst 5'd9
-`define MemAndMulCMD_in_SRowFirst 5'd10 /* only 16b of the bus are used */
-`define MemAndMulCMD_in_CRowFirst 5'd11
-`define MemAndMulCMD_in_SSState 5'd12
-`define MemAndMulCMD_in_RNGState 5'd13
-`define MemAndMulCMD_in_salt 5'd14
-`define MemAndMulCMD_in_seedSE 5'd15
-`define MemAndMulCMD_in_pkh 5'd16
-`define MemAndMulCMD_in_u 5'd17
-`define MemAndMulCMD_in_k 5'd18
+`define MemAndMulCMD_inOp_selectKey 5'd8 /* TODO:  BRAM.k = BRAM.B' == 0 && BRAM.C == 0 ? BRAM.k : _s ------------------------- TODO */
+`define MemAndMulCMD_inOp_BeqInMinB 5'd9 /* BRAM.B' = _B - BRAM.B' */
 
-`define MemAndMulCMD_out_BRowFirst 5'd19
-`define MemAndMulCMD_out_BColFirst 5'd20
-`define MemAndMulCMD_out_CRowFirst 5'd21
-`define MemAndMulCMD_out_SSState 5'd22
-`define MemAndMulCMD_out_RNGState 5'd23
-`define MemAndMulCMD_out_salt 5'd24
-`define MemAndMulCMD_out_seedSE 5'd25
-`define MemAndMulCMD_out_pkh 5'd26
-`define MemAndMulCMD_out_u 5'd27
-`define MemAndMulCMD_out_k 5'd28
+`define MemAndMulCMD_in_BRowFirst 5'd10
+`define MemAndMulCMD_in_BColFirst 5'd11
+`define MemAndMulCMD_in_SRowFirst 5'd12 /* only 16b of the bus are used */
+`define MemAndMulCMD_in_CRowFirst 5'd13
+`define MemAndMulCMD_in_SSState 5'd14
+`define MemAndMulCMD_in_RNGState 5'd15
+`define MemAndMulCMD_in_salt 5'd16
+`define MemAndMulCMD_in_seedSE 5'd17
+`define MemAndMulCMD_in_pkh 5'd18
+`define MemAndMulCMD_in_u 5'd19
+`define MemAndMulCMD_in_k 5'd20
 
-`define MemAndMulCMD_FULLSIZE  29
+`define MemAndMulCMD_out_BRowFirst 5'd21
+`define MemAndMulCMD_out_BColFirst 5'd22
+`define MemAndMulCMD_out_CRowFirst 5'd23
+`define MemAndMulCMD_out_SSState 5'd24
+`define MemAndMulCMD_out_RNGState 5'd25
+`define MemAndMulCMD_out_salt 5'd26
+`define MemAndMulCMD_out_seedSE 5'd27
+`define MemAndMulCMD_out_pkh 5'd28
+`define MemAndMulCMD_out_u 5'd29
+`define MemAndMulCMD_out_k 5'd30
+
+`define MemAndMulCMD_FULLSIZE  31
 `define MemAndMulCMD_SIZE       5
-`define MemAndMulCMD_mask_op       29'h0000000F
-`define MemAndMulCMD_mask_inOp     29'h000000F0
-`define MemAndMulCMD_mask_opMul1   29'h00000053
-`define MemAndMulCMD_mask_opMul    29'h00000073
-`define MemAndMulCMD_mask_opNoMul  29'h0000008C
-`define MemAndMulCMD_mask_in       29'h0007FF00
-`define MemAndMulCMD_mask_out      29'h1FF80000
+`define MemAndMulCMD_mask_op       31'h0000000F
+`define MemAndMulCMD_mask_inOp     31'h000003F0
+`define MemAndMulCMD_mask_opMul1   31'h00000053
+`define MemAndMulCMD_mask_opMul    31'h00000073
+`define MemAndMulCMD_mask_opNoMul  31'h0000038C
+`define MemAndMulCMD_mask_in       31'h001FFC00
+`define MemAndMulCMD_mask_out      31'h7FE00000
 `define MemAndMulCMD_mask_conflictIn   (`MemAndMulCMD_mask_in  | `MemAndMulCMD_mask_op | `MemAndMulCMD_mask_inOp)
 `define MemAndMulCMD_mask_conflictOut  (`MemAndMulCMD_mask_out | `MemAndMulCMD_mask_op | `MemAndMulCMD_mask_inOp)
-`define MemAndMulCMD_mask_zero     29'h0
+`define MemAndMulCMD_mask_zero     31'h0
 
 `ATTR_MOD_GLOBAL
 module memAndMul__indexHandler(
@@ -187,7 +188,7 @@ module memAndMul__indexHandler(
   wire index2_update = currentCmd_isIn & bus_in_isReady
                      | (currentCmd[`MemAndMulCMD_op_CeqUminC] & (index1__delay_which == 1'b1))
                      | currentCmd[`MemAndMulCMD_op_CeqU]
-                     | (currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & bus_inOp_isReady)
+                     | ((currentCmd[`MemAndMulCMD_inOp_addCRowFirst] | currentCmd[`MemAndMulCMD_inOp_BeqInMinB]) & bus_inOp_isReady)
                      | (currentCmd_isOpMul & index1_isLast__d1);
   wire [14-1:0] index2_next_input = currentCmd_isIn ? w_index_next : r_index_next;
 
@@ -197,9 +198,9 @@ module memAndMul__indexHandler(
 
   wire currentCmd_op_isLastCycle__a2 = (currentCmd[`MemAndMulCMD_op_CeqUminC] & (index1__delay_which == 1'b1) & ~index1_has_next)
                                      | (currentCmd[`MemAndMulCMD_op_CeqU] & ~index1_has_next)
-                                     | (currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & bus_inOp_isReady & ~index1_has_next)
+                                     | ((currentCmd[`MemAndMulCMD_inOp_addCRowFirst] | currentCmd[`MemAndMulCMD_inOp_BeqInMinB]) & bus_inOp_isReady & ~index1_has_next)
                                      | (currentCmd_isOpMul & ~index1_has_next & ~index2_has_next);
-  assign bus_inOp_canReceive = (currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & bus_inOp_isReady & index1_has_next)
+  assign bus_inOp_canReceive = ((currentCmd[`MemAndMulCMD_inOp_addCRowFirst] | currentCmd[`MemAndMulCMD_inOp_BeqInMinB]) & bus_inOp_isReady & index1_has_next)
                              | (currentCmd_isOpMul & index1_has_val);
   assign bus_inOp_isLast = (currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] | currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA])
                          ? index1_has_val & ~index1_has_next
@@ -207,7 +208,7 @@ module memAndMul__indexHandler(
   assign r_which_index = {~r_index__is1, r_index__is1 & index1__delay_which, r_index__is1 & ~index1__delay_which};
   wire w_enable_op__a2 = (currentCmd_isOpMul1 & index1_isLast__d1)
                        | (currentCmd[`MemAndMulCMD_op_CeqU] & index1_has_val)
-                       | (currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & bus_inOp_isReady)
+                       | ((currentCmd[`MemAndMulCMD_inOp_addCRowFirst] | currentCmd[`MemAndMulCMD_inOp_BeqInMinB]) & bus_inOp_isReady)
                        | (currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & bus_inOp_isReady) // TODO: why not *AT
                        | (currentCmd[`MemAndMulCMD_op_CeqUminC] & (index1__delay_which == 1'b1));
 
@@ -326,7 +327,9 @@ module memAndMul__core(
   wire w_halfBus_U_row = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS] & w_enable;
 
   wire intOp_readBRow = (currentCmd[`MemAndMulCMD_op_CpleqStimesBT] & r_which_index[1])
+                      | (currentCmd[`MemAndMulCMD_inOp_BeqInMinB])
                       | (currentCmd[`MemAndMulCMD_op_UeqCminBtimesS] & r_which_index[1]);
+  wire intOp_writeBRow = (currentCmd[`MemAndMulCMD_inOp_BeqInMinB] & w_enable);
   wire intOp_readCRow = (currentCmd[`MemAndMulCMD_op_CeqUminC] & r_which_index[1])
                       | (currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & r_which_index[0]);
   wire intOp_writeCRow = (currentCmd[`MemAndMulCMD_op_CeqUminC] & w_enable)
@@ -382,6 +385,7 @@ module memAndMul__core(
   wor [`MainMemCMD_SIZE-1:0] w_bus_cmd = w_bus_cmd__raw & {`MainMemCMD_SIZE{bus_in_isReady}};
   wor [`MainMemCMD_SIZE-1:0] r_bus_cmd = r_bus_cmd__raw & {`MainMemCMD_SIZE{bus_out_canReceive}};
   assign r_bus_cmd[`MainMemCMD_bus_B_row] = intOp_readBRow;
+  assign w_bus_cmd[`MainMemCMD_bus_B_row] = intOp_writeBRow;
   assign r_bus_cmd[`MainMemCMD_bus_C_row] = intOp_readCRow;
   assign w_bus_cmd[`MainMemCMD_bus_C_row] = intOp_writeCRow;
 
@@ -497,9 +501,9 @@ module memAndMul__core(
   genvar j;
   generate
     for (j = 0; j < 4; j=j+1) begin
-      assign w_bus__fromOp[j*16+:16] = currentCmd[`MemAndMulCMD_inOp_addCRowFirst]
-                                     ? (r_bus__d2[j*16+:16] + bus_in[j*16+:16])
-                                     : r_encoded_U__d2d3[j*16+:16] - (currentCmd[`MemAndMulCMD_op_CeqUminC] ? r_bus__d2[j*16+:16] : 16'b0);
+      assign w_bus__fromOp[j*16+:16] = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] ? (r_bus__d2[j*16+:16] + bus_in[j*16+:16])
+                                     : currentCmd[`MemAndMulCMD_inOp_BeqInMinB]    ? (bus_in[j*16+:16] - r_bus__d2[j*16+:16])
+                                                                                   : r_encoded_U__d2d3[j*16+:16] - (currentCmd[`MemAndMulCMD_op_CeqUminC] ? r_bus__d2[j*16+:16] : 16'b0);
     end
   endgenerate
 endmodule
@@ -688,6 +692,7 @@ module memAndMul(
   assign core__bus_in_isReady = currentCMD__isIn & in_isReady;
   assign core__bus_in = in;
 endmodule
+
 
 
 

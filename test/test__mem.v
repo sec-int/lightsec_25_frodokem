@@ -9,20 +9,10 @@
     fork : test__mem_k__p1
       test_name <= "test__mem_k";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // store into memory
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_k})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_k})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
       end
 
       begin
@@ -37,14 +27,14 @@
     fork : test__mem_k__p2
       begin
         // load from memory
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd4})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_k})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_k})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
 
         // load from memory
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd4})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_k})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_k})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
       end
 
       begin
@@ -69,19 +59,9 @@
     fork : test__mem_u__p1
       test_name <= "test__mem_u";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_u})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_u})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
       end
 
       begin
@@ -94,9 +74,9 @@
 
     fork : test__mem_u__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_u})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_u})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
       end
 
       begin
@@ -115,19 +95,9 @@
     fork : test__mem_pkh__p1
       test_name <= "test__mem_pkh";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_pkh})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_pkh})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
       end
 
       begin
@@ -140,9 +110,9 @@
 
     fork : test__mem_pkh__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_pkh})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_pkh})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
       end
 
       begin
@@ -161,18 +131,9 @@
     fork : test__mem_salt__p1
       test_name <= "test__mem_salt";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_salt})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_salt})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd8})
       end
 
       begin
@@ -185,9 +146,9 @@
 
     fork : test__mem_salt__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_salt})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_salt})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd8})
       end
 
       begin
@@ -206,19 +167,9 @@
     fork : test__mem_seedSE__p1
       test_name <= "test__mem_seedSE";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_seedSE})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_seedSE})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd8})
       end
 
       begin
@@ -231,9 +182,9 @@
 
     fork : test__mem_seedSE__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_seedSE})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_seedSE})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd8})
       end
 
       begin
@@ -252,19 +203,9 @@
     fork : test__mem_RNGState__p1
       test_name <= "test__mem_RNGState";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_RNGState})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_RNGState})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd8})
       end
 
       begin
@@ -277,9 +218,9 @@
 
     fork : test__mem_RNGState__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_RNGState})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_RNGState})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd8})
       end
 
       begin
@@ -298,19 +239,9 @@
     fork : test__mem_CRowFirst__p1
       test_name <= "test__mem_CRowFirst";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_CRowFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd16})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd16})
       end
 
       begin
@@ -323,9 +254,9 @@
 
     fork : test__mem_CRowFirst__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_CRowFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd16})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd16})
       end
 
       begin
@@ -344,19 +275,9 @@
     fork : test__mem_SSState__p1
       test_name <= "test__mem_SSState";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_SSState})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd25})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_SSState})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd25})
       end
 
       begin
@@ -369,9 +290,9 @@
 
     fork : test__mem_SSState__p2
       begin
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_SSState})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd25})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_SSState})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd25})
       end
 
       begin
@@ -390,20 +311,10 @@
     fork : test__mem_BRowFirst__p1
       test_name <= "test__mem_BRowFirst";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
         // store
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_BRowFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2688})
       end
 
       begin
@@ -417,14 +328,14 @@
     fork : test__mem_BRowFirst__p2
       begin
         // load
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_BRowFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
 
         // load transposed
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_BColFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BColFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
       end
 
       begin
@@ -456,19 +367,9 @@
     fork : test__mem_BColFirst__p1
       test_name <= "test__mem_BColFirst";
       begin
-    // { select which destination:`MainCoreCMD_which_SIZE bits, cmd:`MainCoreCMD_SIZE bits }
-    // o_in:  { sampledFromStd:1bit, size:`Outer_MaxWordLen bits }
-    // o_out: { sampledToStd:1bit, size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:1bit }
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // k:     { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
-
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_in_BColFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_in, 1'b0, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BColFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2688})
       end
 
       begin
@@ -482,14 +383,14 @@
     fork : test__mem_BColFirst__p2
       begin
         // load
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_BColFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BColFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
 
         // load transposed
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_m, `MemAndMulCMD_out_BRowFirst})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreCMD_wp_o_out, 1'b0, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
       end
 
       begin

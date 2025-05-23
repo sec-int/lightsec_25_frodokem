@@ -909,15 +909,17 @@ module keccak_delayWithShift #(parameter BUFF = 3) (
   delay #(BUFF) d (out__a1, out, rst, clk);
 endmodule
 
+`define Keccak_BlockCounterSize  9
+
 `ATTR_MOD_GLOBAL
 module keccak_ctrl #(parameter BUFF=3) (
   output in_cmd_canReceive,
   input in_cmd_isReady, // ready for a new command
   input in_cmd_is128else256,
   input in_cmd_inState, // before any inputs, input the keccak state
-  input in_cmd_outState, // after any output, output the keccak state
-  input [16-1:0] in_cmd_numInBlocks,
-  input [16-1:0] in_cmd_numOutBlocks,
+  input in_cmd_outState, // after any output, output the keccak state. the last I/O is repeated, to allow the remeaning input/out to be used. If the input has not finished, it needs to be aligned to the data rate and have no isLast.
+  input [`Keccak_BlockCounterSize-1:0] in_cmd_numInBlocks,
+  input [`Keccak_BlockCounterSize-1:0] in_cmd_numOutBlocks,
 
   input out_cmd_canReceive,
   output out_cmd_des128,
@@ -948,12 +950,13 @@ module keccak_ctrl #(parameter BUFF=3) (
   wire outState__set = in_cmd_isReady & in_cmd_outState;
   ff_s_r outState__ff(outState__set, outState__reset, outState, ignore, rst, clk);
 
-  wire numInBlocks__isReady, numInBlocks__canRestart, numInBlocks__canReceive;
-  counter_bus #(16) numInBlocks (
+  wire numInBlocks__isReady, numInBlocks__canRestart, numInBlocks__canReceive, numInBlocks__isLast;
+  counter_bus #(`Keccak_BlockCounterSize) numInBlocks (
     .restart(in_cmd_isReady),
     .numSteps(in_cmd_numInBlocks),
     .canRestart(numInBlocks__canRestart),
     .canReceive(numInBlocks__canReceive),
+    .canReceive_isLast(numInBlocks__isLast),
     .isReady(numInBlocks__isReady),
     .rst(rst),
     .clk(clk)
@@ -961,7 +964,7 @@ module keccak_ctrl #(parameter BUFF=3) (
 
   wire numOutBlocks__canReceive, numOutBlocks__isLast;
   wire numOutBlocks__canRestart, numOutBlocks__isReady;
-  counter_bus #(16) numOutBlocks (
+  counter_bus #(`Keccak_BlockCounterSize) numOutBlocks (
     .restart(in_cmd_isReady),
     .numSteps(in_cmd_numOutBlocks),
     .canRestart(numOutBlocks__canRestart),
@@ -1019,8 +1022,6 @@ module keccak_ctrl #(parameter BUFF=3) (
   wor [BUFF-1:0] plan_keccakStart = plan_keccakStart__d1;
   wor [BUFF-1:0] plan_keccakContinue = plan_keccakContinue__d1;
 
-  wire outNeedKeccakForOut = numOutBlocks__isReady & (outState | ~numOutBlocks__isLast);
-
   assign plan_desState = plan_desState__d1
                        | (inState__reset ? firstFree_desState__d1 : {BUFF{1'b0}});
   assign plan_des128   = plan_des128__d1
@@ -1036,8 +1037,8 @@ module keccak_ctrl #(parameter BUFF=3) (
   assign plan_keccakStart    = plan_keccakStart__d1
                              | (numInBlocks__isReady &  firstK ? firstFree_desBlock__d1 << 1 : {BUFF{1'b0}});
   assign plan_keccakContinue = plan_keccakContinue__d1
-                             | (numInBlocks__isReady & ~firstK ? firstFree_desBlock__d1 << 1 : {BUFF{1'b0}})
-                             | (outNeedKeccakForOut ? firstFree_serBlock__d1 : {BUFF{1'b0}});
+                             | (numInBlocks__isReady & ~firstK & ~(outState & numOutBlocks__canRestart & numInBlocks__isLast) ? firstFree_desBlock__d1 << 1 : {BUFF{1'b0}})
+                             | (numOutBlocks__isReady & ~numOutBlocks__isLast ? firstFree_serBlock__d1 : {BUFF{1'b0}});
   
   assign out_cmd_des128 = out_cmd_canReceive & plan_des128[0];
   assign out_cmd_des256 = out_cmd_canReceive & plan_des256[0];
@@ -1058,18 +1059,17 @@ module keccak_ctrl #(parameter BUFF=3) (
   keccak_delayWithShift #(BUFF) dws_keccakContinue (out_cmd_canReceive, plan_keccakContinue, plan_keccakContinue__d1, rst, clk);
 endmodule
 
-
-`define KeccakCMD_SIZE  35
+`define KeccakCMD_SIZE  (3+2*`Keccak_BlockCounterSize)
 
 `ATTR_MOD_GLOBAL
 module keccak(
-    input [`KeccakCMD_SIZE-1:0] cmd, // { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
+    input [`KeccakCMD_SIZE-1:0] cmd, // { is128else256: 1bit, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
     input cmd_isReady,
     output cmd_canReceive,
 
     input [64-1:0] in,
-    input in_isSingleByte, // for the cmd_start256partial_last, this must be false
-    input in_isLast, // if the cmd_start256partial_first, the size of the input data must be a multiple of the rate.
+    input in_isSingleByte, // if inState, this must be false
+    input in_isLast, // if outState and no out, the size of the input data must be a multiple of the rate, and this must not be set.
     input in_isReady,
     output in_canReceive,
 
@@ -1102,11 +1102,11 @@ module keccak(
   keccak_ctrl ctrl(
     .in_cmd_canReceive(cmd_canReceive),
     .in_cmd_isReady(cmd_isReady),
-    .in_cmd_is128else256(cmd[34]),
-    .in_cmd_inState(cmd[33]), // before any inputs, input the full keccak state
-    .in_cmd_outState(cmd[32]),// after any output, output the full keccak state
-    .in_cmd_numInBlocks(cmd[16+:16]),
-    .in_cmd_numOutBlocks(cmd[0+:16]), // for the cmd_start256partial_first, this must be 0  TODO: wut?
+    .in_cmd_is128else256(cmd[2+2*`Keccak_BlockCounterSize]),
+    .in_cmd_inState(cmd[1+2*`Keccak_BlockCounterSize]), // before any inputs, input the full keccak state
+    .in_cmd_outState(cmd[0+2*`Keccak_BlockCounterSize]),// after any output, output the full keccak state
+    .in_cmd_numInBlocks(cmd[`Keccak_BlockCounterSize+:`Keccak_BlockCounterSize]),
+    .in_cmd_numOutBlocks(cmd[0+:`Keccak_BlockCounterSize]),
     .out_cmd_canReceive(c__canReceive),
     .out_cmd_des128(c__des128),
     .out_cmd_des256(c__des256),

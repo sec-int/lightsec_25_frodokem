@@ -341,6 +341,26 @@ module mainMem_readConnector(
   endgenerate
 endmodule
 
+`ATTR_MOD_GLOBAL
+module stdToCompact_single(
+  input [16-1:0] in,
+  output [4-1:0] out
+);
+  assign out[3] = in[15]; // isNeg
+  assign out[2:0] = in[15] ? -in[2:0] : in[2:0];
+endmodule
+
+`ATTR_MOD_GLOBAL
+module stdToCompact(
+    input [64-1:0] in,
+    output [16-1:0] out
+  );
+  stdToCompact_single s0(in[16*0+:16], out[4*0+:4]);
+  stdToCompact_single s1(in[16*1+:16], out[4*1+:4]);
+  stdToCompact_single s2(in[16*2+:16], out[4*2+:4]);
+  stdToCompact_single s3(in[16*3+:16], out[4*3+:4]);
+endmodule
+
 
 // it connects two side: Outside, Inside
 `ATTR_MOD_GLOBAL
@@ -474,7 +494,11 @@ module mainMem_writeConnector(
   endgenerate
 
   assign i_value__w = o_halfBus_U_row ? {16{o_halfBus}} : 512'b0;
-  assign i_value__w = o_bus_S_row ? {4*8{o_bus[0+:16]}} : 512'b0;
+  
+  wire [16-1:0] o_bus_sampledCompact;
+  stdToCompact o_bus_sampledCompact__c (o_bus, o_bus_sampledCompact);
+  
+  assign i_value__w = o_bus_S_row ? {4*8{o_bus_sampledCompact}} : 512'b0;
 endmodule
 
 `define MainMemCMD_bus_B_row 0
@@ -626,5 +650,4 @@ module mainMem(
   );
 
 endmodule
-
 

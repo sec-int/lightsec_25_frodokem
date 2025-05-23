@@ -21,13 +21,14 @@
 
 `include "keccak.v"
 
-`define KeccakInCMD_sendByte 1'd0
-`define KeccakInCMD_forward  1'd1
-`define KeccakInCMD_SIZE  10
+`define KeccakInCMD_sendByte  2'b00
+`define KeccakInCMD_sendZeros 2'b01
+`define KeccakInCMD_forward   2'b10
+`define KeccakInCMD_SIZE  (8+1+2)
 
 `ATTR_MOD_GLOBAL
 module adapted_keccak__in(
-    input [`KeccakInCMD_SIZE-1:0] cmd,  // {byteVal:8bits, skipIsLast:1bit, CMD:1bit}
+    input [`KeccakInCMD_SIZE-1:0] cmd,  // {byteVal:8bits, skipIsLast:1bit, CMD:2bit}
     input cmd_isReady,
     output cmd_canReceive,
 
@@ -59,22 +60,42 @@ module adapted_keccak__in(
     .rst(rst),
     .clk(clk)
   );
-  wire cmdB_sendByte = cmdB[0] == `KeccakInCMD_sendByte & cmdB_hasAny;
-  wire cmdB_forward  = cmdB[0] == `KeccakInCMD_forward & cmdB_hasAny;
-  wire cmdB_skipIsLast = cmdB[1];
-  wire [8-1:0] cmdB_byteVal = cmdB[2+:8];
+  wire cmdB_sendByte  = cmdB[0+:2] == `KeccakInCMD_sendByte & cmdB_hasAny;
+  wire cmdB_sendZeros = cmdB[0+:2] == `KeccakInCMD_sendZeros & cmdB_hasAny;
+  wire cmdB_forward   = cmdB[0+:2] == `KeccakInCMD_forward & cmdB_hasAny;
+  wire cmdB_skipIsLast = cmdB[2];
+  wire [8-1:0] cmdB_byteVal = cmdB[3+:8];
+
+  wire zerosCounter__canRestart, zerosCounter__canReceive, zerosCounter__canReceive_isLast;
+  wire isReady = zerosCounter__canReceive & k__in_canReceive;
+  counter_bus #(.N(8)) zerosCounter (
+    .restart(cmdB_sendZeros),
+    .numSteps(cmdB_byteVal),
+    .canRestart(zerosCounter__canRestart),
+    .canReceive(zerosCounter__canReceive),
+    .canReceive_isLast(zerosCounter__canReceive_isLast),
+    .isReady(isReady),
+    .rst(rst),
+    .clk(clk)
+  );
 
   assign cmdB_consume = cmdB_sendByte & k__in_canReceive
-                     | cmdB_forward & h__out_isLast_out;
+                      | cmdB_forward & h__out_isLast_out
+                      | cmdB_sendZeros & zerosCounter__canRestart;
 
-  assign k__in_isLast = ~cmdB_skipIsLast & cmdB_consume;
   assign h__out_isLast_in = 1'b0; // disabled
+  assign h__out_canReceive = cmdB_forward & k__in_canReceive;
+
+  assign k__in_isLast = ~cmdB_skipIsLast & cmdB_sendByte  & k__in_canReceive
+                      | ~cmdB_skipIsLast & cmdB_forward   & h__out_isLast_out
+                      | ~cmdB_skipIsLast & cmdB_sendZeros & zerosCounter__canReceive_isLast;
+  
   assign k__in_isSingleByte = cmdB_sendByte;
   assign k__in = (cmdB_sendByte ? {56'b0, cmdB_byteVal} : 64'b0)
                | (cmdB_forward ? h__out : 64'b0);
-  assign h__out_canReceive = cmdB_forward & k__in_canReceive;
   assign k__in_isReady = cmdB_sendByte & k__in_canReceive
-                       | cmdB_forward & h__out_isReady;
+                       | cmdB_forward & h__out_isReady
+                       | cmdB_sendZeros & isReady;
 endmodule
 
 
@@ -107,17 +128,33 @@ module sampler_single(
 endmodule
 
 `ATTR_MOD_GLOBAL
+module compactToStd_single(
+  input [4-1:0] in,
+  output [16-1:0] out
+);
+  wire isNeg = in[3];
+  wire [16-1:0] mod = {13'b0, in[3-1:0]};
+
+  assign out = isNeg ? -mod : mod;
+endmodule
+
+`ATTR_MOD_GLOBAL
 module sampler(
     input enable,
     input [64-1:0] in,
     output [64-1:0] out
   );
-  wor [64-1:0] out_sampled = 64'b0;
+  wire [16-1:0] out_sampled;
+  wire [64-1:0] out_std;
   sampler_single s0(in[16*0+:16], out_sampled[4*0+:4]);
   sampler_single s1(in[16*1+:16], out_sampled[4*1+:4]);
   sampler_single s2(in[16*2+:16], out_sampled[4*2+:4]);
   sampler_single s3(in[16*3+:16], out_sampled[4*3+:4]);
-  assign out = enable ? out_sampled : in;
+  compactToStd_single c0(out_sampled[4*0+:4], out_std[16*0+:16]);
+  compactToStd_single c1(out_sampled[4*1+:4], out_std[16*1+:16]);
+  compactToStd_single c2(out_sampled[4*2+:4], out_std[16*2+:16]);
+  compactToStd_single c3(out_sampled[4*3+:4], out_std[16*3+:16]);
+  assign out = enable ? out_std : in;
 endmodule
 
 `ATTR_MOD_GLOBAL
@@ -168,6 +205,8 @@ module adapted_keccak__out(
   assign k__out_isLast = ~cmdB_skipIsLast & cmdB_forward & h__in_isLast_out;
 endmodule
 
+`define KeccakAdaptedCMD_SIZE  (4 + `Keccak_BlockCounterSize + 1)
+
 `ATTR_MOD_GLOBAL
 module adapted_keccak (
     input [`KeccakInCMD_SIZE-1:0] k_in__cmd,  // {byteVal:8bits, skipIsLast:1bit, CMD:1bit}
@@ -178,7 +217,7 @@ module adapted_keccak (
     input k_out__cmd_isReady,
     output k_out__cmd_canReceive,
 
-    input [`KeccakCMD_SIZE-1:0] k__cmd, // { is128else256, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
+    input [`KeccakAdaptedCMD_SIZE-1:0] k__cmd, // { is128else256:1bit, inState:1bit, outState:1bit, mainIsInElseOut:1bit, mainNumBlocks:9bits, secondaryNumBlocks:1bits }
     input k__cmd_isReady,
     output k__cmd_canReceive,
 
@@ -207,12 +246,14 @@ module adapted_keccak (
   wire k__out_isReady;
   wire k__out_canReceive;
   wire k__out_isLast;
-/*  assign k__out = k__in;
-  assign k__out_isReady = k__in_isReady;
-  assign k__in_canReceive = k__out_canReceive;
-*/
+  wire k__cmd__secondaryNumBlocks = {{`Keccak_BlockCounterSize-1{1'b0}}, k__cmd[0]};
+  wire k__cmd__mainNumBlocks = k__cmd[1+:`Keccak_BlockCounterSize];
+  wire k__cmd__mainIsInElseOut = k__cmd[1+`Keccak_BlockCounterSize];
+  wire k__cmd__param = k__cmd[1+`Keccak_BlockCounterSize+1+:3];
+  wire [`KeccakCMD_SIZE-1:0] k__cmd__expanded = k__cmd__mainIsInElseOut ? { k__cmd__param, k__cmd__mainNumBlocks,      k__cmd__secondaryNumBlocks }
+                                                                        : { k__cmd__param, k__cmd__secondaryNumBlocks, k__cmd__mainNumBlocks      };
   keccak k(
-    .cmd(k__cmd),
+    .cmd(k__cmd__expanded),
     .cmd_isReady(k__cmd_isReady),
     .cmd_canReceive(k__cmd_canReceive),
     .in(k__in),
