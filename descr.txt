@@ -130,14 +130,12 @@ test = false
 
 ## encaps
 
-if(!test)
-  BRAM.u | BRAM.salt <- SHAKE256(2 : 64b | BRAM.RNG_state)
-
 seedA : 128b <- IN(seedA)
 BRAM.B' = IN(pk.b)^T // =B^T
 BRAM.pkh = SHAKE256(seedA|BRAM.B'^T) // while streaming
 
 if(!test)
+  BRAM.u | BRAM.salt <- SHAKE256(2 : 64b | BRAM.RNG_state)
   BRAM.RNG_state <- SHAKE256(3 : 64b | BRAM.RNG_state | BRAM.pkh)
 
 BRAM.seedSE | BRAM.k = SHAKE256(BRAM.pkh | BRAM.u | BRAM.salt) // end of pkh
@@ -188,10 +186,9 @@ seedA : 128b <- IN(sk.seedA)
 _A = GEN(seedA)  // end of seedA
 BRAM.B' += BRAM.S' *" _A
 
-corr = BRAM.B' == 0 && BRAM.C == 0
-
+_corr = BRAM.B' == 0 && BRAM.C == 0
 _s : 256b <- IN(sk.s)
-BRAM.k = corr ? BRAM.k : _s
+BRAM.k = _corr ? BRAM.k : _s
 
 BRAM.k = SHAKE_finish(ss_state, BRAM.k) // ss
 OUT(ss) : 256b <- BRAM.k // while streaming
@@ -201,7 +198,6 @@ if(!test)
 
 test = false
 
-
 ## set up for test
 
 BRAM.seedSE | BRAM.u | BRAM.salt | seedA <- IN
@@ -210,7 +206,7 @@ test = true
 
 ## add entropy
 
-BRAM.RNG_state <- SHAKE256(5 : 8b | BRAM.RNG_state | IN)
+BRAM.RNG_state <- SHAKE256(5 : 8b | BRAM.RNG_state | IN : 512b)
 
 
 
