@@ -39,7 +39,7 @@ We have two modes of operation of out multiplication module:
  1.  4b x 8 x 4 * 16b x 4 x 1 = 16b x 8 x 1.   Changes L and R, accumulates out.
      Executed as: for(j) B'_{*,j} = E'_{*,j} + \sum_i S_{*,i} * A_{i,j}
  2.  4b x 8 x 1 * 16b x 1 x 4 = 16b x 8 x 4. It keeps L and changes R and out.
-     Executed as: for(i) for(j)  B'_{i,j} = B'_{i,j} + S_{*,i} * A{i,j}.
+     Executed as: for(i) for(j)  B'_{i,j} = B'_{i,j} + S_{*,i} * A_{i,j}.
 
 Note that the multiplication is always between 16 bit value, and a 4 bit value in the range [-6, 6], and so it's a single sum with two optional shifts.
 
