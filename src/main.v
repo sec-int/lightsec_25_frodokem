@@ -91,7 +91,6 @@ module command_expansion(
                        | (o == `MainExpCMD_genA_kOut ? `MainCoreCMD_which_k | `MainCoreCMD_which_h | `MainCoreCMD_which_k_out : hasNone);
 
 
-  wire [`MainCoreCMD_SIZE-1:0] iNone = {`MainCoreCMD_SIZE{1'b0}};
   assign i = {
     // o_in
     o__h_dst == `CmdHubCMD_keccak && o__h_src == `CmdHubCMD_outer ? 15'd16 : 15'd0,
@@ -210,8 +209,8 @@ module command_sequences(
   assign i__k_isSampled = i__k_isSampled__r;
   assign i__param = i__param__r;
   assign i__m_cmd = i__m_cmd__r;
-  assign i__h_dst = i__h_dst;
-  assign i__h_src = i__h_src;
+  assign i__h_dst = i__h_dst__r;
+  assign i__h_src = i__h_src__r;
 
 `define SET_CMD__IS_LAST  1'b1
 `define SET_CMD__NOT_LAST  1'b0
@@ -582,7 +581,7 @@ module main(
   wire seq_canReceive;
   wire [16-1:0] seq_genA__counter;
   command_sequences seq(
-    .cmd(seq_cmd),
+    .o(seq_cmd),
     .o_isReady(seq_isReady),
     .o_canReceive(seq_canReceive),
     .genA__counter(seq_genA__counter),
@@ -617,22 +616,21 @@ module main(
   );
 
 
-  wire currCmd__canReceive;
   wire [`MainCMD_SIZE-1:0] currCmd__d1;
-  wire [`MainCMD_SIZE-1:0] currCmd = currCmd__canReceive ? cmd : currCmd__d1;
+  wire [`MainCMD_SIZE-1:0] currCmd = cmd_canReceive ? cmd : currCmd__d1;
   delay #(`MainCMD_SIZE) (currCmd, currCmd__d1, rst, clk);
 
 
   wire currCmd_isTest = currCmd == `MainCMD_setupTest;
   wire currCmd_isTest__d1;
   delay (currCmd_isTest, currCmd_isTest__d1, rst, clk);
-  ff_en_imm lastCmd_isTest__ff(currCmd__canReceive, currCmd_isTest__d1, lastCmd_wasTest, rst, clk);
+  ff_en_imm lastCmd_isTest__ff(cmd_canReceive, currCmd_isTest__d1, lastCmd_wasTest, rst, clk);
 
 
 
   wire [5-1:0] state;
 
-  wire state__restart = currCmd__canReceive & currCmd != `MainCMD_no_cmd & currCmd != `MainCMD_rst;
+  wire state__restart = cmd_canReceive & currCmd != `MainCMD_no_cmd & currCmd != `MainCMD_rst;
   wire [3-1:0] state__numStates = (currCmd == `MainCMD_keygen ? 4 : 0)
                                 | (currCmd == `MainCMD_encaps ? 5 : 0)
                                 | (currCmd == `MainCMD_decaps ? 4 : 0)
@@ -641,7 +639,7 @@ module main(
   counter_bus_state #(.MAX_NUM_STEPS(5)) state__counter (
     .restart(state__restart),
     .numStates(state__numStates),
-    .canRestart(currCmd__canReceive),
+    .canRestart(cmd_canReceive),
     
     .hasAny(flt_hasAny),
     .state(state),
@@ -677,7 +675,7 @@ module main(
       if(state[0]) flt_cmd = `MainFltCMD_setupTest;
     end
     if(currCmd == `MainCMD_addEntropy) begin
-      if(w[0]) flt_cmd = `MainFltCMD_addEntropy;
+      if(state[0]) flt_cmd = `MainFltCMD_addEntropy;
     end
   end
 

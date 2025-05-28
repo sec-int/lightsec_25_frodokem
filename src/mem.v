@@ -346,6 +346,7 @@ module stdToCompact_single(
   input [16-1:0] in,
   output [4-1:0] out
 );
+  wire ignore = | in[15-1:3];
   assign out[3] = in[15]; // isNeg
   assign out[2:0] = in[15] ? -in[2:0] : in[2:0];
 endmodule

@@ -293,6 +293,7 @@ module decode(
   input [16-1:0] in,
   output [4-1:0] out
 );
+  wire ignore = in[11-1:0];
   assign out = {(in[11+:5] + 5'b1) >> 1};
 endmodule
 
@@ -437,10 +438,10 @@ module memAndMul__core(
   // main memory module
   wor mainMemory__w_bus__useAdder;
   wor mainMemory__w_bus__useIsNotZero;
-  wire mainMemory__w_bus = mainMemory__w_bus__useAdder             ? adder__ret
-                         : mainMemory__w_bus__useIsNotZero         ? isNotZero__ret
-                         : currentCmd & `MemAndMulCMD_mask_in != 0 ? bus_in
-                                                                   : bus_inOp;
+  wire [64-1:0] mainMemory__w_bus = mainMemory__w_bus__useAdder             ? adder__ret
+                                  : mainMemory__w_bus__useIsNotZero         ? isNotZero__ret
+                                  : currentCmd & `MemAndMulCMD_mask_in != 0 ? bus_in
+                                                                            : bus_inOp;
 
   wor [`MainMemCMD_SIZE-1:0] mainMemory__r_bus_cmd;
   wor [`MainMemCMD_SIZE-1:0] mainMemory__w_bus_cmd;
@@ -509,13 +510,13 @@ module memAndMul__core(
 
   //  mul module
   wor [16*4-1:0] m__a__d2;
-  wire [128-1:0] m__outVec__d2;
+  wire [128-1:0] m__outVec;
   wor m__isMatrixMul2__d2;
   wire m__isMatrixMul1__d2 = ~m__isMatrixMul2__d2;
   wor m__isNeg__d2;
   wire m__isPos__d2 = ~m__isNeg__d2;
   
-  wire m__doOp;
+  wor m__doOp;
   wire m__doOp__d1;
   delay (m__doOp, m__doOp__d1, rst, clk);
   wire m__doOp__d2;
@@ -525,11 +526,11 @@ module memAndMul__core(
   wire [32-1:0] m__sCol__d2d3;
   optionalDelay #(32) r_halfBus__ff (m__sCol__doDelay__d2, mainMemory__r_halfBus__d2, m__sCol__d2d3, rst, clk);
 
-  wire m__setStorage__a2 = ~indexHandler__r_index__useIndex1;
-  wire m__setStorage__a1;
-  delay m__setStorage__ff2 (m__setStorage__a2, m__setStorage__a1, rst, clk);
-  wire m__setStorage;
-  delay m__setStorage__ff1 (m__setStorage__a1, m__setStorage, rst, clk);
+  wire m__setStorage = ~indexHandler__r_index__useIndex1;
+  wire m__setStorage__d1;
+  delay m__setStorage__ff2 (m__setStorage, m__setStorage__d1, rst, clk);
+  wire m__setStorage__d2;
+  delay m__setStorage__ff1 (m__setStorage__d1, m__setStorage__d2, rst, clk);
   frodoMul m(
     .a(m__a__d2),
     .accVec(mainMemory__r_dubBus__d2),
@@ -537,7 +538,7 @@ module memAndMul__core(
     .sMat(mainMemory__r_dubBus__d2),
     .accMat(mainMemory__r_paral__d2),
     .outMat(mainMemory__w_paral),
-    .outVec(m__outVec__d2),
+    .outVec(m__outVec),
     .isMatrixMul1(m__isMatrixMul1__d2),
     .isPos(m__isPos__d2),
     .setStorage(m__setStorage__d2),
@@ -840,7 +841,7 @@ module memAndMul(
     .clk(clk)
   );
 
-  wire currentCMD__isOp = | (currentCmd & `MemAndMulCMD_mask_op);
+  //wire currentCMD__isOp = | (currentCmd & `MemAndMulCMD_mask_op);
   wire currentCMD__isInOp = | (currentCmd & `MemAndMulCMD_mask_inOp);
   wire currentCMD__isIn = | (currentCmd & `MemAndMulCMD_mask_in);
   wire currentCMD__isOut = | (currentCmd & `MemAndMulCMD_mask_out);

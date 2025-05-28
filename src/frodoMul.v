@@ -101,7 +101,7 @@ module frodoMul #(
       assign partSum [j*(A+1)*16+:16] = state[j*16+:16];
 
       for (i = 0; i < A; i=i+1) begin
-        assign partSum [(j*(A+1)+i+1)*16+:16] = (isMatrixMul1 ? partSum[(j*(A+1)+i)*16+:16] : accMat[(j*A+i)*16+:16] ) + mul_out[(j*A+i)*16+:16];
+        assign partSum [(j*(A+1)+i+1)*16+:16] = ( isMatrixMul1 ? partSum[(j*(A+1)+i)*16+:16] : accMat[(j*A+i)*16+:16] ) + mul_out[(j*A+i)*16+:16];
       end
 
       assign state__new [j*16+:16] = partSum[(j*(A+1)+A)*16+:16];
