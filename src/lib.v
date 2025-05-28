@@ -199,6 +199,36 @@ module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to 
 endmodule
 
 `ATTR_MOD_GLOBAL
+module counter_bus_state #(parameter MAX_NUM_STEPS = 1) (
+    input restart,  // can't interupt
+    input [$clog2(MAX_NUM_STEPS+1)-1:0] numStates, // must be active throughtout the whole counter operation.
+    output canRestart,
+    
+    output hasAny,
+    output [MAX_NUM_STEPS-1:0] state, // meaningful if hasAny
+    input consume, // it requires hasAny, as usual.
+    output isLast,
+
+    input rst,
+    input clk
+  );
+
+  wire [MAX_NUM_STEPS-1:0] one = { {MAX_NUM_STEPS-1{1'b0}} , 1'b1};
+  wire [MAX_NUM_STEPS-1:0] maskAllowedStates = (one << numStates) - one;
+  
+  wire [MAX_NUM_STEPS-1:0] stateNext__d1;
+  assign canRestart = ~ ( | stateNext__d1 );
+
+  assign state = stateNext__d1 | { {MAX_NUM_STEPS-1{1'b0}} , restart & canRestart};
+  assign hasAny = | state;
+
+  wire [MAX_NUM_STEPS-1:0] stateNext = consume ? (state << 1) & maskAllowedStates : state;
+  assign isLast = hasAny & ~ ( | stateNext );
+  delay #(MAX_NUM_STEPS) stateNext__ff (stateNext, stateNext__d1, rst, clk);
+  
+endmodule
+
+`ATTR_MOD_GLOBAL
 module serdes #(parameter N = 1) ( // the startSer and startDes can be true together
   input cmd_startDes,
   input cmd_startSer,
