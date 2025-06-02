@@ -116,14 +116,14 @@ module main_core(
   wire k__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_k) != 0 & k__cmd_canReceive;
   wire s__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_s) != 0 & s__cmd_canReceive;
 
-  wire [`OuterInCMD_SIZE-1:0] o_in__cmd  = cmd[`OuterOutCMD_SIZE + `KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`OuterInCMD_SIZE];
-  wire [`OuterOutCMD_SIZE-1:0] o_out__cmd = cmd[`KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`OuterOutCMD_SIZE];
-  wire [`KeccakInCMD_SIZE-1:0] k_in__cmd  = cmd[`KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`KeccakInCMD_SIZE];
+  wire [`OuterInCMD_SIZE-1:0] o_in__cmd    = cmd[`OuterOutCMD_SIZE + `KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`OuterInCMD_SIZE];
+  wire [`OuterOutCMD_SIZE-1:0] o_out__cmd  = cmd[`KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`OuterOutCMD_SIZE];
+  wire [`KeccakInCMD_SIZE-1:0] k_in__cmd   = cmd[`KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`KeccakInCMD_SIZE];
   wire [`KeccakOutCMD_SIZE-1:0] k_out__cmd = cmd[`CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`KeccakOutCMD_SIZE];
-  wire [`CmdHubCMD_SIZE-1:0] h__cmd     = cmd[`MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`CmdHubCMD_SIZE];
+  wire [`CmdHubCMD_SIZE-1:0] h__cmd        = cmd[`MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`CmdHubCMD_SIZE];
   wire [`MemAndMulCMD_SIZE-1:0] m__cmd     = cmd[`KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`MemAndMulCMD_SIZE];
-  wire [`KeccakAdaptedCMD_SIZE-1:0] k__cmd     = cmd[`SeedAStorageCMD_SIZE +:`KeccakAdaptedCMD_SIZE];
-  wire [`SeedAStorageCMD_SIZE-1:0] s__cmd     = cmd[0 +:`SeedAStorageCMD_SIZE];
+  wire [`KeccakAdaptedCMD_SIZE-1:0] k__cmd = cmd[`SeedAStorageCMD_SIZE +:`KeccakAdaptedCMD_SIZE];
+  wire [`SeedAStorageCMD_SIZE-1:0] s__cmd  = cmd[0 +:`SeedAStorageCMD_SIZE];
 
 
   wire [64*4-1:0] h__in;
@@ -140,7 +140,12 @@ module main_core(
     .cmd(h__cmd),
     .cmd_isReady(h__cmd_isReady),
     .cmd_canReceive(h__cmd_canReceive),
-    .allowedCMDMask(16'b1111_1011_1100_1100), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
+    .allowedCMDMask(16'b1111_1011_1100_1100), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }  Combinatiorial loop: yes
+//    .allowedCMDMask(16'b1011_0000_1000_1000), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }  Combinatiorial loop: no
+//    .allowedCMDMask(16'b1001_0001_0000_1100), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }  Combinatiorial loop: yes
+//    .allowedCMDMask(16'b1001_0000_0000_1100), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }  Combinatiorial loop: no
+//    .allowedCMDMask(16'b1001_0001_0000_1000), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }  Combinatiorial loop: no
+//    .allowedCMDMask(16'b1101_1000_0000_1000), // [pos_to * N + pos_from] { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }  Combinatiorial loop: no
     .in(h__in),
     .in_isReady(h__in_isReady),
     .in_canReceive(h__in_canReceive),

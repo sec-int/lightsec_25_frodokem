@@ -151,7 +151,7 @@ module main_adapter_outer_out(
 
   wire useCounter;
   wire useCounter__d1;
-  wire useCounter__val = cmd_size == 0;
+  wire useCounter__val = cmd_size != 0;
   ff_en_imm useCounter__ff1(cmd_forward, useCounter__val, useCounter, rst, clk);
   delay useCounter__ff2(useCounter, useCounter__d1, rst, clk);
 
@@ -173,7 +173,7 @@ module main_adapter_outer_out(
   ff_rs_next noCounterEnded__ff(h__out_isLast_out, cmd_forward, noCounterOngoing, rst, clk);
 
   assign cmd_canReceive = useCounter__d1 ? counter__canRestart : ~noCounterOngoing;
-  assign h__out_canReceive = o__out_canReceive & (counter__canReceive | ~useCounter);
+  assign h__out_canReceive = o__out_canReceive & (~useCounter | counter__canReceive);
   assign o__out_isReady = h__out_isReady;
 endmodule
 
@@ -209,7 +209,7 @@ module main_adapter_outer_in(
 
   wire useCounter;
   wire useCounter__d1;
-  wire useCounter__val = cmd_size == 0;
+  wire useCounter__val = cmd_size != 0;
   ff_en_imm useCounter__ff1(cmd_forward, useCounter__val, useCounter, rst, clk);
   delay useCounter__ff2(useCounter, useCounter__d1, rst, clk);
 
@@ -231,7 +231,7 @@ module main_adapter_outer_in(
   ff_rs_next noCounterEnded__ff(h__in_isLast_out, cmd_forward, noCounterOngoing, rst, clk);
 
   assign cmd_canReceive = useCounter__d1 ? counter__canRestart : ~noCounterOngoing;
-  assign o__in_canReceive = h__in_canReceive & (counter__canReceive | ~useCounter);
+  assign o__in_canReceive = h__in_canReceive & (~useCounter | counter__canReceive);
   assign h__in_isReady = o__in_isReady;
 endmodule
 

@@ -357,7 +357,7 @@ module memAndMul__core(
     .clk(clk)
   );
   wire state__consume__d1;
-  delay (state__consume, state__consume__d1, rst, clk);
+  delay state__consume__ff (state__consume, state__consume__d1, rst, clk);
   wire state__isFirstCycle = isAnyOP & currentCmd_in_isFirstCycle
                            | state__consume__d1 & state__hasAny;
 
@@ -518,9 +518,9 @@ module memAndMul__core(
   
   wor m__doOp;
   wire m__doOp__d1;
-  delay (m__doOp, m__doOp__d1, rst, clk);
+  delay m__doOp__ff1 (m__doOp, m__doOp__d1, rst, clk);
   wire m__doOp__d2;
-  delay (m__doOp__d1, m__doOp__d2, rst, clk);
+  delay m__doOp__ff2 (m__doOp__d1, m__doOp__d2, rst, clk);
 
   wor m__sCol__doDelay__d2;
   wire [32-1:0] m__sCol__d2d3;

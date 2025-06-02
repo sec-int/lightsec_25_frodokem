@@ -37,7 +37,6 @@
 `define MainCoreSerialCMD_wp_k     { `MainCoreCMD_which_k,     {`MainCoreSerialCMD_SIZE - `KeccakAdaptedCMD_SIZE{1'b0}} }
 `define MainCoreSerialCMD_wp_s     { `MainCoreCMD_which_s,     {`MainCoreSerialCMD_SIZE - `SeedAStorageCMD_SIZE{1'b0}} }
 
-
 `ATTR_MOD_GLOBAL
 module main_core_serialCmd(
     input [`MainCoreCMD_which_SIZE+`MainCoreSerialCMD_SIZE-1:0] cmd,

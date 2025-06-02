@@ -52,6 +52,7 @@
 
 
 // Inner Outer
+`ATTR_MOD_GLOBAL
 module command_expansion(
     input [`MainExpCMD_SIZE-1:0] o,
 
@@ -72,19 +73,21 @@ module command_expansion(
     input i_consume
   );
 
+  wire [4-1:0] o__h_either = o__h_src | o__h_dst;
+
   assign o_consume = i_consume;
 
   wire [`MainCoreCMD_which_SIZE-1:0] i_hasAny__raw;
   wire hasNone = {`MainCoreCMD_which_SIZE{1'b0}};
   assign i_hasAny = o_hasAny ? i_hasAny__raw : hasNone;
 
-  assign i_hasAny__raw = (o__h_dst & `CmdHubCMD_keccak != 0                 ? `MainCoreCMD_which_k_in : hasNone)
-                       | (o__h_src & `CmdHubCMD_keccak != 0                 ? `MainCoreCMD_which_k_out : hasNone)
-                       | (o__h_dst & `CmdHubCMD_outer != 0                  ? `MainCoreCMD_which_o_out : hasNone)
-                       | (o__h_src & `CmdHubCMD_outer != 0                  ? `MainCoreCMD_which_o_in : hasNone)
-                       | ((o__h_dst | o__h_src) & `CmdHubCMD_memAndMul != 0 ? `MainCoreCMD_which_m : hasNone)
-                       | ((o__h_dst | o__h_src) & `CmdHubCMD_seedA != 0     ? `MainCoreCMD_which_s : hasNone)
-                       | ((o__h_dst | o__h_src) != 0                        ? `MainCoreCMD_which_h : hasNone)
+  assign i_hasAny__raw = ((o__h_dst & `CmdHubCMD_keccak) != 0         ? `MainCoreCMD_which_k_in : hasNone)
+                       | ((o__h_src & `CmdHubCMD_keccak) != 0         ? `MainCoreCMD_which_k_out : hasNone)
+                       | ((o__h_dst & `CmdHubCMD_outer) != 0          ? `MainCoreCMD_which_o_out : hasNone)
+                       | ((o__h_src & `CmdHubCMD_outer) != 0          ? `MainCoreCMD_which_o_in : hasNone)
+                       | ((o__h_either & `CmdHubCMD_memAndMul) != 0   ? `MainCoreCMD_which_m : hasNone)
+                       | ((o__h_either & `CmdHubCMD_seedA) != 0       ? `MainCoreCMD_which_s : hasNone)
+                       | (o__h_either != 0                            ? `MainCoreCMD_which_h : hasNone)
                        | (o == `MainExpCMD_ki_byte  || o == `MainExpCMD_ki_zeros ? `MainCoreCMD_which_k_in : hasNone)
                        | (o == `MainExpCMD_k_single || o == `MainExpCMD_k_longOut || o == `MainExpCMD_k_longIn || o == `MainExpCMD_k_outState || o == `MainExpCMD_k_inState ? `MainCoreCMD_which_k : hasNone)
                        | (o == `MainExpCMD_m         ? `MainCoreCMD_which_m : hasNone)
@@ -142,6 +145,7 @@ endmodule
 
 
 // Inner Outer
+`ATTR_MOD_GLOBAL
 module command_sequences(
     input [`MainSeqCMD_SIZE-1:0] o,
     input o_isReady,
@@ -474,6 +478,7 @@ endmodule
 
 
 // Inner Outer
+`ATTR_MOD_GLOBAL
 module command_flattener(
     input [`MainFltCMD_SIZE-1:0] o_cmd,
     input o_isTest,
@@ -518,6 +523,7 @@ module command_flattener(
   delay #(16) genA__counter__ff (genA__counter, genA__counter__d1, rst, clk); 
 endmodule
 
+`ATTR_MOD_GLOBAL
 module main(
     input [`MainCMD_SIZE-1:0] cmd,  // must be MainCMD_no_cmd or MainCMD_rst unless cmd_canReceive
     output cmd_canReceive, // the i/o could still be ongoing.

@@ -256,9 +256,9 @@ module serdes #(parameter N = 1) ( // the startSer and startDes can be true toge
   ff_en_imm isSer__ff (cmd_startAny, cmd_startSer, isSer, rst, clk);
   ff_en_imm isDes_ff (cmd_startAny, cmd_startDes, isDes, rst, clk);
 
+  wire counter__canReceive;
   wire counter__isReady = counter__canReceive & (isDes ? des_isReady : ser_canReceive);
   assign ser_isLast = des_isLast;
-  wire counter__canReceive;
   counter_bus_fixed #(N) counter (
     .restart(cmd_startAny),
     .canRestart(cmd_canReceive),
@@ -346,6 +346,34 @@ module cmd_buffer_std #(parameter CmdSize = 1, parameter BufSize = 2) (
 endmodule
 
 `ATTR_MOD_GLOBAL
+module cmd_buffer_unstd #(parameter CmdSize = 1, parameter BufSize = 2) (
+  input [CmdSize-1:0] i,
+  input i_hasAny,
+  output i_consume,
+
+  output [CmdSize-1:0] o,
+  output o_hasAny,
+  input o_consume,
+
+  input rst,
+  input clk
+);
+  wire i_canReceive;
+  assign i_consume = i_hasAny & i_canReceive;
+  wire i_isReady = i_hasAny & i_canReceive;
+  cmd_buffer #(CmdSize, BufSize) actualBuffer (
+    .i(i),
+    .i_isReady(i_isReady),
+    .i_canReceive(i_canReceive),
+    .o(o),
+    .o_hasAny(o_hasAny),
+    .o_consume(o_consume),
+    .rst(rst),
+    .clk(clk)
+  );
+endmodule
+
+`ATTR_MOD_GLOBAL
 module cmd_buffer1 #(parameter CmdSize = 1) (
   input [CmdSize-1:0] i,
   input i_isReady,
@@ -365,14 +393,11 @@ module cmd_buffer1 #(parameter CmdSize = 1) (
   assign o_hasAny = buffer_isUsed;
 
   assign i_canReceive = ~buffer_isUsed | o_consume;
-  wire buffer_isUsed__postConsume = o_consume ? 1'b0 : buffer_isUsed;
+  wire buffer_isUsed__postConsume        = o_consume ?    1'b0         : buffer_isUsed;
   wire [CmdSize-1:0] buffer__postConsume = o_consume ? {CmdSize{1'b0}} : buffer;
 
-  wire insert = i_isReady & ~buffer_isUsed__postConsume;
-
-  wire buffer_isUsed__a1 = buffer_isUsed__postConsume | insert;
-  wor [CmdSize-1:0] buffer__a1 = buffer__postConsume
-                               | (insert ? i : {CmdSize{1'b0}});
+  wire buffer_isUsed__a1        = buffer_isUsed__postConsume |  i_isReady;
+  wire [CmdSize-1:0] buffer__a1 = buffer__postConsume        | (i_isReady ? i : {CmdSize{1'b0}});
 
   delay #(CmdSize) buffer__ff (buffer__a1, buffer, rst, clk);
   delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
