@@ -267,7 +267,7 @@ module adapted_keccak (
   wire [`Keccak_BlockCounterSize-1:0] k__cmd__secondaryNumBlocks = {{`Keccak_BlockCounterSize-1{1'b0}}, k__cmdB[0]};
   wire [`Keccak_BlockCounterSize-1:0] k__cmd__mainNumBlocks = k__cmdB[1+:`Keccak_BlockCounterSize];
   wire k__cmd__mainIsInElseOut = k__cmdB[1+`Keccak_BlockCounterSize];
-  wire k__cmd__param = k__cmdB[1+`Keccak_BlockCounterSize+1+:3];
+  wire [3-1:0] k__cmd__param = k__cmdB[1+`Keccak_BlockCounterSize+1+:3];
   wire [`KeccakCMD_SIZE-1:0] k__cmd__expanded = k__cmd__mainIsInElseOut ? { k__cmd__param, k__cmd__mainNumBlocks,      k__cmd__secondaryNumBlocks }
                                                                         : { k__cmd__param, k__cmd__secondaryNumBlocks, k__cmd__mainNumBlocks      };
   keccak k(

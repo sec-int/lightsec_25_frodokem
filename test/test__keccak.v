@@ -24,12 +24,12 @@
       end
 
       begin
-        `TEST_UTIL__SEND(64'hDAFF_82FE_98B3_7C58) // 587cb398fe82ffda
+        `TEST_UTIL__SEND(swapBytes64(64'h587cb398fe82ffda)) 
         `TEST_UTIL__SEND_CANT
       end
 
       begin
-        `TEST_UTIL__RECEIVE(64'hBA2D_F685_DBDD_F554) // 54f5dddb85f62dba
+        `TEST_UTIL__RECEIVE(swapBytes64(64'h54f5dddb85f62dba))
         `TEST_UTIL__RECEIVE_CANT
       end
     join
@@ -113,6 +113,48 @@
       begin
         for(test__keccak__out_i = 0; test__keccak__out_i < 31; test__keccak__out_i = test__keccak__out_i+1) begin
           `TEST_UTIL__RECEIVE(swapBytes64(test__keccak_largeOut256__out[64*test__keccak__out_i+:64]))
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST_VARS
+    reg [0:128-1] test__keccak_small128__in = 128'hd4d67b00ca51397791b81205d5582c0a;
+    reg [0:128-1] test__keccak_small128__out = 128'hd0acfb2a14928caf8c168ae514925e4e;
+`endif
+
+`ifdef TEST
+    `DO_RST
+    fork : test__keccak_small128
+      test_name <= "test__keccak_small128";
+      begin
+        // send the data to hash
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+        
+        // do hash
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b1000, 9'd1, 1'b1})
+
+        // receive hashed data
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b00})
+      end
+
+      begin
+        for(test__keccak__in_i = 0; test__keccak__in_i < 2; test__keccak__in_i = test__keccak__in_i+1) begin
+          `TEST_UTIL__SEND(swapBytes64(test__keccak_small128__in[64*test__keccak__in_i+:64]))
+        end
+        `TEST_UTIL__SEND_CANT
+      end
+
+      begin
+        for(test__keccak__out_i = 0; test__keccak__out_i < 2; test__keccak__out_i = test__keccak__out_i+1) begin
+          `TEST_UTIL__RECEIVE(swapBytes64(test__keccak_small128__out[64*test__keccak__out_i+:64]))
         end
         `TEST_UTIL__RECEIVE_CANT
       end
