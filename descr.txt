@@ -127,6 +127,8 @@ OUT(pkh) : 256b <- SHAKE256(seedA | BRAM.B'^T)
 
 test = false
 
+// erase secret
+BRAM.S' = 0
 
 ## encaps
 
@@ -141,7 +143,7 @@ if(!test)
 BRAM.seedSE | BRAM.k = SHAKE256(BRAM.pkh | BRAM.u | BRAM.salt) // end of pkh
 BRAM.C = Encode(BRAM.u) // =U // end of u
 
-_r = SHAKE256(0x96 | seedSE) // end of seedSE
+_r = SHAKE256(0x96 | BRAM.seedSE) // end of seedSE
 BRAM.S' = SampleMatrix(_r) // =S'
 BRAM.C += BRAM.S' *' BRAM.B'^T // =C-E'' // end of B
 BRAM.B' = SampleMatrix(_r) // =E'
@@ -157,6 +159,12 @@ OUT(ss) : 256b <- SHAKE(BRAM.B' | BRAM.C | BRAM.salt | BRAM.k) // can be done on
 
 test = false
 
+// erase secret
+BRAM.S' = 0
+
+BRAM.u = 0
+BRAM.seedSE = 0
+BRAM.k = 0
 
 ## decaps
 
@@ -198,6 +206,16 @@ if(!test)
 
 test = false
 
+// erase secret
+BRAM.S' = 0
+
+BRAM.u = 0
+BRAM.seedSE = 0
+BRAM.k = 0
+
+BRAM.B' = 0
+BRAM.C = 0
+
 ## set up for test
 
 BRAM.seedSE | BRAM.u | BRAM.salt | seedA <- IN
@@ -207,9 +225,5 @@ test = true
 ## add entropy
 
 BRAM.RNG_state <- SHAKE256(5 : 8b | BRAM.RNG_state | IN : 512b)
-
-
-
-TODO: clean up secrets in the memory
 
 

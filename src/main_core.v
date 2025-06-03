@@ -45,7 +45,7 @@
 `define MainCoreCMD_NO_k     {`KeccakAdaptedCMD_SIZE{1'b0}}
 `define MainCoreCMD_NO_s     {`SeedAStorageCMD_SIZE{1'b0}}
 
-//                          15                   15                11                  2                       8                  5                    14                       2
+//                          15                   15                11                  2                       8                  6                    14                       2
 `define MainCoreCMD_SIZE  (`OuterInCMD_SIZE + `OuterOutCMD_SIZE + `KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE)
 
 
@@ -69,7 +69,7 @@ module main_core(
     // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:2bit } 
     // k_out: { skipIsLast:1bit, sample:1bit }
     // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
+    // m:     { only command:6bit }
     // k:     { is128else256:1bit, inState:1bit, outState:1bit, mainIsInElseOut:1bit, mainNumBlocks:9bits, secondaryNumBlocks:1bits }
     // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
     input [`MainCoreCMD_SIZE-1:0] cmd,

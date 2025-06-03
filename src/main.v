@@ -59,7 +59,7 @@ module command_expansion(
     input o__k_isLast,
     input o__k_isSampled,
     input [9-1:0] o__param,
-    input [5-1:0] o__m_cmd,
+    input [`MemAndMulCMD_SIZE-1:0] o__m_cmd,
     // k2o is 4 words
     // o2k is 16 words
     input [4-1:0] o__h_dst,
@@ -138,8 +138,9 @@ endmodule
 `define MainSeqCMD_decaps_preGenA    8
 `define MainSeqCMD_decaps_mid        9
 `define MainSeqCMD_decaps_PRNG       10
-`define MainSeqCMD_setupTest         11
-`define MainSeqCMD_addEntropy        12
+`define MainSeqCMD_decaps_postPRNG   11
+`define MainSeqCMD_setupTest         12
+`define MainSeqCMD_addEntropy        13
 
 `define MainSeqCMD_SIZE  4
 
@@ -156,7 +157,7 @@ module command_sequences(
     output i__k_isLast,
     output i__k_isSampled,
     output [9-1:0] i__param,
-    output [5-1:0] i__m_cmd,
+    output [`MemAndMulCMD_SIZE-1:0] i__m_cmd,
     output [4-1:0] i__h_dst,
     output [4-1:0] i__h_src,
     output i_hasAny,
@@ -175,14 +176,15 @@ module command_sequences(
   wire [5-1:0] state__numStates = (oCurr == `MainSeqCMD_genA_iter ? 4 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_PRNG ? 10 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_mid ? 9 : 0)
-                                | (oCurr == `MainSeqCMD_keygen_postGenA ? 4 : 0)
+                                | (oCurr == `MainSeqCMD_keygen_postGenA ? 5 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_prePRNG ? 4 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_PRNG ? 10 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_mid ? 15 : 0)
-                                | (oCurr == `MainSeqCMD_encaps_postGenA ? 6 : 0)
+                                | (oCurr == `MainSeqCMD_encaps_postGenA ? 8 : 0)
                                 | (oCurr == `MainSeqCMD_decaps_preGenA ? 25 : 0)
                                 | (oCurr == `MainSeqCMD_decaps_mid ? 6 : 0)
                                 | (oCurr == `MainSeqCMD_decaps_PRNG ? 5 : 0)
+                                | (oCurr == `MainSeqCMD_decaps_postPRNG ? 3 : 0)
                                 | (oCurr == `MainSeqCMD_setupTest ? 4 : 0)
                                 | (oCurr == `MainSeqCMD_addEntropy ? 5 : 0);
   counter_bus_state #(.MAX_NUM_STEPS(25)) state__counter (
@@ -205,7 +207,7 @@ module command_sequences(
   reg i__k_isLast__r;
   reg i__k_isSampled__r;
   reg [9-1:0] i__param__r;
-  reg [5-1:0] i__m_cmd__r;
+  reg [`MemAndMulCMD_SIZE-1:0] i__m_cmd__r;
   reg [4-1:0] i__h_dst__r;
   reg [4-1:0] i__h_src__r;
   assign i = i__r;
@@ -261,6 +263,7 @@ module command_sequences(
       if(state[ 2]) `SET_CMD__S2K(`SET_CMD__IS_LAST)
       if(state[ 3]) `SET_CMD__GENA__KOUT
     end
+    //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_keygen_PRNG) begin
       //--// OUT(sk.s) : 256b | BRAM.seedSE : 512b | seedA : 128b (=z) <- SHAKE256(0 : 8b | BRAM.RNG_state)
       if(state[ 0]) `SET_CMD__KI_BYTE(8'h00)
@@ -302,7 +305,11 @@ module command_sequences(
       if(state[ 1]) `SET_CMD__S2K(`SET_CMD__NOT_LAST)
       if(state[ 2]) `SET_CMD__M2K(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_LAST, 1'b1)      
       if(state[ 3]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      
+      //--// BRAM.S' = 0
+      if(state[ 4]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
     end
+    //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_encaps_prePRNG) begin
       //--// seedA : 128b <- IN(seedA)
       //--// BRAM.B' = IN(pk.b)^T // =B^T
@@ -366,7 +373,16 @@ module command_sequences(
       if(state[ 3]) `SET_CMD__M2K(`MemAndMulCMD_out_salt, `SET_CMD__NOT_LAST, 1'b1)
       if(state[ 4]) `SET_CMD__M2K(`MemAndMulCMD_out_k, `SET_CMD__IS_LAST, 1'b0)
       if(state[ 5]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+
+      //--// BRAM.S' = 0
+      if(state[ 6]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
+
+      //--// BRAM.u = 0
+      //--// BRAM.seedSE = 0
+      //--// BRAM.k = 0
+      if(state[ 7]) `SET_CMD__M(`MemAndMulCMD_op_Erase2)
     end
+    //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_decaps_preGenA) begin
       //--// BRAM.S' <- IN(sk.S^T) // =S^T
       if(state[ 0]) `SET_CMD__O2M(`MemAndMulCMD_in_SRowFirst)
@@ -441,6 +457,20 @@ module command_sequences(
       if(state[ 3]) `SET_CMD__M2K(`MemAndMulCMD_out_k, `SET_CMD__IS_LAST, 1'b0)
       if(state[ 4]) `SET_CMD__K2M(`MemAndMulCMD_in_RNGState, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST, 1'b0)
     end
+    if(oCurr == `MainSeqCMD_decaps_postPRNG) begin
+      //--// BRAM.S' = 0
+      if(state[ 0]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
+
+      //--// BRAM.u = 0
+      //--// BRAM.seedSE = 0
+      //--// BRAM.k = 0
+      if(state[ 1]) `SET_CMD__M(`MemAndMulCMD_op_Erase2)
+
+      //--// BRAM.B' = 0
+      //--// BRAM.C = 0
+      if(state[ 2]) `SET_CMD__M(`MemAndMulCMD_op_Erase3)
+    end
+    //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_setupTest) begin
       //--// BRAM.seedSE | BRAM.u | BRAM.salt | seedA <- IN
       if(state[ 0]) `SET_CMD__O2M(`MemAndMulCMD_in_seedSE)
@@ -448,6 +478,7 @@ module command_sequences(
       if(state[ 2]) `SET_CMD__O2M(`MemAndMulCMD_in_salt)
       if(state[ 3]) `SET_CMD__O2S
     end
+    //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_addEntropy) begin
       //--// BRAM.RNG_state <- SHAKE256(5 : 8b | BRAM.RNG_state | IN : 512b)
       if(state[ 0]) `SET_CMD__K_SINGLE
@@ -471,8 +502,9 @@ endmodule
 `define MainFltCMD_decaps_preGenA    8
 `define MainFltCMD_decaps_mid        9
 `define MainFltCMD_decaps_PRNG       10
-`define MainFltCMD_setupTest         11
-`define MainFltCMD_addEntropy        12
+`define MainFltCMD_decaps_postPRNG   11
+`define MainFltCMD_setupTest         12
+`define MainFltCMD_addEntropy        13
 
 `define MainFltCMD_SIZE  4
 
@@ -507,6 +539,7 @@ module command_flattener(
            | (o_cmd == `MainFltCMD_decaps_preGenA   ? `MainSeqCMD_decaps_preGenA : {`MainSeqCMD_SIZE{1'b0}})
            | (o_cmd == `MainFltCMD_decaps_mid       ? `MainSeqCMD_decaps_mid : {`MainSeqCMD_SIZE{1'b0}})
            | (o_cmd == `MainFltCMD_decaps_PRNG      ? `MainSeqCMD_decaps_PRNG : {`MainSeqCMD_SIZE{1'b0}})
+           | (o_cmd == `MainFltCMD_decaps_postPRNG  ? `MainSeqCMD_decaps_postPRNG : {`MainSeqCMD_SIZE{1'b0}})
            | (o_cmd == `MainFltCMD_setupTest        ? `MainSeqCMD_setupTest : {`MainSeqCMD_SIZE{1'b0}})
            | (o_cmd == `MainFltCMD_addEntropy       ? `MainSeqCMD_addEntropy : {`MainSeqCMD_SIZE{1'b0}});
   assign i_isReady = o_hasAny
@@ -639,7 +672,7 @@ module main(
   wire state__restart = cmd_canReceive & currCmd != `MainCMD_no_cmd & currCmd != `MainCMD_rst;
   wire [3-1:0] state__numStates = (currCmd == `MainCMD_keygen ? 4 : 0)
                                 | (currCmd == `MainCMD_encaps ? 5 : 0)
-                                | (currCmd == `MainCMD_decaps ? 4 : 0)
+                                | (currCmd == `MainCMD_decaps ? 5 : 0)
                                 | (currCmd == `MainCMD_setupTest ? 1 : 0)
                                 | (currCmd == `MainCMD_addEntropy ? 1 : 0);
   counter_bus_state #(.MAX_NUM_STEPS(5)) state__counter (
@@ -676,6 +709,7 @@ module main(
       if(state[1]) flt_cmd = `MainFltCMD_genA;
       if(state[2]) flt_cmd = `MainFltCMD_decaps_mid;
       if(state[3]) flt_cmd = `MainFltCMD_decaps_PRNG;
+      if(state[4]) flt_cmd = `MainFltCMD_decaps_postPRNG;
     end
     if(currCmd == `MainCMD_setupTest) begin
       if(state[0]) flt_cmd = `MainFltCMD_setupTest;

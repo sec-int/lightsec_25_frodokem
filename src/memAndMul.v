@@ -219,53 +219,56 @@ endmodule
 
 
 
-`define MemAndMulCMD_op_CpleqStimesBT 5'd0 /* BRAM.C = BRAM.C + BRAM.S' *' BRAM.B'^T */
-`define MemAndMulCMD_op_UeqCminBtimesS 5'd1 /* BRAM.u = decode(BRAM.C - (BRAM.S' *' BRAM.B'^T)^T) */
-`define MemAndMulCMD_op_CeqUminC 5'd2 /* BRAM.C = Encode(BRAM.u) - BRAM.C */
-`define MemAndMulCMD_op_CeqU 5'd3 /* BRAM.C = Encode(BRAM.u) */
+`define MemAndMulCMD_op_CpleqStimesBT  6'd0 /* BRAM.C = BRAM.C + BRAM.S' *' BRAM.B'^T */
+`define MemAndMulCMD_op_UeqCminBtimesS 6'd1 /* BRAM.u = decode(BRAM.C - (BRAM.S' *' BRAM.B'^T)^T) */
+`define MemAndMulCMD_op_CeqUminC       6'd2 /* BRAM.C = Encode(BRAM.u) - BRAM.C */
+`define MemAndMulCMD_op_CeqU           6'd3 /* BRAM.C = Encode(BRAM.u) */
+`define MemAndMulCMD_op_Erase1         6'd4 /* BRAM.S' = 0 */
+`define MemAndMulCMD_op_Erase2         6'd5 /* BRAM.u = 0 ; BRAM.seedSE = 0 ; BRAM.k = 0 */
+`define MemAndMulCMD_op_Erase3         6'd6 /* BRAM.B' = 0 ; BRAM.C = 0 */
 
-`define MemAndMulCMD_inOp_BpleqStimesInAT 5'd4 /* BRAM.B' = BRAM.B'+ BRAM.S' *' _A^T */
-`define MemAndMulCMD_inOp_BpleqStimesInA 5'd5 /* BRAM.B' = BRAM.B' + BRAM.S' *'' _A */
-`define MemAndMulCMD_inOp_CpleqStimesInB 5'd6 /* BRAM.C = BRAM.C + BRAM.S' *' _B */
-`define MemAndMulCMD_inOp_addCRowFirst 5'd7 /* BRAM.C = BRAM.C + _C */
-`define MemAndMulCMD_inOp_selectKey 5'd8 /* BRAM.k = BRAM.B' == 0 && BRAM.C == 0 ? BRAM.k : _s */
-`define MemAndMulCMD_inOp_BeqInMinB 5'd9 /* BRAM.B' = _B - BRAM.B' */
+`define MemAndMulCMD_inOp_BpleqStimesInAT 6'd7 /* BRAM.B' = BRAM.B'+ BRAM.S' *' _A^T */
+`define MemAndMulCMD_inOp_BpleqStimesInA  6'd8 /* BRAM.B' = BRAM.B' + BRAM.S' *'' _A */
+`define MemAndMulCMD_inOp_CpleqStimesInB  6'd9 /* BRAM.C = BRAM.C + BRAM.S' *' _B */
+`define MemAndMulCMD_inOp_addCRowFirst    6'd10 /* BRAM.C = BRAM.C + _C */
+`define MemAndMulCMD_inOp_selectKey       6'd11 /* BRAM.k = BRAM.B' == 0 && BRAM.C == 0 ? BRAM.k : _s */
+`define MemAndMulCMD_inOp_BeqInMinB       6'd12 /* BRAM.B' = _B - BRAM.B' */
 
-`define MemAndMulCMD_in_BRowFirst 5'd10
-`define MemAndMulCMD_in_BColFirst 5'd11
-`define MemAndMulCMD_in_SRowFirst 5'd12 /* only 16b of the bus are used */
-`define MemAndMulCMD_in_CRowFirst 5'd13
-`define MemAndMulCMD_in_SSState 5'd14
-`define MemAndMulCMD_in_RNGState 5'd15
-`define MemAndMulCMD_in_salt 5'd16
-`define MemAndMulCMD_in_seedSE 5'd17
-`define MemAndMulCMD_in_pkh 5'd18
-`define MemAndMulCMD_in_u 5'd19
-`define MemAndMulCMD_in_k 5'd20
+`define MemAndMulCMD_in_BRowFirst 6'd13
+`define MemAndMulCMD_in_BColFirst 6'd14
+`define MemAndMulCMD_in_SRowFirst 6'd15 /* only 16b of the bus are used */
+`define MemAndMulCMD_in_CRowFirst 6'd16
+`define MemAndMulCMD_in_SSState   6'd17
+`define MemAndMulCMD_in_RNGState  6'd18
+`define MemAndMulCMD_in_salt      6'd19
+`define MemAndMulCMD_in_seedSE    6'd20
+`define MemAndMulCMD_in_pkh       6'd21
+`define MemAndMulCMD_in_u         6'd22
+`define MemAndMulCMD_in_k         6'd23
 
-`define MemAndMulCMD_out_BRowFirst 5'd21
-`define MemAndMulCMD_out_BColFirst 5'd22
-`define MemAndMulCMD_out_CRowFirst 5'd23
-`define MemAndMulCMD_out_SSState 5'd24
-`define MemAndMulCMD_out_RNGState 5'd25
-`define MemAndMulCMD_out_salt 5'd26
-`define MemAndMulCMD_out_seedSE 5'd27
-`define MemAndMulCMD_out_pkh 5'd28
-`define MemAndMulCMD_out_u 5'd29
-`define MemAndMulCMD_out_k 5'd30
+`define MemAndMulCMD_out_BRowFirst 6'd24
+`define MemAndMulCMD_out_BColFirst 6'd25
+`define MemAndMulCMD_out_CRowFirst 6'd26
+`define MemAndMulCMD_out_SSState   6'd27
+`define MemAndMulCMD_out_RNGState  6'd28
+`define MemAndMulCMD_out_salt      6'd29
+`define MemAndMulCMD_out_seedSE    6'd30
+`define MemAndMulCMD_out_pkh       6'd31
+`define MemAndMulCMD_out_u         6'd32
+`define MemAndMulCMD_out_k         6'd33
 
-`define MemAndMulCMD_FULLSIZE  31
-`define MemAndMulCMD_SIZE       5
-`define MemAndMulCMD_mask_op       31'h0000000F
-`define MemAndMulCMD_mask_inOp     31'h000003F0
-`define MemAndMulCMD_mask_opMul1   31'h00000053
-`define MemAndMulCMD_mask_opMul    31'h00000073
-`define MemAndMulCMD_mask_opNoMul  31'h0000038C
-`define MemAndMulCMD_mask_in       31'h001FFC00
-`define MemAndMulCMD_mask_out      31'h7FE00000
+`define MemAndMulCMD_SIZE       6
+`define MemAndMulCMD_FULLSIZE  34
+`define MemAndMulCMD_mask_op       34'h00000007F
+`define MemAndMulCMD_mask_inOp     34'h000001F80
+`define MemAndMulCMD_mask_opMul1   34'h000000283
+`define MemAndMulCMD_mask_opMul    34'h000000383
+`define MemAndMulCMD_mask_opNoMul  34'h000001C7C
+`define MemAndMulCMD_mask_in       34'h000FFE000
+`define MemAndMulCMD_mask_out      34'h3FF000000
 `define MemAndMulCMD_mask_conflictIn   (`MemAndMulCMD_mask_in  | `MemAndMulCMD_mask_op | `MemAndMulCMD_mask_inOp)
 `define MemAndMulCMD_mask_conflictOut  (`MemAndMulCMD_mask_out | `MemAndMulCMD_mask_op | `MemAndMulCMD_mask_inOp)
-`define MemAndMulCMD_mask_zero     31'h0
+`define MemAndMulCMD_mask_zero     34'h0
 
 
 
@@ -437,9 +440,11 @@ module memAndMul__core(
 
   // main memory module
   wor mainMemory__w_bus__useAdder;
+  wor mainMemory__w_bus__toZero;
   wor mainMemory__w_bus__useIsNotZero;
   wire [64-1:0] mainMemory__w_bus = mainMemory__w_bus__useAdder             ? adder__ret
                                   : mainMemory__w_bus__useIsNotZero         ? isNotZero__ret
+                                  : mainMemory__w_bus__toZero               ? 64'b0
                                   : currentCmd & `MemAndMulCMD_mask_in != 0 ? bus_in
                                                                             : bus_inOp;
 
@@ -684,6 +689,24 @@ module memAndMul__core(
   assign mainMemory__w_bus__useIsNotZero          = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2];
   assign isNotZero__onTrue                        = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] ? bus_inOp : 64'b0;
   assign isNotZero__onFalse                       = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] ? mainMemory__r_bus__d2 : 64'b0;
+
+  assign state__numStates                             = currentCmd[`MemAndMulCMD_op_Erase1] ? 1 : 0;
+  assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_Erase1] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_S_row] = currentCmd[`MemAndMulCMD_op_Erase1] & indexHandler__w_enable;
+  assign mainMemory__w_bus__toZero                    = currentCmd[`MemAndMulCMD_op_Erase1];
+
+  assign state__numStates                                 = currentCmd[`MemAndMulCMD_op_Erase2] ? 3 : 0;
+  assign mainMemory__w_bus__toZero                        = currentCmd[`MemAndMulCMD_op_Erase2];
+  assign indexHandler__currentCmd                         = currentCmd[`MemAndMulCMD_op_Erase2] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_U_twoRows] = currentCmd[`MemAndMulCMD_op_Erase2] & state[0] & indexHandler__w_enable;
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_seedSE]    = currentCmd[`MemAndMulCMD_op_Erase2] & state[1] & indexHandler__w_enable;
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k]         = currentCmd[`MemAndMulCMD_op_Erase2] & state[2] & indexHandler__w_enable;
+
+  assign state__numStates                             = currentCmd[`MemAndMulCMD_op_Erase3] ? 2 : 0;
+  assign mainMemory__w_bus__toZero                    = currentCmd[`MemAndMulCMD_op_Erase3];
+  assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_Erase3] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_op_Erase3] & state[0] & indexHandler__w_enable;
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_op_Erase3] & state[1] & indexHandler__w_enable;
 
 endmodule
 
