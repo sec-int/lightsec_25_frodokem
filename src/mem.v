@@ -220,8 +220,8 @@ module mainMem_readConnector(
                              | o_bus_k ? `MainMem_OFF_k : 9'd0;
 
 
-  assign o_index_next = (o_bus_B_row & (o_index[0+:9] == 9'd335)) ? { o_index[14-1:9] + 1, 9'b0 }
-                                                                  : o_index + 14'b1;
+  assign o_index_next = (o_bus_B_row & (o_index[0+:9] == 9'd335)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
+                                                                  : o_index + 14'd1;
 
   assign o_index_hasNext = (o_bus_B_row ? o_index != {5'd7, 9'd335} : 1'b0)
                          | (o_bus_B_col ? o_index != 14'd2687 : 1'b0) 
@@ -409,8 +409,8 @@ module mainMem_writeConnector(
                              | (o_halfBus_U_row | o_bus_U_twoRows) ? `MainMem_OFF_U : 9'd0
                              | o_bus_k ? `MainMem_OFF_k : 9'd0;
 
-  assign o_index_next = (o_bus_B_row & (o_index[0+:9] == 9'd335))   ? { o_index[14-1:9] + 1, 9'b0 }
-                      : (o_bus_S_row & (o_index[0+:11] == 11'd335)) ? { o_index[14-1:11] + 1, 11'b0 }
+  assign o_index_next = (o_bus_B_row & (o_index[0+:9] == 9'd335))   ? { o_index[14-1:9] + 5'd1, 9'b0 }
+                      : (o_bus_S_row & (o_index[0+:11] == 11'd335)) ? { o_index[14-1:11] + 3'd1, 11'b0 }
                                                                     : o_index + 14'b1;
 
   assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index != {5'd7, 9'd335} : 1'b0)

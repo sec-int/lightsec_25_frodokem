@@ -199,6 +199,30 @@ module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to 
 endmodule
 
 `ATTR_MOD_GLOBAL
+module counter_bus_diff #(parameter N = 1) ( // N bits must be able to store the highest 'numSteps', and at least 1.
+    input restart,
+    input [N-1:0] numSteps,
+    output restart_consume,
+    output canReceive,
+    output canReceive_isLast,
+    input isReady, // it requires canReceive, as usual.
+
+    input rst,
+    input clk
+  );
+  assign restart_consume = canReceive & canReceive_isLast & isReady;
+  counter_bus #(N) actualCounter (
+    .restart(restart),  // can't interupt
+    .numSteps(numSteps),
+    .canReceive(canReceive),
+    .canReceive_isLast(canReceive_isLast),
+    .isReady(isReady),
+    .rst(rst),
+    .clk(clk)
+  );
+endmodule
+
+`ATTR_MOD_GLOBAL
 module counter_bus_state #(parameter MAX_NUM_STEPS = 1) (
     input restart,  // can't interupt
     input [$clog2(MAX_NUM_STEPS+1)-1:0] numStates, // must be active throughtout the whole counter operation.

@@ -66,12 +66,12 @@ module adapted_keccak__in(
   wire cmdB_skipIsLast = cmdB[2];
   wire [8-1:0] cmdB_byteVal = cmdB[3+:8];
 
-  wire zerosCounter__canRestart, zerosCounter__canReceive, zerosCounter__canReceive_isLast;
+  wire zerosCounter__restart_consume, zerosCounter__canReceive, zerosCounter__canReceive_isLast;
   wire isReady = zerosCounter__canReceive & k__in_canReceive;
-  counter_bus #(.N(8)) zerosCounter (
+  counter_bus_diff #(.N(8)) zerosCounter (
     .restart(cmdB_sendZeros),
     .numSteps(cmdB_byteVal),
-    .canRestart(zerosCounter__canRestart),
+    .restart_consume(zerosCounter__restart_consume),
     .canReceive(zerosCounter__canReceive),
     .canReceive_isLast(zerosCounter__canReceive_isLast),
     .isReady(isReady),
@@ -81,7 +81,7 @@ module adapted_keccak__in(
 
   assign cmdB_consume = cmdB_sendByte & k__in_canReceive
                       | cmdB_forward & h__out_isLast_out
-                      | cmdB_sendZeros & zerosCounter__canRestart;
+                      | cmdB_sendZeros & zerosCounter__restart_consume;
 
   assign h__out_isLast_in = 1'b0; // disabled
   assign h__out_canReceive = cmdB_forward & k__in_canReceive;

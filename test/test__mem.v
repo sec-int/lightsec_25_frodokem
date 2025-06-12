@@ -5,9 +5,8 @@
 
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_k")
     fork : test__mem_k__p1
-      test_name <= "test__mem_k";
       begin
         // store into memory
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_k})
@@ -55,9 +54,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_u")
     fork : test__mem_u__p1
-      test_name <= "test__mem_u";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_u})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -91,9 +89,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_pkh")
     fork : test__mem_pkh__p1
-      test_name <= "test__mem_pkh";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_pkh})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -127,9 +124,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_salt")
     fork : test__mem_salt__p1
-      test_name <= "test__mem_salt";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_salt})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -163,9 +159,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_seedSE")
     fork : test__mem_seedSE__p1
-      test_name <= "test__mem_seedSE";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_seedSE})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -199,9 +194,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_RNGState")
     fork : test__mem_RNGState__p1
-      test_name <= "test__mem_RNGState";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_RNGState})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -235,9 +229,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_CRowFirst")
     fork : test__mem_CRowFirst__p1
-      test_name <= "test__mem_CRowFirst";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_CRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -271,9 +264,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_SSState")
     fork : test__mem_SSState__p1
-      test_name <= "test__mem_SSState";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_SSState})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
@@ -307,9 +299,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_BRowFirst")
     fork : test__mem_BRowFirst__p1
-      test_name <= "test__mem_BRowFirst";
       begin
         // store
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BRowFirst})
@@ -363,9 +354,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__mem_BColFirst")
     fork : test__mem_BColFirst__p1
-      test_name <= "test__mem_BColFirst";
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BColFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})

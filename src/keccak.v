@@ -218,6 +218,7 @@ module keccak_iter(
   input cmd_continue,
   output cmd_canReceive,
   input isTransparent,
+  input isTransparent_merge,
   input [1600-1:0] in_data,
   output [1600-1:0] out_data__d1, // the last valid output is during the clk when the next cmd_ is sent
   
@@ -227,8 +228,9 @@ module keccak_iter(
   assign cmd_isFirst = cmd_start | cmd_continue;
 
   wire counter__canReceive;
+  wire counter__restart = cmd_isFirst & ~isTransparent;
   counter_bus_fixed #(24) counter (
-    .restart(cmd_isFirst),
+    .restart(counter__restart),
     .canRestart(cmd_canReceive),
     .canReceive(counter__canReceive),
     .isReady(counter__canReceive),
@@ -240,7 +242,7 @@ module keccak_iter(
   keccak_rc rcGenerator(cmd_isFirst, rc, rst, clk);
 
   wire [1600-1:0] statePrev;
-  wire [1600-1:0] body__si = {1600{~cmd_start}} & statePrev
+  wire [1600-1:0] body__si = {1600{~cmd_start}} & statePrev  // TODO
                            ^ {1600{cmd_isFirst}} & in_data;
 
 `ifdef USE_NO_KECCAK_PERMUTATION
@@ -250,7 +252,8 @@ module keccak_iter(
   keccak_fn body(body__si, rc, body__so);
 `endif
 
-  wire [1600-1:0] statePost = isTransparent      ? in_data // TODO: does this need to be instantaneous
+  wire [1600-1:0] statePost = isTransparent_merge ? body__si
+                            : isTransparent       ? in_data
                             : counter__canReceive ? body__so
                                                   : statePrev;
   delay #(1600) state__ff(statePost, statePrev, rst, clk);
@@ -701,13 +704,11 @@ module keccak_block(
   input rst,
   input clk
 );
-  wor ignore;
-
   wire cmd_desBuf = cmd_des128 | cmd_des256;
   wire cmd_serBuf = cmd_ser128 | cmd_ser256;
   wire cmd_anyBuf = cmd_serBuf | cmd_desBuf;
   wire cmd_anyState = cmd_serState | cmd_desState;
-  wire cmd_keccakAny = cmd_keccakStart | cmd_keccakContinue;
+  wire cmd_keccakAny = (cmd_keccakStart | cmd_keccakContinue) & ~cmd_serState;
   wire cmd_any = cmd_anyBuf | cmd_anyState | cmd_keccakAny;
 
   wire isAnyState, isAnyState__d1, isAnyBuf__d1, isKeccakAny__d1;
@@ -724,6 +725,8 @@ module keccak_block(
   wire [64-1:0] inSta;
   wire inSta_isReady;
   wire inSta_canReceive;
+  wire ignore1;
+  wire ignore2;
   keccak_busTwoOut twoOut(
     .startA(cmd_desBuf),
     .startB(cmd_desState),
@@ -740,8 +743,8 @@ module keccak_block(
     .outB(inSta),
     .outB_isReady(inSta_isReady),
     .outB_canReceive(inSta_canReceive),
-    .outB_isSingleByte(ignore),
-    .outB_isLast(ignore),
+    .outB_isSingleByte(ignore1),
+    .outB_isLast(ignore2),
     .rst(rst),
     .clk(clk)
   );
@@ -753,6 +756,7 @@ module keccak_block(
   wire [64-1:0] outSta;
   wire outSta_isReady;
   wire outSta_canReceive;
+  wire ignore3;
   keccak_busTwoIn twoIn(
     .startA(cmd_serBuf),
     .startB(cmd_serState),
@@ -763,7 +767,7 @@ module keccak_block(
     .inB(outSta),
     .inB_isReady(outSta_isReady),
     .inB_canReceive(outSta_canReceive),
-    .inB_isLast(ignore),
+    .inB_isLast(ignore3),
     .out(out),
     .out_isLast(out_isLast),
     .out_isReady(out_isReady),
@@ -853,6 +857,7 @@ module keccak_block(
     .cmd_continue(cmd_keccakContinue),
     .cmd_canReceive(core__cmd_canReceive),
     .isTransparent(isAnyState),
+    .isTransparent_merge(cmd_serState),
     .in_data(core__in),
     .out_data__d1(core__out__d1),
     .rst(rst),
@@ -917,7 +922,7 @@ module keccak_ctrl #(parameter BUFF=3) (
   input in_cmd_isReady, // ready for a new command
   input in_cmd_is128else256,
   input in_cmd_inState, // before any inputs, input the keccak state
-  input in_cmd_outState, // after any output, output the keccak state. the last I/O is repeated, to allow the remeaning input/out to be used. If the input has not finished, it needs to be aligned to the data rate and have no isLast.
+  input in_cmd_outState, // after any output, output the keccak state. the last I/O cycle is repeated, to allow the remeaning input/out to be used. If the input has not finished, it needs to be aligned to the data rate and have no isLast. There must be at least one full input cycle.
   input [`Keccak_BlockCounterSize-1:0] in_cmd_numInBlocks,
   input [`Keccak_BlockCounterSize-1:0] in_cmd_numOutBlocks,
 
@@ -937,18 +942,24 @@ module keccak_ctrl #(parameter BUFF=3) (
   wire is128else256;
   ff_en_imm is128else256__ff(in_cmd_isReady, in_cmd_is128else256, is128else256, rst, clk);
 
-  wor ignore;
+  wire ignore1;
   wire firstK__reset, firstK;
   wire firstK__set = in_cmd_isReady & ~in_cmd_inState;
-  ff_s_r firstK__ff(firstK__set, firstK__reset, firstK, ignore, rst, clk);
+  ff_s_r firstK__ff(firstK__set, firstK__reset, firstK, ignore1, rst, clk);
 
+  wire ignore2;
   wire inState__reset, inState;
   wire inState__set = in_cmd_isReady & in_cmd_inState;
-  ff_s_r inState__ff(inState__set, inState__reset, inState, ignore, rst, clk);
+  ff_s_r inState__ff(inState__set, inState__reset, inState, ignore2, rst, clk);
+  wire inState__canNotRestart;
+  ff_sr_next inState__canNotRestart__ff(inState__set, inState__reset, inState__canNotRestart, rst, clk);
 
+  wire ignore3;
   wire outState__reset, outState;
   wire outState__set = in_cmd_isReady & in_cmd_outState;
-  ff_s_r outState__ff(outState__set, outState__reset, outState, ignore, rst, clk);
+  ff_s_r outState__ff(outState__set, outState__reset, outState, ignore3, rst, clk);
+  wire outState__canNotRestart;
+  ff_sr_next outState__canNotRestart__ff(outState__set, outState__reset, outState__canNotRestart, rst, clk);
 
   wire numInBlocks__isReady, numInBlocks__canRestart, numInBlocks__canReceive, numInBlocks__isLast;
   counter_bus #(`Keccak_BlockCounterSize) numInBlocks (
@@ -975,7 +986,7 @@ module keccak_ctrl #(parameter BUFF=3) (
     .clk(clk)
   );
   
-  assign in_cmd_canReceive = numInBlocks__canRestart & numOutBlocks__canRestart;
+  assign in_cmd_canReceive = numInBlocks__canRestart & numOutBlocks__canRestart & ~inState__canNotRestart & ~outState__canNotRestart;
   
   wire [BUFF-1:0] plan_des128__d1;
   wire [BUFF-1:0] plan_des256__d1;
@@ -998,8 +1009,8 @@ module keccak_ctrl #(parameter BUFF=3) (
   keccak_planToFree #(BUFF) p2f_doSer (plan_serAny__d1, free_ser__d1);
 
   wire [BUFF-1:0] free_desState__d1 = free_des__d1 & free_keccak__d1;
-  wire [BUFF-1:0] free_desBlock__d1 = free_des__d1 & (free_keccak__d1 >> 1);
-  wire [BUFF-1:0] free_serBlock__d1 = free_ser__d1 & free_keccak__d1;
+  wire [BUFF-1:0] free_desBlock__d1 = free_des__d1 & (free_keccak__d1 >> 1); // except for the last one that is des only
+  wire [BUFF-1:0] free_serBlock__d1 = free_keccak__d1 & (free_ser__d1 >> 1);
   wire [BUFF-1:0] free_serState__d1 = free_ser__d1 & free_keccak__d1;
 
   wire [BUFF-1:0] firstFree_desState__d1 = free_desState__d1 & ~(free_desState__d1 << 1);
@@ -1009,9 +1020,10 @@ module keccak_ctrl #(parameter BUFF=3) (
 
   assign inState__reset        = inState                  & |free_desState__d1;
   assign numInBlocks__isReady  = numInBlocks__canReceive  & ~inState & |free_desBlock__d1;
-  assign firstK__reset         = firstK                   & numInBlocks__isReady;
   assign numOutBlocks__isReady = numOutBlocks__canReceive & ~inState & ~numInBlocks__canReceive & |free_serBlock__d1;
   assign outState__reset       = outState                 & ~inState & ~numInBlocks__canReceive & ~numOutBlocks__canReceive & |free_serState__d1;
+  assign firstK__reset         = firstK                   & (numInBlocks__isReady & ~numInBlocks__isLast | numOutBlocks__isReady | outState__reset); // the first execution of the keccak for a single block of input is skeduled with the next (either generation of the output or the output of the state)
+
 
   wor [BUFF-1:0] plan_des128 = plan_des128__d1;
   wor [BUFF-1:0] plan_des256 = plan_des256__d1;
@@ -1029,16 +1041,16 @@ module keccak_ctrl #(parameter BUFF=3) (
   assign plan_des256   = plan_des256__d1
                        | (numInBlocks__isReady & ~is128else256 ? firstFree_desBlock__d1 : {BUFF{1'b0}});
   assign plan_ser128   = plan_ser128__d1
-                       | (numOutBlocks__isReady &  is128else256 ? firstFree_serBlock__d1 : {BUFF{1'b0}});
+                       | (numOutBlocks__isReady &  is128else256 ? firstFree_serBlock__d1 << 1 : {BUFF{1'b0}});
   assign plan_ser256   = plan_ser256__d1
-                       | (numOutBlocks__isReady & ~is128else256 ? firstFree_serBlock__d1 : {BUFF{1'b0}});
+                       | (numOutBlocks__isReady & ~is128else256 ? firstFree_serBlock__d1 << 1 : {BUFF{1'b0}});
   assign plan_serState = plan_serState__d1
                        | (outState__reset ? firstFree_serState__d1 : {BUFF{1'b0}});
-  assign plan_keccakStart    = plan_keccakStart__d1
-                             | (numInBlocks__isReady &  firstK ? firstFree_desBlock__d1 << 1 : {BUFF{1'b0}});
-  assign plan_keccakContinue = plan_keccakContinue__d1
-                             | (numInBlocks__isReady & ~firstK & ~(outState & numOutBlocks__canRestart & numInBlocks__isLast) ? firstFree_desBlock__d1 << 1 : {BUFF{1'b0}})
-                             | (numOutBlocks__isReady & ~numOutBlocks__isLast ? firstFree_serBlock__d1 : {BUFF{1'b0}});
+  wire [BUFF-1:0] addPlan_keccakAny = (numInBlocks__isReady & ~numInBlocks__isLast ? firstFree_desBlock__d1 << 1 : {BUFF{1'b0}})
+                                    | (numOutBlocks__isReady ? firstFree_serBlock__d1 : {BUFF{1'b0}})
+                                    | (outState__reset ? firstFree_serState__d1 : {BUFF{1'b0}});
+  assign plan_keccakStart    = plan_keccakStart__d1 | (firstK ? addPlan_keccakAny : {BUFF{1'b0}});
+  assign plan_keccakContinue = plan_keccakContinue__d1 | (~firstK ? addPlan_keccakAny : {BUFF{1'b0}});
   
   assign out_cmd_des128 = out_cmd_canReceive & plan_des128[0];
   assign out_cmd_des256 = out_cmd_canReceive & plan_des256[0];

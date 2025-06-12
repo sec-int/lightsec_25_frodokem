@@ -81,7 +81,16 @@ module test();
 
 
 `define TEST
-`define DO_RST   @(negedge clk) rst <= 1'b1; @(posedge clk) #0.01 rst <= 1'b0;
+`define DO_RST(testName) \
+        @(negedge clk); \
+        rst <= 1'b1; \
+        @(posedge clk); \
+        test_name <= (testName); \
+        @(negedge clk); \
+        rst <= 1'b0; \
+        @(posedge clk);
+
+
 `define TEST_UTIL__CMD_SEND(c) \
         #0.1; \
         cmd <= (c); \
@@ -160,8 +169,7 @@ module test();
 `include "test__seedA.v"
 `include "test__keccak.v"
 `include "test__mem.v"
-    `DO_RST
-    test_name <= "DONE!";
+    `DO_RST("DONE!")
     #3;
     $finish();
   end

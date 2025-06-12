@@ -1,7 +1,6 @@
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__seedA_simple")
     fork : test__seedA_simple
-      test_name <= "test__seedA_simple";
       begin
         // store seedA
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2})
@@ -38,9 +37,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST
+    `DO_RST("test__seedA_withPause")
     fork : test__seedA_withPause
-      test_name <= "test__seedA_withPause";
       begin
         // store seedA
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2})

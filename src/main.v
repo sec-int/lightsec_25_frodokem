@@ -657,12 +657,12 @@ module main(
 
   wire [`MainCMD_SIZE-1:0] currCmd__d1;
   wire [`MainCMD_SIZE-1:0] currCmd = cmd_canReceive ? cmd : currCmd__d1;
-  delay #(`MainCMD_SIZE) (currCmd, currCmd__d1, rst, clk);
+  delay #(`MainCMD_SIZE) currCmd__ff (currCmd, currCmd__d1, rst, clk);
 
 
   wire currCmd_isTest = currCmd == `MainCMD_setupTest;
   wire currCmd_isTest__d1;
-  delay (currCmd_isTest, currCmd_isTest__d1, rst, clk);
+  delay currCmd_isTest__ff (currCmd_isTest, currCmd_isTest__d1, rst, clk);
   ff_en_imm lastCmd_isTest__ff(cmd_canReceive, currCmd_isTest__d1, lastCmd_wasTest, rst, clk);
 
 
