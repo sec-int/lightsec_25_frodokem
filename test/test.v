@@ -116,7 +116,7 @@ module test();
 `define TEST_UTIL__SEND_CANT \
         #0.2; \
         if(in_canReceive) begin \
-          $display("%t: Must not say it can receive when it should be impossible!", $time); \
+          $display("%t-%s: Must not say it can receive when it should be impossible!", $time, test_name); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk);
@@ -124,7 +124,7 @@ module test();
 `define TEST_UTIL__SEND_DONT \
         #0.2; \
         if(~in_canReceive) begin \
-          $display("%t: Must not say it can't receive when it should be able to!", $time); \
+          $display("%t-%s: Must not say it can't receive when it should be able to!", $time, test_name); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk);
@@ -136,7 +136,7 @@ module test();
         #0.25; \
         while(~out_isReady) #1; \
         if(out !== (v)) begin \
-          $display("%t: Received word %h instead of %h!", $time, out, (v)); \
+          $display("%t-%s: Received word %h instead of %h!", $time, test_name, out, (v)); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk); \
@@ -145,7 +145,7 @@ module test();
 `define TEST_UTIL__RECEIVE_DONT \
         #0.4; \
         if(out_isReady) begin \
-          $display("%t: Must not say it's ready if it can't be received!", $time); \
+          $display("%t-%s: Must not say it's ready if it can't be received!", $time, test_name); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk);
@@ -155,7 +155,7 @@ module test();
         out_canReceive <= 1'b1; \
         #0.25; \
         if(out_isReady) begin \
-          $display("%t: Output is ready when it should be impossible!", $time); \
+          $display("%t-%s: Output is ready when it should be impossible!", $time, test_name); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk); \

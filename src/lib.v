@@ -155,6 +155,7 @@ module counter_bus #(parameter N = 1) ( // N bits must be able to store the high
     input [N-1:0] numSteps,
     output canRestart,
     output canReceive,
+    output canReceive_wouldBeLast,
     output canReceive_isLast,
     input isReady, // it requires canReceive, as usual.
 
@@ -168,6 +169,7 @@ module counter_bus #(parameter N = 1) ( // N bits must be able to store the high
   wire [N-1:0] counter = doRestart ? numSteps : nextCounter;
   wire [N-1:0] counter__min1 = counter - 1;
   assign canReceive = counter != 0;
+  assign canReceive_wouldBeLast = counter__min1 == 0;
   assign canReceive_isLast = counter__min1 == 0 & isReady;
 
   wire [N-1:0] nextCounter__a1 = isReady ? counter__min1 : counter;
@@ -180,6 +182,7 @@ module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to 
     input restart,  // can't interupt
     output canRestart,
     output canReceive,
+    output canReceive_wouldBeLast,
     output canReceive_isLast,
     input isReady, // it requires canReceive, as usual.
 
@@ -191,6 +194,7 @@ module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to 
     .numSteps(NUM_STEPS),
     .canRestart(canRestart),
     .canReceive(canReceive),
+    .canReceive_wouldBeLast(canReceive_wouldBeLast),
     .canReceive_isLast(canReceive_isLast),
     .isReady(isReady),
     .rst(rst),
