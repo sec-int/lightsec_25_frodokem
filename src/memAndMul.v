@@ -566,7 +566,7 @@ module memAndMul__core(
   wire [64-1:0] bus_inOp__d2;
   delay #(64) bus_inOp__ff2 (bus_inOp__d1, bus_inOp__d2, rst, clk);
 
-  assign indexHandler__currentCmd = currentCmd & `MemAndMulCMD_mask_in != 0 ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign indexHandler__currentCmd = (currentCmd & `MemAndMulCMD_mask_in) != 0 ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_in_BRowFirst] & bus_in_isReady;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_B_col] = currentCmd[`MemAndMulCMD_in_BColFirst] & bus_in_isReady;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_in_CRowFirst] & bus_in_isReady;
@@ -579,7 +579,7 @@ module memAndMul__core(
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_in_k] & bus_in_isReady;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_U_twoRows] = currentCmd[`MemAndMulCMD_in_u] & bus_in_isReady;
 
-  assign indexHandler__currentCmd = currentCmd & `MemAndMulCMD_mask_out != 0 ? `MemAndMulIndexCMD_out : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign indexHandler__currentCmd = (currentCmd & `MemAndMulCMD_mask_out) != 0 ? `MemAndMulIndexCMD_out : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_out_BRowFirst] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_col] = currentCmd[`MemAndMulCMD_out_BColFirst] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_out_CRowFirst] & bus_out_canReceive;

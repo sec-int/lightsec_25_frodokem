@@ -206,7 +206,10 @@ module mainMem_readConnector(
     output [8-1:0] i_bramEnable,
     output [8-1:0] i_byteEnable,
     output [8-1:0] i_fromNextIndex, // if selected, the BRAM's index is the next one
-    input [64*8-1:0] i_value__d2
+    input [64*8-1:0] i_value__d2,
+    
+    input rst,
+    input clk
 );
   wire [9-1:0] column_offset = (o_bus_B_row | o_bus_B_col | o_dubBus_B_col | o_paral_B_mat) ? `MainMem_OFF_B : 9'd0
                              | (o_dubBus_S_mat | o_halfBus_S_col) ? `MainMem_OFF_S : 9'd0
@@ -277,7 +280,7 @@ module mainMem_readConnector(
   mem_elementIndexToByteEnable i_bramEnable_elem__c (i_bramEnable_elemIndex, i_bramEnable_elem);
   
   wire [3-1:0] i_bramEnable_byteIndex = (o_bus_B_row ? o_index[9+:3] : 3'b0)
-                                      | (o_bus_C_row ? (o_index[9+:3] ^ {2'b0, o_index[0]}) : 3'b0)
+                                      | (o_bus_C_row ? (o_index[1+:3] ^ {2'b0, o_index[0]}) : 3'b0)
                                       | (o_bus_anyCell ? o_index[0+:3] : 3'b0)
                                       | (o_quarterBus_U_row ? o_index[2+:3] : 3'b0);
   wire [8-1:0] i_bramEnable_byte;
@@ -324,10 +327,13 @@ module mainMem_readConnector(
                       : (o_dubBus_C_col & o_index[2])  ? mergeCol_swapped__d2
                                                        : mergeCol__d2;
 
+  wire o_bus_B_col__d1;
+  delay o_bus_B_col__ff1 (o_bus_B_col, o_bus_B_col__d1, rst, clk);
+  wire o_bus_B_col__d2;
+  delay o_bus_B_col__ff2 (o_bus_B_col__d1, o_bus_B_col__d2, rst, clk);
   wire [64-1:0] mergeRow__d2 = mergeTwoRows__d2[0+:64] | mergeTwoRows__d2[64+:64];
-  assign o_bus__d2 = o_bus_B_col
-                   ? (mergeCol__d2[0+:16*4] | mergeCol__d2[16*4+:16*4])
-                   : mergeRow__d2;
+  assign o_bus__d2 = o_bus_B_col__d2 ? (mergeCol__d2[0+:16*4] | mergeCol__d2[16*4+:16*4])
+                                     : mergeRow__d2;
 
   assign o_quarterBus__d2 = mergeRow__d2[0+:16] | mergeRow__d2[16+:16] | mergeRow__d2[32+:16] | mergeRow__d2[48+:16];
 
@@ -459,7 +465,7 @@ module mainMem_writeConnector(
 
 
   wire [3-1:0] i_bramEnable_byteIndex = (o_bus_B_row ? o_index[9+:3] : 3'b0)
-                                      | (o_bus_C_row ? (o_index[1+:3] ^ {2'b0, o_index[0]}) : 3'b0) // TODO Why is the get a 9+:3?
+                                      | (o_bus_C_row ? (o_index[1+:3] ^ {2'b0, o_index[0]}) : 3'b0)
                                       | (o_bus_S_row ? o_index[11+:3] : 3'b0)
                                       | (o_halfBus_U_row ? o_index[1+:3] : 3'b0)
                                       | (o_bus_anyCell ? o_index[0+:3] : 3'b0);
@@ -618,7 +624,9 @@ module mainMem(
     .i_bramEnable(b__r_bramEnable),
     .i_byteEnable(b__r_byteEnable),
     .i_fromNextIndex(b__r_fromNextIndex),
-    .i_value__d2(b__r_value__d2)
+    .i_value__d2(b__r_value__d2),
+    .rst(rst),
+    .clk(clk)
   );
 
   mainMem_writeConnector w(
