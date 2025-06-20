@@ -11,7 +11,7 @@
         // store into memory
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_k})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -26,12 +26,12 @@
     fork : test__mem_k__p2
       begin
         // load from memory
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_k})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
 
         // load from memory
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_k})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
       end
@@ -59,7 +59,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_u})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -74,7 +74,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_u})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -94,7 +94,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_pkh})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -109,7 +109,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_pkh})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -129,7 +129,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_salt})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -144,7 +144,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_salt})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -164,7 +164,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_seedSE})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -179,7 +179,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_seedSE})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -199,7 +199,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_RNGState})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -214,7 +214,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_RNGState})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd8})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -234,7 +234,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_CRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd16})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -249,7 +249,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_CRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd16})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -269,7 +269,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_SSState})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd25})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -284,7 +284,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_SSState})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd25})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -305,7 +305,7 @@
         // store
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -321,7 +321,7 @@
         // load
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -342,7 +342,7 @@
         // store
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -358,7 +358,7 @@
         // load transposed
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BColFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -385,7 +385,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BColFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -401,7 +401,7 @@
         // load
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BColFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -413,7 +413,6 @@
     join
 `endif
 
-
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
@@ -422,7 +421,7 @@
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BColFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
       end
 
       begin
@@ -438,7 +437,7 @@
         // load transposed
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_BRowFirst})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2688})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
       end
 
       begin
@@ -471,4 +470,57 @@
       end
     join
 `endif
+
+//-----------------------------------------------------------------------------------
+
+`define test__mem_SRowFirst__p1__mixer(a)  { a[2]^a[6]^a[9]^a[12], a[1]^a[5]^a[8]^a[11], a[0]^a[4]^a[7]^a[10] }
+`define test__mem_SRowFirst__p1__mixer__std(a, l)  { {13{a[3]}}, `test__mem_SRowFirst__p1__mixer(a)^l }
+`define test__mem_SRowFirst__p1__mixer__compact(a, l)  {a[3], a[3] ? - (`test__mem_SRowFirst__p1__mixer(a)^l) : `test__mem_SRowFirst__p1__mixer(a)^l }
+
+`ifdef TEST
+    `DO_RST("test__mem_SRowFirst")
+    fork : test__mem_SRowFirst__p1
+      begin
+        // store
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+      end
+
+      begin
+        for(test__mem__in_i = 0; test__mem__in_i < 15'd2688; test__mem__in_i = test__mem__in_i+1) begin
+          `TEST_UTIL__SEND({
+            `test__mem_SRowFirst__p1__mixer__std(test__mem__in_i, 2'd3),
+            `test__mem_SRowFirst__p1__mixer__std(test__mem__in_i, 2'd2),
+            `test__mem_SRowFirst__p1__mixer__std(test__mem__in_i, 2'd1),
+            `test__mem_SRowFirst__p1__mixer__std(test__mem__in_i, 2'd0)
+          })
+        end
+        `TEST_UTIL__SEND_CANT
+      end
+    join
+
+    fork : test__mem_SRowFirst__p2
+      begin
+        // load transposed
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_SRowFirst_DBG})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__mem__out_i = 0; test__mem__out_i < 15'd2688; test__mem__out_i = test__mem__out_i+1) begin
+          `TEST_UTIL__RECEIVE({
+            48'b0,
+            `test__mem_SRowFirst__p1__mixer__compact(test__mem__out_i, 2'd3),
+            `test__mem_SRowFirst__p1__mixer__compact(test__mem__out_i, 2'd2),
+            `test__mem_SRowFirst__p1__mixer__compact(test__mem__out_i, 2'd1),
+            `test__mem_SRowFirst__p1__mixer__compact(test__mem__out_i, 2'd0)
+          })
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
 

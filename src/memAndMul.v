@@ -236,7 +236,7 @@ endmodule
 
 `define MemAndMulCMD_in_BRowFirst 6'd13
 `define MemAndMulCMD_in_BColFirst 6'd14
-`define MemAndMulCMD_in_SRowFirst 6'd15 /* only 16b of the bus are used */
+`define MemAndMulCMD_in_SRowFirst 6'd15 /* it changes the encoding when storing, to save space */
 `define MemAndMulCMD_in_CRowFirst 6'd16
 `define MemAndMulCMD_in_SSState   6'd17
 `define MemAndMulCMD_in_RNGState  6'd18
@@ -248,27 +248,28 @@ endmodule
 
 `define MemAndMulCMD_out_BRowFirst 6'd24
 `define MemAndMulCMD_out_BColFirst 6'd25
-`define MemAndMulCMD_out_CRowFirst 6'd26
-`define MemAndMulCMD_out_SSState   6'd27
-`define MemAndMulCMD_out_RNGState  6'd28
-`define MemAndMulCMD_out_salt      6'd29
-`define MemAndMulCMD_out_seedSE    6'd30
-`define MemAndMulCMD_out_pkh       6'd31
-`define MemAndMulCMD_out_u         6'd32
-`define MemAndMulCMD_out_k         6'd33
+`define MemAndMulCMD_out_SRowFirst_DBG 6'd26 /* only 16b of the bus are used, it outputs the internal representation for debug. There is no other way to get any info on the value stored in S, otherwise. */
+`define MemAndMulCMD_out_CRowFirst 6'd27
+`define MemAndMulCMD_out_SSState   6'd28
+`define MemAndMulCMD_out_RNGState  6'd29
+`define MemAndMulCMD_out_salt      6'd30
+`define MemAndMulCMD_out_seedSE    6'd31
+`define MemAndMulCMD_out_pkh       6'd32
+`define MemAndMulCMD_out_u         6'd33
+`define MemAndMulCMD_out_k         6'd34
 
 `define MemAndMulCMD_SIZE       6
-`define MemAndMulCMD_FULLSIZE  34
-`define MemAndMulCMD_mask_op       34'h00000007F
-`define MemAndMulCMD_mask_inOp     34'h000001F80
-`define MemAndMulCMD_mask_opMul1   34'h000000283
-`define MemAndMulCMD_mask_opMul    34'h000000383
-`define MemAndMulCMD_mask_opNoMul  34'h000001C7C
-`define MemAndMulCMD_mask_in       34'h000FFE000
-`define MemAndMulCMD_mask_out      34'h3FF000000
+`define MemAndMulCMD_FULLSIZE  35
+`define MemAndMulCMD_mask_op       35'h00000007F
+`define MemAndMulCMD_mask_inOp     35'h000001F80
+`define MemAndMulCMD_mask_opMul1   35'h000000283
+`define MemAndMulCMD_mask_opMul    35'h000000383
+`define MemAndMulCMD_mask_opNoMul  35'h000001C7C
+`define MemAndMulCMD_mask_in       35'h000FFE000
+`define MemAndMulCMD_mask_out      35'h7FF000000
 `define MemAndMulCMD_mask_conflictIn   (`MemAndMulCMD_mask_in  | `MemAndMulCMD_mask_op | `MemAndMulCMD_mask_inOp)
 `define MemAndMulCMD_mask_conflictOut  (`MemAndMulCMD_mask_out | `MemAndMulCMD_mask_op | `MemAndMulCMD_mask_inOp)
-`define MemAndMulCMD_mask_zero     34'h0
+`define MemAndMulCMD_mask_zero     35'h0
 
 
 
@@ -583,7 +584,7 @@ module memAndMul__core(
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_out_BRowFirst] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_col] = currentCmd[`MemAndMulCMD_out_BColFirst] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_out_CRowFirst] & bus_out_canReceive;
-  assign mainMemory__r_bus_cmd[`MainMemCMD_bus_S_row] = 1'b0;
+  assign mainMemory__r_bus_cmd[`MainMemCMD_bus_S_row] = currentCmd[`MemAndMulCMD_out_SRowFirst_DBG] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_SSState] = currentCmd[`MemAndMulCMD_out_SSState] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_RNGState] = currentCmd[`MemAndMulCMD_out_RNGState] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_salt] = currentCmd[`MemAndMulCMD_out_salt] & bus_out_canReceive;
