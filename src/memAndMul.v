@@ -89,7 +89,7 @@ module memAndMul__indexHandler(
 
   // index reset
   wire currentCmd_in_isFirstCycle__d1;
-  delay currentCmd_in_isFirstCycle__ff (currentCmd_in_isFirstCycle, currentCmd_in_isFirstCycle__d1, rst, clk);
+  delay currentCmd_in_isFirstCycle__ff1 (currentCmd_in_isFirstCycle, currentCmd_in_isFirstCycle__d1, rst, clk);
 
   wire index1_isLast__d2;
   wire index1_reset = (currentCmd_out & currentCmd_out_isFirstCycle)
@@ -156,11 +156,10 @@ module memAndMul__indexHandler(
   delay currentCmd_op_isLastCycle__ff1 (currentCmd_op_isLastCycle__a1, currentCmd_op_isLastCycle, rst, clk);
   assign currentCmd_in_isLastCycle = currentCmd_in ? bus_in_isReady & ~w_index_hasNext : currentCmd_op_isLastCycle;
   assign currentCmd_out_isLastCycle = currentCmd_out ? bus_out_canReceive & ~r_index_hasNext : currentCmd_op_isLastCycle;
-
+  
   
   // bus_inOp_
-  assign bus_inOp_canReceive = (currentCmd_updateSyncIn & index1_has_next)
-                             | (currentCmd_updateFSAnyIn & index1_has_val);
+  assign bus_inOp_canReceive = (currentCmd_updateSyncIn | currentCmd_updateFSAnyIn) & index1_has_val;
   assign bus_inOp_isLast = currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next
                                                       : currentCmd_op_isLastCycle__a2;
 
@@ -448,7 +447,7 @@ module memAndMul__core(
                                   : mainMemory__w_bus__useIsNotZero         ? isNotZero__ret
                                   : mainMemory__w_bus__toZero               ? 64'b0
                                   : currentCmd & `MemAndMulCMD_mask_in != 0 ? bus_in
-                                                                            : bus_inOp;
+                                                                            : bus_inOp; // TODO: whut
 
   wor [`MainMemCMD_SIZE-1:0] mainMemory__r_bus_cmd;
   wor [`MainMemCMD_SIZE-1:0] mainMemory__w_bus_cmd;
@@ -663,7 +662,7 @@ module memAndMul__core(
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_inOp_BeqInMinB] & indexHandler__w_enable;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_inOp_BeqInMinB];
   assign mainMemory__w_bus__useAdder                  = currentCmd[`MemAndMulCMD_inOp_BeqInMinB];
-  assign adder__op1                                   = currentCmd[`MemAndMulCMD_inOp_BeqInMinB] ? bus_inOp : 64'b0;
+  assign adder__op1                                   = currentCmd[`MemAndMulCMD_inOp_BeqInMinB] ? bus_inOp__d2 : 64'b0;
   assign adder__op2                                   = currentCmd[`MemAndMulCMD_inOp_BeqInMinB] ? mainMemory__r_bus__d2 : 64'b0;
   assign adder__neg2                                  = currentCmd[`MemAndMulCMD_inOp_BeqInMinB];
 
@@ -672,7 +671,7 @@ module memAndMul__core(
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] & indexHandler__w_enable;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_inOp_addCRowFirst];
   assign mainMemory__w_bus__useAdder                  = currentCmd[`MemAndMulCMD_inOp_addCRowFirst];
-  assign adder__op1                                   = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] ? bus_inOp : 64'b0;
+  assign adder__op1                                   = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] ? bus_inOp__d2 : 64'b0;
   assign adder__op2                                   = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] ? mainMemory__r_bus__d2 : 64'b0;
 
   assign state__numStates                             = currentCmd[`MemAndMulCMD_inOp_selectKey] ? 3 : 0;
@@ -689,7 +688,7 @@ module memAndMul__core(
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] & indexHandler__w_enable;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2];
   assign mainMemory__w_bus__useIsNotZero          = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2];
-  assign isNotZero__onTrue                        = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] ? bus_inOp : 64'b0;
+  assign isNotZero__onTrue                        = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] ? bus_inOp__d2 : 64'b0;
   assign isNotZero__onFalse                       = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] ? mainMemory__r_bus__d2 : 64'b0;
 
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_Erase1] ? 1 : 0;
