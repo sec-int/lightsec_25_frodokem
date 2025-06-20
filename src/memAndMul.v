@@ -159,7 +159,7 @@ module memAndMul__indexHandler(
 
   
   // bus_inOp_
-  assign bus_inOp_canReceive = (currentCmd_updateSyncIn & bus_inOp_isReady & index1_has_next)
+  assign bus_inOp_canReceive = (currentCmd_updateSyncIn & index1_has_next)
                              | (currentCmd_updateFSAnyIn & index1_has_val);
   assign bus_inOp_isLast = currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next
                                                       : currentCmd_op_isLastCycle__a2;
@@ -341,7 +341,7 @@ module memAndMul__core(
     input clk
   );
 
-  wire isAnyOP = currentCmd & ~`MemAndMulCMD_mask_in & ~`MemAndMulCMD_mask_out != 0;
+  wire isAnyOP = | (currentCmd & ~`MemAndMulCMD_mask_in & ~`MemAndMulCMD_mask_out);
   
   
   // state
@@ -383,6 +383,7 @@ module memAndMul__core(
   wire indexHandler__r_enable;
   wire indexHandler__r_enable__d2;
   wire indexHandler__w_enable;
+  wor indexHandler__bus_in_isReady = bus_in_isReady;
   wor indexHandler__bus_out_canReceive = bus_out_canReceive;
   memAndMul__indexHandler indexHandler(
     .currentCmd(indexHandler__currentCmd),
@@ -394,7 +395,7 @@ module memAndMul__core(
     .bus_inOp_isReady(bus_inOp_isReady),
     .bus_inOp_canReceive(bus_inOp_canReceive),
     .bus_inOp_isLast(bus_inOp_isLast),
-    .bus_in_isReady(bus_in_isReady),
+    .bus_in_isReady(indexHandler__bus_in_isReady),
     .bus_out_canReceive(indexHandler__bus_out_canReceive),
 
     .r_index(indexHandler__r_index),
@@ -425,7 +426,7 @@ module memAndMul__core(
   genvar j;
   generate
     for (j = 0; j < 4; j=j+1) begin
-      assign adder__ret[j*16+:16] = adder__op1 + (adder__neg2 ? -adder__op2 : adder__op2);
+      assign adder__ret[j*16+:16] = adder__op1[j*16+:16] + (adder__neg2 ? -adder__op2[j*16+:16] : adder__op2[j*16+:16]);
     end
   endgenerate
   
@@ -693,12 +694,14 @@ module memAndMul__core(
 
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_Erase1] ? 1 : 0;
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_Erase1] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign indexHandler__bus_in_isReady                 = currentCmd[`MemAndMulCMD_op_Erase1];
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_S_row] = currentCmd[`MemAndMulCMD_op_Erase1] & indexHandler__w_enable;
   assign mainMemory__w_bus__toZero                    = currentCmd[`MemAndMulCMD_op_Erase1];
 
   assign state__numStates                                 = currentCmd[`MemAndMulCMD_op_Erase2] ? 3 : 0;
   assign mainMemory__w_bus__toZero                        = currentCmd[`MemAndMulCMD_op_Erase2];
   assign indexHandler__currentCmd                         = currentCmd[`MemAndMulCMD_op_Erase2] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign indexHandler__bus_in_isReady                     = currentCmd[`MemAndMulCMD_op_Erase2];
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_U_twoRows] = currentCmd[`MemAndMulCMD_op_Erase2] & state[0] & indexHandler__w_enable;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_seedSE]    = currentCmd[`MemAndMulCMD_op_Erase2] & state[1] & indexHandler__w_enable;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k]         = currentCmd[`MemAndMulCMD_op_Erase2] & state[2] & indexHandler__w_enable;
@@ -706,6 +709,7 @@ module memAndMul__core(
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_Erase3] ? 2 : 0;
   assign mainMemory__w_bus__toZero                    = currentCmd[`MemAndMulCMD_op_Erase3];
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_Erase3] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
+  assign indexHandler__bus_in_isReady                 = currentCmd[`MemAndMulCMD_op_Erase3];
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_op_Erase3] & state[0] & indexHandler__w_enable;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_op_Erase3] & state[1] & indexHandler__w_enable;
 

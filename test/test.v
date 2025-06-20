@@ -169,6 +169,7 @@ module test();
 `include "test__seedA.v"
 `include "test__keccak.v"
 `include "test__mem.v"
+`include "test__memOp.v"
     `DO_RST("DONE!")
     #3;
     $finish();

@@ -73,7 +73,7 @@ module busSwitch #(parameter N = 1) (
     end
   endgenerate
 
-  wire cmdB_wait = | cmdB & cumulativeCmd__d1;
+  wire cmdB_wait = | (cmdB & cumulativeCmd__d1);
   assign cmdB_consume = cmdB_hasAny & ~cmdB_wait;
 
   wire [N-1:0] p2p_reset_byFrom;
