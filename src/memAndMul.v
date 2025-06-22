@@ -415,7 +415,7 @@ module memAndMul__core(
   );
   assign currentCmd_in_isLastCycle = isAnyOP ? state__isLast : indexHandler__currentCmd_in_isLastCycle;
   assign currentCmd_out_isLastCycle = isAnyOP ? state__isLast : indexHandler__currentCmd_out_isLastCycle;
-  assign state__consume = isAnyOP & indexHandler__currentCmd_in_isLastCycle;
+  assign state__consume = isAnyOP & (indexHandler__currentCmd_in_isLastCycle | indexHandler__currentCmd_out_isLastCycle);
 
   // adder
   wor [64-1:0] adder__op1;
