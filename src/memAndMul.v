@@ -23,6 +23,8 @@
 `include "frodoMul.v"
 `include "mem.v"
 
+// TODO: MemAndMulCMD_inOp_CpleqStimesInB: the index2's initial reset is done too late
+
 
 `define MemAndMulIndexCMD_in               5'h01
 `define MemAndMulIndexCMD_out              5'h02
@@ -104,14 +106,20 @@ module memAndMul__indexHandler(
   assign index1__toggle = index1_reset ? 1'b0 : ~index1__toggle__d1;
   delay index1__toggle__ff(index1__toggle, index1__toggle__d1, rst, clk);
 
+  wire index1_reset__d1;
+  delay index1_reset__ff(index1_reset, index1_reset__d1, rst, clk);
   wire index1_has_next;
   wire index1_has_next__d1;
-  delay index1_has_next__ff (index1_has_next, index1_has_next__d1, rst, clk);
+  delay index1_has_next__ff1 (index1_has_next, index1_has_next__d1, rst, clk);
+  wire index1_has_next__d2;
+  delay index1_has_next__ff2 (index1_has_next__d1, index1_has_next__d2, rst, clk);
+  wire index1_has_val__a1 = index1_has_next; // in theory it needs to be '| index1_reset__a1' but we're only using this to create the '_isLast' and we never have a value with a single cell.
   wire index1_has_val = index1_reset | index1_has_next__d1;
   wire index1_has_val__d1;
   delay index1_has_val__ff1 (index1_has_val, index1_has_val__d1, rst, clk);
   wire index1_has_val__d2;
   delay index1_has_val__ff2 (index1_has_val__d1, index1_has_val__d2, rst, clk);
+  wire index1_isLast = index1_has_val & ~index1_has_val__a1;
   wire index1_isLast__d1 = index1_has_val__d1 & ~index1_has_val;
   assign index1_isLast__d2 = index1_has_val__d2 & ~index1_has_val__d1;
 
@@ -125,17 +133,17 @@ module memAndMul__indexHandler(
                      | currentCmd_updateAnyIn & bus_inOp_isReady
                      | currentCmd_updateSync;
   wire index2_update = currentCmd_in & bus_in_isReady
-                     | (currentCmd_updateFSAny & index1_isLast__d1);
+                     | currentCmd_updateFSAny & index1_isLast;// & ~index2_reset;
 
 
   // indexes
   wire [14-1:0] index1_next_input = r_index_next;
-  wire [14-1:0] index2_next_input = currentCmd_in ? w_index_next : r_index_next;
+  wire [14-1:0] index2_next_input = currentCmd_in | currentCmd_updateFastAny ? w_index_next : r_index_next;
 
   wire [14-1:0] index1_next__d1;
   wire [14-1:0] index1 = index1_reset ? 14'b0 : index1_next__d1;
   wire [14-1:0] index1_next = index1_update ? index1_next_input : index1;
-  delay #(14) index_next__ff (index1_next, index1_next__d1, rst, clk);
+  delay #(14) index1_next__ff (index1_next, index1_next__d1, rst, clk);
   wire [14-1:0] index2_next__d1;
   wire [14-1:0] index2 = index2_reset ? 14'b0 : index2_next__d1;
   wire [14-1:0] index2_next = index2_update ? index2_next_input : index2;
@@ -143,13 +151,16 @@ module memAndMul__indexHandler(
 
 
   // _isLastCycle
+  wire index2_update__d1;
+  delay index2_update__ff (index2_update, index2_update__d1, rst, clk);
+  
   assign index1_has_next = index1_reset | (~index1_update ? index1_has_next__d1 : r_index_hasNext);
-  assign index2_has_next = index2_reset | (~index2_update ? index2_has_next__d1 : (currentCmd_in ? w_index_hasNext : r_index_hasNext));
+  assign index2_has_next = index2_reset | (~index2_update__d1 ? index2_has_next__d1 : (currentCmd_in ? w_index_hasNext : r_index_hasNext));
 
   wire currentCmd_op_isLastCycle__a2 = currentCmd_updateSyncMem & index1__toggle & ~index1_has_next
                                      | currentCmd_updateSyncIn & bus_inOp_isReady & ~index1_has_next
                                      | currentCmd_updateSync & ~index1_has_next
-                                     | currentCmd_updateFSAny & ~index1_has_next & ~index2_has_next; // TODO: do we need to check there is an in?
+                                     | currentCmd_updateFSAny & ~(index1_has_next | index2_has_next | currentCmd_updateFastAny & index2_has_next__d1); // TODO: do we need to check there is an in?
   wire currentCmd_op_isLastCycle__a1;
   delay currentCmd_op_isLastCycle__ff2 (currentCmd_op_isLastCycle__a2, currentCmd_op_isLastCycle__a1, rst, clk);
   wire currentCmd_op_isLastCycle;
@@ -157,18 +168,17 @@ module memAndMul__indexHandler(
   assign currentCmd_in_isLastCycle = currentCmd_in ? bus_in_isReady & ~w_index_hasNext : currentCmd_op_isLastCycle;
   assign currentCmd_out_isLastCycle = currentCmd_out ? bus_out_canReceive & ~r_index_hasNext : currentCmd_op_isLastCycle;
   
-  
   // bus_inOp_
   assign bus_inOp_canReceive = (currentCmd_updateSyncIn | currentCmd_updateFSAnyIn) & index1_has_val;
-  assign bus_inOp_isLast = currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next
+  assign bus_inOp_isLast = currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next & ~index2_has_next
                                                       : currentCmd_op_isLastCycle__a2;
-
 
   // r index
   assign r_index__useIndex1 = currentCmd_out | currentCmd_updateSyncAny | (currentCmd_updateFSAny & index1_has_val);
   assign r_index = ~r_index__useIndex1                          ? index2
                  : currentCmd_updateFastMemMem & index1__toggle ? { index2[0+:5], index1[0+:9] }
                                                                 : index1;
+
   wire r_enable_op = currentCmd_updateFastMemMem & (index1_has_val | index2_has_val)
                    | currentCmd_updateFastMemIn  & (index1_has_val & bus_inOp_isReady | index2_has_val)
                    | currentCmd_updateSlowMemIn  & (index1_has_val & bus_inOp_isReady | index2_has_val)
@@ -196,16 +206,13 @@ module memAndMul__indexHandler(
                   | w_enable_op;
 
   // w index
+  wire [14-1:0] index2__d1;
+  delay #(14) index2__ff (index2, index2__d1, rst, clk);
   wire w_index_op__useIndex1 = currentCmd_updateSyncAny | currentCmd_updateSlowMemIn;
 
-  wire [14-1:0] index2__delayed;
-  ff_en_next #(14) index2__ff (index2_update, index2, index2__delayed, rst, clk);
-
-  wire w_index_op__index2_isDelayed = currentCmd_updateFastAny;
-
-  wire [14-1:0] w_index_op__a2 = w_index_op__useIndex1        ? index1
-                               : w_index_op__index2_isDelayed ? index2__delayed
-                                                              : index2;
+  wire [14-1:0] w_index_op__a2 = w_index_op__useIndex1    ? index1
+                               : currentCmd_updateFastAny ? index2__d1
+                                                          : index2;
   wire [14-1:0] w_index_op__a1;
   delay #(14) w_index_op__ff2 (w_index_op__a2, w_index_op__a1, rst, clk);
   wire [14-1:0] w_index_op;
