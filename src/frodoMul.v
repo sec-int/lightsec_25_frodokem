@@ -68,8 +68,8 @@ module frodoMul #(
   wire  [16*S-1:0] state__init;
   wire  [16*S-1:0] state__new;
   wire  [16*S-1:0] state__a1 = setStorage ? state__init
-                             : doOp ? state__new
-                             : state;
+                             : doOp       ? state__new
+                                          : state;
   delay #(16*S) state__ff (state__a1, state, rst, clk);
 
   generate

@@ -1,4 +1,59 @@
 
+# current status
+
+## Slice Logic Distribution
+
++--------------------------------------------+-------+-------+------------+-----------+-------+
+|                  Site Type                 |  Used | Fixed | Prohibited | Available | Util% |
++--------------------------------------------+-------+-------+------------+-----------+-------+
+| Slice                                      |  3348 |     0 |          0 |      8150 | 41.08 |
+|   SLICEL                                   |  2281 |     0 |            |           |       |
+|   SLICEM                                   |  1067 |     0 |            |           |       |
+| LUT as Logic                               | 12738 |     0 |          0 |     20800 | 61.24 |
+|   using O5 output only                     |     0 |       |            |           |       |
+|   using O6 output only                     | 12684 |       |            |           |       |
+|   using O5 and O6                          |    54 |       |            |           |       |
+| LUT as Memory                              |     0 |     0 |          0 |      9600 |  0.00 |
+|   LUT as Distributed RAM                   |     0 |     0 |            |           |       |
+|     using O5 output only                   |     0 |       |            |           |       |
+|     using O6 output only                   |     0 |       |            |           |       |
+|     using O5 and O6                        |     0 |       |            |           |       |
+|   LUT as Shift Register                    |     0 |     0 |            |           |       |
+|     using O5 output only                   |     0 |       |            |           |       |
+|     using O6 output only                   |     0 |       |            |           |       |
+|     using O5 and O6                        |     0 |       |            |           |       |
+| Slice Registers                            |  3516 |     0 |          0 |     41600 |  8.45 |
+|   Register driven from within the Slice    |  3419 |       |            |           |       |
+|   Register driven from outside the Slice   |    97 |       |            |           |       |
+|     LUT in front of the register is unused |    15 |       |            |           |       |
+|     LUT in front of the register is used   |    82 |       |            |           |       |
+| Unique Control Sets                        |     6 |       |          0 |      8150 |  0.07 |
++--------------------------------------------+-------+-------+------------+-----------+-------+
+* * Note: Available Control Sets calculated as Slice * 1, Review the Control Sets Report for more information regarding control sets.
+
+
+## Memory
+
++----------------+------+-------+------------+-----------+-------+
+|    Site Type   | Used | Fixed | Prohibited | Available | Util% |
++----------------+------+-------+------------+-----------+-------+
+| Block RAM Tile |    0 |     0 |          0 |        50 |  0.00 |
+|   RAMB36/FIFO* |    0 |     0 |          0 |        50 |  0.00 |
+|   RAMB18       |    0 |     0 |          0 |       100 |  0.00 |
++----------------+------+-------+------------+-----------+-------+
+* Note: Each Block RAM Tile only has one FIFO logic available and therefore can accommodate only one FIFO36E1 or one FIFO18E1. However, if a FIFO18E1 occupies a Block RAM Tile, that tile can still accommodate a RAMB18E1
+
+
+## DSP
+
++-----------+------+-------+------------+-----------+-------+
+| Site Type | Used | Fixed | Prohibited | Available | Util% |
++-----------+------+-------+------------+-----------+-------+
+| DSPs      |    0 |     0 |          0 |        90 |  0.00 |
++-----------+------+-------+------------+-----------+-------+
+
+# comparison to guess where all those LUTs come from
+
 base:
 
 +-------------------------+-------+-------+------------+-----------+-------+

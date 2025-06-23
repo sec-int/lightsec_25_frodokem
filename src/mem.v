@@ -324,10 +324,23 @@ module mainMem_readConnector(
     end
   endgenerate
 
-  assign o_dubBus__d2 = (o_dubBus_C_row & ~o_index[0]) ? mergeTwoRows__d2
-                      : (o_dubBus_C_row & o_index[0])  ? {mergeTwoRows__d2[0+:64], mergeTwoRows__d2[64+:64]}
-                      : (o_dubBus_C_col & o_index[2])  ? mergeCol_swapped__d2
-                                                       : mergeCol__d2;
+  wire o_dubBus_C_row__d1;
+  delay o_dubBus_C_row__ff1 (o_dubBus_C_row, o_dubBus_C_row__d1, rst, clk);
+  wire o_dubBus_C_row__d2;
+  delay o_dubBus_C_row__ff2 (o_dubBus_C_row__d1, o_dubBus_C_row__d2, rst, clk);
+  wire o_dubBus_C_col__d1;
+  delay o_dubBus_C_col__ff1 (o_dubBus_C_col, o_dubBus_C_col__d1, rst, clk);
+  wire o_dubBus_C_col__d2;
+  delay o_dubBus_C_col__ff2 (o_dubBus_C_col__d1, o_dubBus_C_col__d2, rst, clk);
+  wire [14-1:0] o_index__d1;
+  delay #(14) o_index__ff1 (o_index, o_index__d1, rst, clk);
+  wire [14-1:0] o_index__d2;
+  delay #(14) o_index__ff2 (o_index__d1, o_index__d2, rst, clk);
+
+  assign o_dubBus__d2 = o_dubBus_C_row__d2 & ~o_index__d2[0] ? mergeTwoRows__d2
+                      : o_dubBus_C_row__d2                   ? {mergeTwoRows__d2[0+:64], mergeTwoRows__d2[64+:64]}
+                      : o_dubBus_C_col__d2 &  o_index__d2[2] ? mergeCol_swapped__d2
+                                                             : mergeCol__d2;
 
   wire o_bus_B_col__d1;
   delay o_bus_B_col__ff1 (o_bus_B_col, o_bus_B_col__d1, rst, clk);

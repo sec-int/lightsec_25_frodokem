@@ -133,7 +133,7 @@ module memAndMul__indexHandler(
                      | currentCmd_updateAnyIn & bus_inOp_isReady
                      | currentCmd_updateSync;
   wire index2_update = currentCmd_in & bus_in_isReady
-                     | currentCmd_updateFSAny & index1_isLast;// & ~index2_reset;
+                     | currentCmd_updateFSAny & index1_isLast;
 
 
   // indexes
@@ -142,25 +142,25 @@ module memAndMul__indexHandler(
 
   wire [14-1:0] index1_next__d1;
   wire [14-1:0] index1 = index1_reset ? 14'b0 : index1_next__d1;
-  wire [14-1:0] index1_next = index1_update ? index1_next_input : index1;
+  wire [14-1:0] index1_next = index1_update & index1_has_next ? index1_next_input : index1;
   delay #(14) index1_next__ff (index1_next, index1_next__d1, rst, clk);
   wire [14-1:0] index2_next__d1;
   wire [14-1:0] index2 = index2_reset ? 14'b0 : index2_next__d1;
-  wire [14-1:0] index2_next = index2_update ? index2_next_input : index2;
+  wire [14-1:0] index2_next = index2_update & index2_has_next ? index2_next_input : index2;
   delay #(14) index2_next__ff (index2_next, index2_next__d1, rst, clk);
 
 
   // _isLastCycle
   wire index2_update__d1;
   delay index2_update__ff (index2_update, index2_update__d1, rst, clk);
-  
+
   assign index1_has_next = index1_reset | (~index1_update ? index1_has_next__d1 : r_index_hasNext);
-  assign index2_has_next = index2_reset | (~index2_update__d1 ? index2_has_next__d1 : (currentCmd_in ? w_index_hasNext : r_index_hasNext));
+  assign index2_has_next = index2_reset | (~(currentCmd_updateFastAny ? index2_update__d1 : index2_update) ? index2_has_next__d1 : (currentCmd_in ? w_index_hasNext : r_index_hasNext));
 
   wire currentCmd_op_isLastCycle__a2 = currentCmd_updateSyncMem & index1__toggle & ~index1_has_next
                                      | currentCmd_updateSyncIn & bus_inOp_isReady & ~index1_has_next
                                      | currentCmd_updateSync & ~index1_has_next
-                                     | currentCmd_updateFSAny & ~(index1_has_next | index2_has_next | currentCmd_updateFastAny & index2_has_next__d1); // TODO: do we need to check there is an in?
+                                     | currentCmd_updateFSAny & ~(index1_has_next | index1_has_next__d1 | index2_has_next | index2_has_next__d1); // TODO: do we need to check bus_inOp_isReady?
   wire currentCmd_op_isLastCycle__a1;
   delay currentCmd_op_isLastCycle__ff2 (currentCmd_op_isLastCycle__a2, currentCmd_op_isLastCycle__a1, rst, clk);
   wire currentCmd_op_isLastCycle;
