@@ -6,13 +6,13 @@
 +--------------------------------------------+-------+-------+------------+-----------+-------+
 |                  Site Type                 |  Used | Fixed | Prohibited | Available | Util% |
 +--------------------------------------------+-------+-------+------------+-----------+-------+
-| Slice                                      |  3348 |     0 |          0 |      8150 | 41.08 |
-|   SLICEL                                   |  2281 |     0 |            |           |       |
-|   SLICEM                                   |  1067 |     0 |            |           |       |
-| LUT as Logic                               | 12738 |     0 |          0 |     20800 | 61.24 |
+| Slice                                      |  3352 |     0 |          0 |      8150 | 41.13 |
+|   SLICEL                                   |  2286 |     0 |            |           |       |
+|   SLICEM                                   |  1066 |     0 |            |           |       |
+| LUT as Logic                               | 12759 |     0 |          0 |     20800 | 61.34 |
 |   using O5 output only                     |     0 |       |            |           |       |
-|   using O6 output only                     | 12684 |       |            |           |       |
-|   using O5 and O6                          |    54 |       |            |           |       |
+|   using O6 output only                     | 12694 |       |            |           |       |
+|   using O5 and O6                          |    65 |       |            |           |       |
 | LUT as Memory                              |     0 |     0 |          0 |      9600 |  0.00 |
 |   LUT as Distributed RAM                   |     0 |     0 |            |           |       |
 |     using O5 output only                   |     0 |       |            |           |       |
@@ -23,10 +23,10 @@
 |     using O6 output only                   |     0 |       |            |           |       |
 |     using O5 and O6                        |     0 |       |            |           |       |
 | Slice Registers                            |  3516 |     0 |          0 |     41600 |  8.45 |
-|   Register driven from within the Slice    |  3419 |       |            |           |       |
-|   Register driven from outside the Slice   |    97 |       |            |           |       |
-|     LUT in front of the register is unused |    15 |       |            |           |       |
-|     LUT in front of the register is used   |    82 |       |            |           |       |
+|   Register driven from within the Slice    |  3432 |       |            |           |       |
+|   Register driven from outside the Slice   |    84 |       |            |           |       |
+|     LUT in front of the register is unused |     5 |       |            |           |       |
+|     LUT in front of the register is used   |    79 |       |            |           |       |
 | Unique Control Sets                        |     6 |       |          0 |      8150 |  0.07 |
 +--------------------------------------------+-------+-------+------------+-----------+-------+
 * * Note: Available Control Sets calculated as Slice * 1, Review the Control Sets Report for more information regarding control sets.
@@ -51,6 +51,16 @@
 +-----------+------+-------+------------+-----------+-------+
 | DSPs      |    0 |     0 |          0 |        90 |  0.00 |
 +-----------+------+-------+------------+-----------+-------+
+
+## Timing
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+    -17.168   -51633.285                   6282                 8851        0.063        0.000                      0                 8851        2.494        0.000                       0                  3518  
+
+
+Timing constraints are not met.
+
 
 # comparison to guess where all those LUTs come from
 

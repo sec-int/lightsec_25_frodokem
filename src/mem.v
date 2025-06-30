@@ -293,11 +293,7 @@ module mainMem_readConnector(
                       | o_dubBus_C_row ? i_bramEnable_elem : 8'b0
                       | (o_bus_B_row | o_bus_C_row | o_bus_anyCell | o_quarterBus_U_row | o_bus_S_row_DBG) ? i_bramEnable_byte : 8'b0;
 
-
-  wire [3-1:0] i_fromNextIndex_byteIndex = i_index[0+:3] ^ 3'b001;
-  wire [8-1:0] i_fromNextIndex_byte;
-  mem_byteIndexToByteEnable i_fromNextIndex_byte__c(i_fromNextIndex_byteIndex, i_fromNextIndex_byte);
-  assign i_fromNextIndex = {8{o_dubBus_C_row}} & i_fromNextIndex_byte;
+  assign i_fromNextIndex = {8{o_dubBus_C_row}} & {4{ {~o_index[0], o_index[0]} }};
 
 
   genvar row;
