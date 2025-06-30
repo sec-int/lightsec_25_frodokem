@@ -1052,8 +1052,6 @@
 
 
 
-
-//`define MemAndMulCMD_op_CpleqStimesBT  6'd0 /* BRAM.C = BRAM.C + BRAM.S' *' BRAM.B'^T */
 //`define MemAndMulCMD_op_UeqCminBtimesS 6'd1 /* BRAM.u = decode(BRAM.C - (BRAM.S' *' BRAM.B'^T)^T) */
 //`define MemAndMulCMD_inOp_BpleqStimesInAT 6'd7 /* BRAM.B' = BRAM.B'+ BRAM.S' *' _A^T */
 //`define MemAndMulCMD_inOp_BpleqStimesInA  6'd8 /* BRAM.B' = BRAM.B' + BRAM.S' *'' _A */

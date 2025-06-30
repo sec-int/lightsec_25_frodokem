@@ -23,8 +23,6 @@
 `include "frodoMul.v"
 `include "mem.v"
 
-// TODO: MemAndMulCMD_inOp_CpleqStimesInB: the index2's initial reset is done too late
-
 
 `define MemAndMulIndexCMD_in               5'h01
 `define MemAndMulIndexCMD_out              5'h02
