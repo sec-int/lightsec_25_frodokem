@@ -137,7 +137,10 @@ module memAndMul__indexHandler(
 
 
   // indexes
-  wire [14-1:0] index1_next_input = r_index_next;
+  wire [14-1:0] r_index_next__d1;
+  delay #(14) r_index_next__ff (r_index_next, r_index_next__d1, rst, clk);
+
+  wire [14-1:0] index1_next_input = currentCmd_updateFastMemMem ? r_index_next__d1 : r_index_next;
   wire [14-1:0] index2_next_input = currentCmd_in | currentCmd_updateFastAny ? w_index_next : r_index_next;
 
   wire [14-1:0] index1_next__d1;
@@ -153,8 +156,10 @@ module memAndMul__indexHandler(
   // _isLastCycle
   wire index2_update__d1;
   delay index2_update__ff (index2_update, index2_update__d1, rst, clk);
+  wire r_index_hasNext__d1;
+  delay r_index_hasNext__ff (r_index_hasNext, r_index_hasNext__d1, rst, clk);
 
-  assign index1_has_next = index1_reset | (~index1_update ? index1_has_next__d1 : r_index_hasNext);
+  assign index1_has_next = index1_reset | (~index1_update ? index1_has_next__d1 : currentCmd_updateFastMemMem ? r_index_hasNext__d1 : r_index_hasNext);
   assign index2_has_next = index2_reset | (~(currentCmd_updateFastAny ? index2_update__d1 : index2_update) ? index2_has_next__d1 : (currentCmd_in ? w_index_hasNext : r_index_hasNext));
 
   wire currentCmd_op_isLastCycle__a2 = currentCmd_updateSyncMem & index1__toggle & ~index1_has_next
@@ -535,9 +540,9 @@ module memAndMul__core(
   wire m__doOp__d2;
   delay m__doOp__ff2 (m__doOp__d1, m__doOp__d2, rst, clk);
 
-  wor m__sCol__doDelay__d2;
-  wire [32-1:0] m__sCol__d2d3;
-  optionalDelay #(32) r_halfBus__ff (m__sCol__doDelay__d2, mainMemory__r_halfBus__d2, m__sCol__d2d3, rst, clk);
+  wor m__sMat__doDelay__d2;
+  wire [128-1:0] m__sMat__d2d3;
+  optionalDelay #(128) r_dubBus__ff (m__sMat__doDelay__d2, mainMemory__r_dubBus__d2, m__sMat__d2d3, rst, clk);  // TODO: invert the stored operand by indexHandler__index1__toggle
 
   wire m__setStorage = ~indexHandler__r_index__useIndex1;
   wire m__setStorage__d1;
@@ -547,8 +552,8 @@ module memAndMul__core(
   frodoMul m(
     .a(m__a__d2),
     .accVec(mainMemory__r_dubBus__d2),
-    .sCol(m__sCol__d2d3),
-    .sMat(mainMemory__r_dubBus__d2),
+    .sCol(mainMemory__r_halfBus__d2),
+    .sMat(m__sMat__d2d3),
     .accMat(mainMemory__r_paral__d2),
     .outMat(mainMemory__w_paral),
     .outVec(m__outVec),
@@ -608,7 +613,7 @@ module memAndMul__core(
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_op_CpleqStimesBT] & indexHandler__r_index__useIndex1 & indexHandler__index1__toggle;
   assign m__doOp                                      = currentCmd[`MemAndMulCMD_op_CpleqStimesBT] & indexHandler__r_index__useIndex1 & indexHandler__index1__toggle & indexHandler__r_enable;
   assign m__a__d2                                     = currentCmd[`MemAndMulCMD_op_CpleqStimesBT] ? mainMemory__r_bus__d2 : 64'b0;
-  assign m__sCol__doDelay__d2                         = currentCmd[`MemAndMulCMD_op_CpleqStimesBT];
+  assign m__sMat__doDelay__d2                         = currentCmd[`MemAndMulCMD_op_CpleqStimesBT];
 
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS] ? 1 : 0;
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS] ? `MemAndMulIndexCMD_updateFastMemMem : {`MemAndMulIndexCMD_SIZE{1'b0}};
@@ -619,7 +624,7 @@ module memAndMul__core(
   assign m__doOp                                      = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS] & indexHandler__r_index__useIndex1 & indexHandler__index1__toggle & indexHandler__r_enable;
   assign m__isNeg__d2                                 = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS];
   assign m__a__d2                                     = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS] ? mainMemory__r_bus__d2 : 64'b0;
-  assign m__sCol__doDelay__d2                         = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS];
+  assign m__sMat__doDelay__d2                         = currentCmd[`MemAndMulCMD_op_UeqCminBtimesS];
 
   assign state__numStates           = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] ? 1 : 0;
   assign indexHandler__currentCmd   = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] ? `MemAndMulIndexCMD_updateFastMemIn : {`MemAndMulIndexCMD_SIZE{1'b0}};

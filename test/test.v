@@ -137,7 +137,7 @@ module test();
         #0.25; \
         while(~out_isReady) #1; \
         if(out !== (v)) begin \
-          $display("%t-%s:\nReceived word:\n\t%h\ninstead of:\n\t%h!", $time, test_name, out, (v)); \
+          $display("%t-%s:\nReceived word: %h\ninstead of:    %h!", $time, test_name, out, (v)); \
           done_fail <= 1'b1; \
         end \
         @(posedge clk); \
