@@ -36,7 +36,7 @@ module bram(
 `ifdef USE_BRAM_IP
 
   // simple dual port bram. witdth 64. depth 512. with write byte enable, 8 bits. with primitives output register, for a total read delay of two clock cycles
-  blk_mem_gen_0 (
+  blk_mem_gen_0 ip (
     // a is write
     .ena(doWrite),
     .wea(write_byteEnable),

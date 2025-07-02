@@ -26,7 +26,7 @@
 // uncomment to enable:
 //
 //`define USE_DONT_TOUCH
-//`define USE_BRAM_IP
+//`define USE_BRAM_IP      // TODO: this is bugged
 //`define USE_NO_KECCAK
 //`define USE_NO_KECCAK_PERMUTATION
 
