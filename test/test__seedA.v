@@ -1,5 +1,5 @@
 `ifdef TEST
-    `DO_RST("test__seedA_simple")
+    `DO_RST("test__seedA_simple", 0)
     fork : test__seedA_simple
       begin
         // store seedA
@@ -37,7 +37,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__seedA_withPause")
+    `DO_RST("test__seedA_withPause", 0)
     fork : test__seedA_withPause
       begin
         // store seedA

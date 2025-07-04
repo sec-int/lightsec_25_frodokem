@@ -84,6 +84,8 @@ module main_core(
     output out_isReady,
     input out_canReceive,
 
+    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+
     input rst,
     input clk
   );
@@ -231,6 +233,7 @@ module main_core(
     .out_isLast(h__in_isLast_in[1]),
     .out(h__in[1*64+:64]),
     .out_canReceive(h__in_canReceive[1]),
+    .config_matrixNumBlocks(config_matrixNumBlocks),
     .rst(rst),
     .clk(clk)
   );

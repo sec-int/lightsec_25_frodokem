@@ -104,8 +104,6 @@ module memAndMul__indexHandler(
   assign index1__toggle = index1_reset ? 1'b0 : ~index1__toggle__d1;
   delay index1__toggle__ff(index1__toggle, index1__toggle__d1, rst, clk);
 
-  wire index1_reset__d1;
-  delay index1_reset__ff(index1_reset, index1_reset__d1, rst, clk);
   wire index1_has_next;
   wire index1_has_next__d1;
   delay index1_has_next__ff1 (index1_has_next, index1_has_next__d1, rst, clk);
@@ -339,6 +337,8 @@ module memAndMul__core(
     input bus_out_canReceive,
     output [64-1:0] bus_out__d2,
 
+    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+
     input rst,
     input clk
   );
@@ -512,6 +512,8 @@ module memAndMul__core(
     .w_dubBus(mainMemory__w_dubBus),
     .w_paral(mainMemory__w_paral),
     .w_halfBus(mainMemory__w_halfBus),
+
+    .config_matrixNumBlocks(config_matrixNumBlocks),
 
     .rst(rst),
     .clk(clk)
@@ -801,6 +803,8 @@ module memAndMul(
     output [64-1:0] out,
     input out_canReceive,
 
+    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+
     input rst,
     input clk
   );
@@ -864,6 +868,7 @@ module memAndMul(
     .bus_in(core__bus_in),
     .bus_out_canReceive(core__bus_out_canReceive),
     .bus_out__d2(core__bus_out__d2),
+    .config_matrixNumBlocks(config_matrixNumBlocks),
     .rst(rst),
     .clk(clk)
   );

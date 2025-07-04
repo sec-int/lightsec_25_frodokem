@@ -5,7 +5,7 @@
 
 
 `ifdef TEST
-    `DO_RST("test__memOp_erase1")
+    `DO_RST("test__memOp_erase1", 16)
     fork : test__memOp_erase1
       begin
         // store S
@@ -23,12 +23,12 @@
       end
 
       begin
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND(64'h0001_0001_0001_0001)
         end
         `TEST_UTIL__SEND_CANT
 
-        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2688; test__memOp__out_i = test__memOp__out_i+1) begin
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd32; test__memOp__out_i = test__memOp__out_i+1) begin
           `TEST_UTIL__RECEIVE(64'h0)
         end
         `TEST_UTIL__RECEIVE_CANT
@@ -39,7 +39,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_erase2")
+    `DO_RST("test__memOp_erase2", 16)
     fork : test__memOp_erase2
       begin
         // store u
@@ -95,7 +95,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_erase3")
+    `DO_RST("test__memOp_erase3", 16)
     fork : test__memOp_erase3
       begin
         // store B
@@ -125,12 +125,12 @@
       end
 
       begin
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND(64'h0001_0001_0001_0001)
         end
         `TEST_UTIL__SEND_CANT
 
-        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd16 + 15'd2688; test__memOp__out_i = test__memOp__out_i+1) begin
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd16 + 15'd32; test__memOp__out_i = test__memOp__out_i+1) begin
           `TEST_UTIL__RECEIVE(64'h0)
         end
         `TEST_UTIL__RECEIVE_CANT
@@ -141,7 +141,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_addToC")
+    `DO_RST("test__memOp_addToC", 16)
     fork : test__memOp_addToC
       begin
         // store C
@@ -186,7 +186,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_addToC_del1")
+    `DO_RST("test__memOp_addToC_del1", 16)
     fork : test__memOp_addToC_del1
       begin
         // store C
@@ -234,7 +234,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_addToMinusB")
+    `DO_RST("test__memOp_addToMinusB", 16)
     fork : test__memOp_addToMinusB
       begin
         // store B
@@ -254,16 +254,16 @@
       end
 
       begin
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND(64'h1000_C400_1800_CC00 ^ {4{test__memOp__in_i[0+:16]}})
         end
         
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND(64'h3000_3400_C800_CC00 ^ {4{test__memOp__in_i[0+:16]}})
         end
         `TEST_UTIL__SEND_CANT
 
-        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2688; test__memOp__out_i = test__memOp__out_i+1) begin
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd32; test__memOp__out_i = test__memOp__out_i+1) begin
           `TEST_UTIL__RECEIVE({
             (16'h3000 ^ test__memOp__out_i[0+:16]) - (16'h1000 ^ test__memOp__out_i[0+:16]),
             (16'h3400 ^ test__memOp__out_i[0+:16]) - (16'hC400 ^ test__memOp__out_i[0+:16]),
@@ -279,7 +279,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CeqU")
+    `DO_RST("test__memOp_CeqU", 16)
     fork : test__memOp_CeqU
       begin
         // store u
@@ -323,7 +323,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CeqUminC")
+    `DO_RST("test__memOp_CeqUminC", 16)
     fork : test__memOp_CeqUminC
       begin
         // store u
@@ -381,7 +381,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_selectKey_both0")
+    `DO_RST("test__memOp_selectKey_both0", 16)
     fork : test__memOp_selectKey_both0
       begin
         // store B
@@ -413,7 +413,7 @@
       end
 
       begin
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND(64'h0)
         end
 
@@ -437,7 +437,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_selectKey_firstBis1")
+    `DO_RST("test__memOp_selectKey_firstBis1", 16)
     fork : test__memOp_selectKey_firstBis1
       begin
         // store B
@@ -469,7 +469,7 @@
       end
 
       begin
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND(test__memOp__in_i == 0 ? 64'h1 : 64'h0)
         end
 
@@ -493,7 +493,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_selectKey_lastCis1")
+    `DO_RST("test__memOp_selectKey_lastCis1", 16)
     fork : test__memOp_selectKey_lastCis1
       begin
         // store B
@@ -525,8 +525,8 @@
       end
 
       begin
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd2688; test__memOp__in_i = test__memOp__in_i+1) begin
-          `TEST_UTIL__SEND(test__memOp__in_i == 15'd16 + 15'd2688 -1 ? 64'h1 : 64'h0)
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16 + 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND(test__memOp__in_i == 15'd16 + 15'd32 -1 ? 64'h1 : 64'h0)
         end
 
         for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
@@ -549,7 +549,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_single1")
+    `DO_RST("test__memOp_CpleqStimesInB_single1", 16)
     fork : test__memOp_CpleqStimesInB_single1
       begin
         // store C
@@ -578,26 +578,18 @@
           `TEST_UTIL__SEND(64'h0000_0001_0000_0000)
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
+        for(test__memOp__out_i = 1; test__memOp__out_i < 8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
+        for(test__memOp__out_i = 1; test__memOp__out_i < 8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        end
        `TEST_UTIL__SEND_CANT
 
-        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0150) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0004) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
         `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
         `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
         `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
@@ -613,7 +605,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_all1")
+    `DO_RST("test__memOp_CpleqStimesInB_all1", 16)
     fork : test__memOp_CpleqStimesInB_all1
       begin
         // store C
@@ -642,27 +634,22 @@
           `TEST_UTIL__SEND(64'h4000_3000_2000_1000 ^ {4{ {12'b0, test__memOp__in_i[0+:4]} }})
         end
 
-        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
-            `TEST_UTIL__SEND({4{ 16'b1 }})
-          end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND({4{ 16'b1 }})
         end
 
-        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
-            `TEST_UTIL__SEND({4{ 16'b1 }})
-          end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND({4{ 16'b1 }})
         end
        `TEST_UTIL__SEND_CANT
-
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__RECEIVE({
-              (16'h4000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344,
-              (16'h3000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344,
-              (16'h2000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344,
-              (16'h1000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344
+              (16'h4000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h3000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h2000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h1000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16
             })
           end
         end
@@ -674,7 +661,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_checkResultRowCol")
+    `DO_RST("test__memOp_CpleqStimesInB_checkResultRowCol", 16)
     fork : test__memOp_CpleqStimesInB_checkResultRowCol
       begin
         // store C
@@ -704,13 +691,13 @@
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({4{ {12'b0, test__memOp__out_i[0+:3]} - 16'd4 }})
           end
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({4{ {12'b1, test__memOp__out_i[0+:4]} }})
           end
         end
@@ -719,10 +706,10 @@
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__RECEIVE({
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd3}),
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd2}),
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd1}),
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd0})
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd3}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd2}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd1}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd0})
             })
           end
         end
@@ -734,7 +721,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_checkVectorMul")
+    `DO_RST("test__memOp_CpleqStimesInB_checkVectorMul", 16)
     fork : test__memOp_CpleqStimesInB_checkVectorMul
       begin
         // store C
@@ -764,7 +751,7 @@
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({
               ({12'b0, test__memOp__in_i[0], 2'd3} - 16'd4),
               ({12'b0, test__memOp__in_i[0], 2'd2} - 16'd4),
@@ -775,7 +762,7 @@
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({
               1'b0, test__memOp__in_i[0+:13], 2'd3,
               1'b0, test__memOp__in_i[0+:13], 2'd2,
@@ -787,7 +774,7 @@
        `TEST_UTIL__SEND_CANT
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd16; test__memOp__out_i = test__memOp__out_i+1) begin
-          `TEST_UTIL__RECEIVE(64'h38e0_38e0_38e0_38e0)
+          `TEST_UTIL__RECEIVE(64'h0018_0018_0018_0018)
         end
         `TEST_UTIL__RECEIVE_CANT
       end
@@ -797,7 +784,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesBT_single1")
+    `DO_RST("test__memOp_CpleqStimesBT_single1", 16)
     fork : test__memOp_CpleqStimesBT_single1
       begin
         // store C
@@ -829,26 +816,18 @@
           `TEST_UTIL__SEND(64'h0000_0001_0000_0000)
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
+        for(test__memOp__out_i = 1; test__memOp__out_i < 8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
+        for(test__memOp__out_i = 1; test__memOp__out_i < 8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        end
        `TEST_UTIL__SEND_CANT
 
-        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0150) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0004) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
         `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
         `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
         `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
@@ -864,7 +843,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesBT_all1")
+    `DO_RST("test__memOp_CpleqStimesBT_all1", 16)
     fork : test__memOp_CpleqStimesBT_all1
       begin
         // store C
@@ -896,11 +875,11 @@
           `TEST_UTIL__SEND(64'h4000_3000_2000_1000 ^ {4{ {12'b0, test__memOp__in_i[0+:4]} }})
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344 * 15'd8 / 4; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND({4{ 16'b1 }})
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344 * 15'd8 / 4; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND({4{ 16'b1 }})
         end
        `TEST_UTIL__SEND_CANT
@@ -909,10 +888,10 @@
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__RECEIVE({
-              (16'h4000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344,
-              (16'h3000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344,
-              (16'h2000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344,
-              (16'h1000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd1344
+              (16'h4000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h3000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h2000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h1000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16
             })
           end
         end
@@ -924,7 +903,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesBT_checkResultRowCol")
+    `DO_RST("test__memOp_CpleqStimesBT_checkResultRowCol", 16)
     fork : test__memOp_CpleqStimesBT_checkResultRowCol
       begin
         // store C
@@ -957,13 +936,13 @@
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({4{ {12'b0, test__memOp__out_i[0+:3]} - 16'd4 }})
           end
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({4{ {12'b1, test__memOp__out_i[0+:4]} }})
           end
         end
@@ -972,10 +951,10 @@
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__RECEIVE({
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd3}),
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd2}),
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd1}),
-              16'd1344 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd0})
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd3}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd2}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd1}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd0})
             })
           end
         end
@@ -987,7 +966,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesBT_checkVectorMul")
+    `DO_RST("test__memOp_CpleqStimesBT_checkVectorMul", 16)
     fork : test__memOp_CpleqStimesBT_checkVectorMul
       begin
         // store C
@@ -1020,7 +999,7 @@
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({
               ({12'b0, test__memOp__in_i[0], 2'd3} - 16'd4),
               ({12'b0, test__memOp__in_i[0], 2'd2} - 16'd4),
@@ -1031,7 +1010,7 @@
         end
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2688/8; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({
               1'b0, test__memOp__in_i[0+:13], 2'd3,
               1'b0, test__memOp__in_i[0+:13], 2'd2,
@@ -1043,7 +1022,7 @@
        `TEST_UTIL__SEND_CANT
 
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd16; test__memOp__out_i = test__memOp__out_i+1) begin
-          `TEST_UTIL__RECEIVE(64'h38e0_38e0_38e0_38e0)
+          `TEST_UTIL__RECEIVE(64'h0018_0018_0018_0018)
         end
         `TEST_UTIL__RECEIVE_CANT
       end
@@ -1053,7 +1032,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_UeqCminBtimesS_checkDecoder")
+    `DO_RST("test__memOp_UeqCminBtimesS_checkDecoder", 16)
     fork : test__memOp_UeqCminBtimesS_checkDecoder
       begin
         // store C
@@ -1090,11 +1069,11 @@
           })
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344 * 15'd8 / 4; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND({4{ 16'b0 }})
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344 * 15'd8 / 4; test__memOp__in_i = test__memOp__in_i+1) begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
           `TEST_UTIL__SEND({4{ 16'b0 }})
         end
        `TEST_UTIL__SEND_CANT
@@ -1111,7 +1090,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_UeqCminBtimesS_simple")
+    `DO_RST("test__memOp_UeqCminBtimesS_simple", 16)
     fork : test__memOp_UeqCminBtimesS_simple
       begin
         // store C
@@ -1148,23 +1127,23 @@
         `TEST_UTIL__SEND(64'h0000_0000_0000_0000) `TEST_UTIL__SEND(64'h0000_0000_0000_0000)
         `TEST_UTIL__SEND(64'h0000_0000_0000_0000) `TEST_UTIL__SEND(64'h0000_0000_0000_0000)
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0001_0002_0004_0004) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0001_0002_0004_0004) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0008_0004_0002_0002) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0008_0004_0002_0002) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0008_0004_0002_0002) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0008_0004_0002_0002) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd1344/4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h02A0_0150_00A8_00A8) end // Multiply those values by 1344/4
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h02A0_0150_00A8_00A8) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h02A0_0150_00A8_00A8) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h02A0_0150_00A8_00A8) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
        `TEST_UTIL__SEND_CANT
 
         `TEST_UTIL__RECEIVE(64'h0000_0000_0000_00D0)

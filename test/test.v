@@ -57,6 +57,7 @@ module test();
   wire [64-1:0] out;
   wire out_isReady;
   reg out_canReceive = 1'b0;
+  reg [9-1:0] config_matrixNumBlocks = 1'b0;
   reg rst = 1'b0;
   main_core_serialCmd toTest(
     .cmd(cmd),
@@ -68,6 +69,7 @@ module test();
     .out(out),
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
+    .config_matrixNumBlocks(config_matrixNumBlocks),
     .rst(rst),
     .clk(clk)
   );
@@ -82,9 +84,10 @@ module test();
 
 
 `define TEST
-`define DO_RST(testName) \
+`define DO_RST(testName, matrixSize) \
         @(negedge clk); \
         rst <= 1'b1; \
+        config_matrixNumBlocks <= (matrixSize) >> 2; \
         @(posedge clk); \
         test_name <= (testName); \
         @(negedge clk); \
@@ -171,7 +174,7 @@ module test();
 `include "test__keccak.v"
 `include "test__mem.v"
 `include "test__memOp.v"
-    `DO_RST("DONE!")
+    `DO_RST("DONE!", 0)
     #3;
     $finish();
   end

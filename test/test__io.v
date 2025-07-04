@@ -1,5 +1,5 @@
 `ifdef TEST
-    `DO_RST("test__io_simple")
+    `DO_RST("test__io_simple", 0)
     fork : test__io_simple
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd3})
@@ -35,7 +35,7 @@
 //-----------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__io_withPause")
+    `DO_RST("test__io_withPause", 0)
     fork : test__io_withPause
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd3})
@@ -66,7 +66,7 @@
 //-----------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__io_noOutCounter")
+    `DO_RST("test__io_noOutCounter", 0)
     fork : test__io_noOutCounter
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd3})
@@ -97,7 +97,7 @@
 //-----------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__io_noInCounter")
+    `DO_RST("test__io_noInCounter", 0)
     fork : test__io_noInCounter
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})

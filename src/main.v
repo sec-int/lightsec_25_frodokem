@@ -580,13 +580,13 @@ module main(
     .cmd(core__cmd),
     .cmd_hasAny(core__cmd_hasAny),
     .cmd_consume(core__cmd_consume),
-
     .in(in),
     .in_isReady(in_isReady),
     .in_canReceive(in_canReceive),
     .out(out),
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
+    .config_matrixNumBlocks(9'd336), // only the parameter set 1344 is supported for now
     .rst(rst),
     .clk(clk)
   );

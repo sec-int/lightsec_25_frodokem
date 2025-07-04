@@ -157,9 +157,8 @@ module mem_byteIndexToByteEnable(
   endgenerate
 endmodule
 
-`define MainMem_OFF_B		9'd0
-`define MainMem_OFF_S		(`MainMem_OFF_B + 9'd336)
-`define MainMem_OFF_SSState	(`MainMem_OFF_S + 9'd84)
+
+`define MainMem_OFF_SSState	9'd0
 `define MainMem_OFF_C		(`MainMem_OFF_SSState + 9'd4)
 `define MainMem_OFF_RNGState	(`MainMem_OFF_C + 9'd2)
 `define MainMem_OFF_salt	(`MainMem_OFF_RNGState + 9'd1)
@@ -167,6 +166,9 @@ endmodule
 `define MainMem_OFF_pkh		(`MainMem_OFF_seedSE + 9'd1)
 `define MainMem_OFF_U		(`MainMem_OFF_pkh + 9'd1)
 `define MainMem_OFF_k		(`MainMem_OFF_U + 9'd1)
+`define MainMem_OFF_B		(`MainMem_OFF_k + 9'd1)
+`define MainMem_OFF_S		(`MainMem_OFF_B + 9'd336)
+
 
 // it connects two side: Outside, Inside
 `ATTR_MOD_GLOBAL
@@ -208,7 +210,11 @@ module mainMem_readConnector(
     output [8-1:0] i_byteEnable,
     output [8-1:0] i_fromNextIndex, // if selected, the BRAM's index is the next one
     input [64*8-1:0] i_value__d2,
-    
+
+    input [9-1:0] config_matrixNumBlocksMin1, // how many 8x4 matrixes are in B and S minus 1. The FrodoKEM parameter/4-1.
+    input [14-1:0] config_matrixNumBlocksTimes8Min1, // how many 1x4 matrixes are in B and S minus 1. The FrodoKEM parameter*2-1.
+    input [14-1:0] config_matrixNumBlocksTimes4Min1, // how many 8x1 matrixes are in B and S minus 1. The FrodoKEM parameter-1.
+
     input rst,
     input clk
 );
@@ -224,11 +230,11 @@ module mainMem_readConnector(
                              | o_bus_k ? `MainMem_OFF_k : 9'd0;
 
 
-  assign o_index_next = ((o_bus_B_row | o_bus_S_row_DBG) & (o_index[0+:9] == 9'd335)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
+  assign o_index_next = ((o_bus_B_row | o_bus_S_row_DBG) & (o_index[0+:9] == config_matrixNumBlocksMin1)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
                                                                                       : o_index + 14'd1;
 
-  assign o_index_hasNext = ((o_bus_B_row | o_bus_S_row_DBG) ? o_index != {5'd7, 9'd335} : 1'b0)
-                         | (o_bus_B_col ? o_index != 14'd2687 : 1'b0) 
+  assign o_index_hasNext = ((o_bus_B_row | o_bus_S_row_DBG) ? o_index != {5'd7, config_matrixNumBlocksMin1} : 1'b0)
+                         | (o_bus_B_col ? o_index != config_matrixNumBlocksTimes8Min1 : 1'b0) 
                          | ((o_bus_C_row | o_quarterBus_U_row) ? o_index != 14'd15 : 1'b0) 
                          | (o_bus_SSState ? o_index != 14'd24 : 1'b0) 
                          | (o_bus_RNGState ? o_index != 14'd7 : 1'b0) 
@@ -236,10 +242,10 @@ module mainMem_readConnector(
                          | (o_bus_seedSE ? o_index != 14'd7 : 1'b0)
                          | (o_bus_pkh ? o_index != 14'd3 : 1'b0)
                          | (o_bus_k ? o_index != 14'd3 : 1'b0)
-                         | ((o_dubBus_B_col | o_halfBus_S_col) ? o_index != 14'd1343 : 1'b0)
+                         | ((o_dubBus_B_col | o_halfBus_S_col) ? o_index != config_matrixNumBlocksTimes4Min1 : 1'b0)
                          | ((o_dubBus_C_col | o_dubBus_C_row) ? o_index != 14'd7 : 1'b0)
                          | (o_bus_U_twoRows ? o_index != 14'd3 : 1'b0) 
-                         | ((o_paral_B_mat | o_dubBus_S_mat) ? o_index != 14'd335 : 1'b0);
+                         | ((o_paral_B_mat | o_dubBus_S_mat) ? o_index != {5'd0, config_matrixNumBlocksMin1} : 1'b0);
 
   wire o_bus_anyCell = o_bus_SSState
                      | o_bus_RNGState
@@ -418,7 +424,11 @@ module mainMem_writeConnector(
     output [9-1:0] i_index, // 512 values
     output [8-1:0] i_bramEnable,
     output [8-1:0] i_byteEnable,
-    output [64*8-1:0] i_value
+    output [64*8-1:0] i_value,
+    
+    input [9-1:0] config_matrixNumBlocksMin1, // how many 8x4 matrixes are in B and S minus 1. The FrodoKEM parameter/4-1.
+    input [14-1:0] config_matrixNumBlocksTimes8Min1, // how many 1x4 matrixes are in B and S minus 1. The FrodoKEM parameter*2-1.
+    input [14-1:0] config_matrixNumBlocksTimes4Min1 // how many 8x1 matrixes are in B and S minus 1. The FrodoKEM parameter-1.
 );
   wire [9-1:0] column_offset = (o_bus_B_row | o_bus_B_col | o_dubBus_B_col | o_paral_B_mat) ? `MainMem_OFF_B : 9'd0
                              | o_bus_S_row ? `MainMem_OFF_S : 9'd0
@@ -431,11 +441,11 @@ module mainMem_writeConnector(
                              | (o_halfBus_U_row | o_bus_U_twoRows) ? `MainMem_OFF_U : 9'd0
                              | o_bus_k ? `MainMem_OFF_k : 9'd0;
 
-  assign o_index_next = ((o_bus_B_row | o_bus_S_row) & (o_index[0+:9] == 9'd335)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
+  assign o_index_next = ((o_bus_B_row | o_bus_S_row) & (o_index[0+:9] == config_matrixNumBlocksMin1)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
                                                                                   : o_index + 14'b1;
 
-  assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index != {5'd7, 9'd335} : 1'b0)
-                         | (o_bus_B_col ? o_index != 14'd2687 : 1'b0) 
+  assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index != {5'd7, config_matrixNumBlocksMin1} : 1'b0)
+                         | (o_bus_B_col ? o_index != config_matrixNumBlocksTimes8Min1 : 1'b0) 
                          | (o_bus_C_row ? o_index != 14'd15 : 1'b0) 
                          | (o_bus_SSState ? o_index != 14'd24 : 1'b0) 
                          | (o_bus_RNGState ? o_index != 14'd7 : 1'b0) 
@@ -443,10 +453,10 @@ module mainMem_writeConnector(
                          | (o_bus_seedSE ? o_index != 14'd7 : 1'b0)
                          | (o_bus_pkh ? o_index != 14'd3 : 1'b0)
                          | (o_bus_k ? o_index != 14'd3 : 1'b0)
-                         | (o_dubBus_B_col ? o_index != 14'd1343 : 1'b0)
+                         | (o_dubBus_B_col ? o_index != config_matrixNumBlocksTimes4Min1 : 1'b0)
                          | ((o_dubBus_C_col | o_halfBus_U_row) ? o_index != 14'd7 : 1'b0)
                          | (o_bus_U_twoRows ? o_index != 14'd3 : 1'b0) 
-                         | (o_paral_B_mat ? o_index != 14'd335 : 1'b0);
+                         | (o_paral_B_mat ? o_index != {5'd0, config_matrixNumBlocksMin1} : 1'b0);
 
   wire o_bus_anyCell = o_bus_SSState
                      | o_bus_RNGState
@@ -581,9 +591,15 @@ module mainMem(
     input w_halfBus_U_row, // 4b1x8
     input [4*8-1:0] w_halfBus,
 
+    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+
     input rst,
     input clk
   );
+  wire [9-1:0] config_matrixNumBlocksMin1 = config_matrixNumBlocks - 9'd1;
+  wire [14-1:0] config_matrixNumBlocksTimes8Min1 = (config_matrixNumBlocks << 3) - 14'd1;
+  wire [14-1:0] config_matrixNumBlocksTimes4Min1 = (config_matrixNumBlocks << 2) - 14'd1;
+
 
   wire [9-1:0] b__r_index;
   wire [8-1:0] b__r_bramEnable;
@@ -640,6 +656,9 @@ module mainMem(
     .i_byteEnable(b__r_byteEnable),
     .i_fromNextIndex(b__r_fromNextIndex),
     .i_value__d2(b__r_value__d2),
+    .config_matrixNumBlocksMin1(config_matrixNumBlocksMin1),
+    .config_matrixNumBlocksTimes8Min1(config_matrixNumBlocksTimes8Min1),
+    .config_matrixNumBlocksTimes4Min1(config_matrixNumBlocksTimes4Min1),
     .rst(rst),
     .clk(clk)
   );
@@ -670,7 +689,10 @@ module mainMem(
     .i_index(b__w_index),
     .i_bramEnable(b__w_bramEnable),
     .i_byteEnable(b__w_byteEnable),
-    .i_value(b__w_value)
+    .i_value(b__w_value),
+    .config_matrixNumBlocksMin1(config_matrixNumBlocksMin1),
+    .config_matrixNumBlocksTimes8Min1(config_matrixNumBlocksTimes8Min1),
+    .config_matrixNumBlocksTimes4Min1(config_matrixNumBlocksTimes4Min1)
   );
 
 endmodule
