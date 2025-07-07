@@ -92,11 +92,13 @@ module memAndMul__indexHandler(
   delay currentCmd_in_isFirstCycle__ff1 (currentCmd_in_isFirstCycle, currentCmd_in_isFirstCycle__d1, rst, clk);
 
   wire index1_isLast__d2;
-  wire index1_reset = (currentCmd_out & currentCmd_out_isFirstCycle)
-                    | (currentCmd_updateSyncAny & currentCmd_in_isFirstCycle)
-                    | (currentCmd_updateFSAny & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2));
-  wire index2_reset = (currentCmd_in & currentCmd_in_isFirstCycle)
-                    | (currentCmd_updateFSAny & currentCmd_in_isFirstCycle);
+  wire index2_has_next;
+  wire index1_reset = currentCmd_out & currentCmd_out_isFirstCycle
+                    | currentCmd_updateSyncAny & currentCmd_in_isFirstCycle
+                    | currentCmd_updateFastAny & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2)
+                    | currentCmd_updateSlowMemIn & index2_has_next & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2);
+  wire index2_reset = currentCmd_in & currentCmd_in_isFirstCycle
+                    | currentCmd_updateFSAny & currentCmd_in_isFirstCycle;
 
 
   // index update
@@ -117,7 +119,6 @@ module memAndMul__indexHandler(
   wire index1_isLast__d1 = index1_has_val__d1 & ~index1_has_val;
   assign index1_isLast__d2 = index1_has_val__d2 & ~index1_has_val__d1;
 
-  wire index2_has_next;
   wire index2_has_next__d1;
   delay index2_has_next__ff(index2_has_next, index2_has_next__d1, rst, clk);
   wire index2_has_val = index2_reset | index2_has_next__d1;
@@ -127,7 +128,8 @@ module memAndMul__indexHandler(
                      | currentCmd_updateAnyIn & bus_inOp_isReady
                      | currentCmd_updateSync;
   wire index2_update = currentCmd_in & bus_in_isReady
-                     | currentCmd_updateFSAny & index1_isLast;
+                     | currentCmd_updateFastAny & index1_isLast
+                     | currentCmd_updateSlowMemIn & index1_isLast__d1;
 
 
   // indexes

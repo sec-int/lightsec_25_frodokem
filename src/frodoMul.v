@@ -67,9 +67,9 @@ module frodoMul #(
   wire  [16*S-1:0] state; // 4b or 16b vals that are 16b aligned
   wire  [16*S-1:0] state__init;
   wire  [16*S-1:0] state__new;
-  wire  [16*S-1:0] state__a1 = setStorage ? state__init
-                             : doOp       ? state__new
-                                          : state;
+  wire  [16*S-1:0] state__a1 = setStorage          ? state__init
+                             : doOp & isMatrixMul1 ? state__new
+                                                   : state;
   delay #(16*S) state__ff (state__a1, state, rst, clk);
 
   generate
