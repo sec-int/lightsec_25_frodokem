@@ -92,11 +92,11 @@ module memAndMul__indexHandler(
   delay currentCmd_in_isFirstCycle__ff1 (currentCmd_in_isFirstCycle, currentCmd_in_isFirstCycle__d1, rst, clk);
 
   wire index1_isLast__d2;
-  wire index2_has_next;
+  wire index2_has_val;
   wire index1_reset = currentCmd_out & currentCmd_out_isFirstCycle
                     | currentCmd_updateSyncAny & currentCmd_in_isFirstCycle
                     | currentCmd_updateFastAny & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2)
-                    | currentCmd_updateSlowMemIn & index2_has_next & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2);
+                    | currentCmd_updateSlowMemIn & index2_has_val & (currentCmd_in_isFirstCycle__d1 | index1_isLast__d2);
   wire index2_reset = currentCmd_in & currentCmd_in_isFirstCycle
                     | currentCmd_updateFSAny & currentCmd_in_isFirstCycle;
 
@@ -120,8 +120,9 @@ module memAndMul__indexHandler(
   assign index1_isLast__d2 = index1_has_val__d2 & ~index1_has_val__d1;
 
   wire index2_has_next__d1;
+  wire index2_has_next;
   delay index2_has_next__ff(index2_has_next, index2_has_next__d1, rst, clk);
-  wire index2_has_val = index2_reset | index2_has_next__d1;
+  assign index2_has_val = index2_reset | index2_has_next__d1;
 
   wire index1_update = currentCmd_out & bus_out_canReceive
                      | currentCmd_updateAnyMem & index1__toggle
