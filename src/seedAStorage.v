@@ -21,11 +21,11 @@
 
 `include "lib.v"
 
-`define SeedAStorageCMD_SIZE 2
+`define SeedAStorageCMD_SIZE 1
 
 `ATTR_MOD_GLOBAL
 module seedAStorage (
-    input [`SeedAStorageCMD_SIZE-1:0] cmd, // { cmd_startIn:1bit, cmd_startOut:1bit }
+    input [`SeedAStorageCMD_SIZE-1:0] cmd, // { cmd_startInElseOut:1bit }
     input cmd_isReady,
     output cmd_canReceive,
 
@@ -55,13 +55,22 @@ module seedAStorage (
     .rst(rst),
     .clk(clk)
   );
-  wire cmdB_startIn = cmdB[1] & cmdB_isReady;
-  wire cmdB_startOut = cmdB[0] & cmdB_isReady;
+  wire cmdB_startIn = cmdB[0] & cmdB_isReady;
+  wire cmdB_startOut = ~cmdB[0] & cmdB_isReady;
+
+  wire isInElseOut;
+  ff_en_imm isInElseOut__ff (cmdB_isReady, cmdB[0], isInElseOut, rst, clk);
 
   wire [128-1:0] storage__a1;
   wire [128-1:0] storage;
-  delay #(128) storage__ff (storage__a1, storage, rst, clk);
+  delay #(128) storage__ff (storage__a1, storage, 1'b0, clk); // don't reset the storage, like for the brams. This is data, not control, so it will be overwritten when necessary. This is necessary to reset all the control stuff without resetting the info, e.g. in case we setup a test.
 
+  wire des_isReady = in_isReady & isInElseOut;
+  wire des_canReceive;
+  assign in_canReceive = des_canReceive & isInElseOut;
+  wire ser_canReceive = out_canReceive & ~isInElseOut;
+  wire ser_isReady;
+  assign out_isReady = ser_isReady & ~isInElseOut;
   serdes #(2) serdes (
     .cmd_startSer(cmdB_startOut),
     .cmd_startDes(cmdB_startIn),
@@ -69,12 +78,12 @@ module seedAStorage (
     .buffer_write(storage__a1),
     .buffer_read(storage),
     .des(in),
-    .des_isReady(in_isReady),
-    .des_canReceive(in_canReceive),
+    .des_isReady(des_isReady),
+    .des_canReceive(des_canReceive),
     .des_isLast(in_isLast),
     .ser(out),
-    .ser_isReady(out_isReady),
-    .ser_canReceive(out_canReceive),
+    .ser_isReady(ser_isReady),
+    .ser_canReceive(ser_canReceive),
     .ser_isLast(out_isLast),
     .rst(rst),
     .clk(clk)

@@ -578,7 +578,7 @@ module keccak_busOutConverter(
   assign out = in;
 
   wire noMoreOut;
-  ff_sr_next noMoreOut__ff (out_isLast, cDiff__canReceive_isLast, noMoreOut, rst, clk);
+  ff_rs_next noMoreOut__ff (cDiff__canReceive_isLast, out_isLast, noMoreOut, rst, clk);
 
   assign in_canReceive = c256__canReceive & (out_canReceive | noMoreOut)
                        | cDiff__canReceive & (is256else128 | out_canReceive | noMoreOut);
@@ -944,6 +944,9 @@ module keccak_ctrl #(parameter BUFF=3) (
 );
   wire is128else256;
   ff_en_imm is128else256__ff(in_cmd_isReady, in_cmd_is128else256, is128else256, rst, clk);
+  wire preventOverlapping;
+  wire preventOverlapping__shouldSet = (in_cmd_numInBlocks == 0) & (in_cmd_numOutBlocks == 0) & ~in_cmd_inState & ~in_cmd_outState;
+  ff_en_next preventOverlapping__ff(in_cmd_isReady, preventOverlapping__shouldSet, preventOverlapping, rst, clk);
 
   wire ignore1;
   wire firstK__reset, firstK;
@@ -993,8 +996,8 @@ module keccak_ctrl #(parameter BUFF=3) (
   wire postInState__set = in_cmd_isReady & in_cmd_inState;
   ff_s_r postInState__ff(postInState__set, postInState__reset, postInState, ignore4, rst, clk);
 
-  
-  assign in_cmd_canReceive = numInBlocks__canRestart & numOutBlocks__canRestart & ~inState__canNotRestart & ~outState__canNotRestart;
+  wire anyPlanned__d1;
+  assign in_cmd_canReceive = numInBlocks__canRestart & numOutBlocks__canRestart & ~inState__canNotRestart & ~outState__canNotRestart & (~preventOverlapping | ~anyPlanned__d1);
   
   wire [BUFF-1:0] plan_des128__d1;
   wire [BUFF-1:0] plan_des256__d1;
@@ -1008,6 +1011,7 @@ module keccak_ctrl #(parameter BUFF=3) (
   wire [BUFF-1:0] plan_desAny__d1 = plan_des128__d1 | plan_des256__d1 | plan_desState__d1;
   wire [BUFF-1:0] plan_keccakAny__d1 = plan_keccakStart__d1 | plan_keccakContinue__d1 | plan_desState__d1 | plan_serState__d1 | plan_desAny__d1;
   wire [BUFF-1:0] plan_serAny__d1 = plan_ser128__d1 | plan_ser256__d1 | plan_serState__d1 | plan_keccakAny__d1;
+  assign anyPlanned__d1 = | (plan_desAny__d1 | plan_keccakAny__d1 | plan_serAny__d1);
 
   wire [BUFF-1:0] free_keccak__d1;
   wire [BUFF-1:0] free_des__d1;
@@ -1021,7 +1025,7 @@ module keccak_ctrl #(parameter BUFF=3) (
   wire ser_doKeccak = ~postInState;
 
   wire [BUFF-1:0] free_desState__d1 = free_des__d1 & free_keccak__d1;
-//  wire [BUFF-1:0] free_desBlock__d1 = free_des__d1 & (des_doKeccak ? free_keccak__d1 >> 1 : {BUFF{1'b1}}); // TODO: this is an optimization that for some reason is not working, I'm not investing time in fixing it as we shouldn't really need it.
+//wire [BUFF-1:0] free_desBlock__d1 = free_des__d1 & (des_doKeccak ? free_keccak__d1 >> 1 : {BUFF{1'b1}}); // TODO: this is an optimization that for some reason is not working, I'm not investing time in fixing it as we shouldn't really need it.
   wire [BUFF-1:0] free_desBlock__d1 = free_des__d1 & (free_keccak__d1 >> 1);
   wire [BUFF-1:0] free_serBlock__d1 = (ser_doKeccak ? free_keccak__d1 : {BUFF{1'b1}}) & (free_ser__d1 >> 1);
   wire [BUFF-1:0] free_serState__d1 = free_ser__d1 & free_keccak__d1;

@@ -42,6 +42,7 @@ module memAndMul__indexHandler(
     input currentCmd_out_isFirstCycle,
     output currentCmd_in_isLastCycle,
     output currentCmd_out_isLastCycle, // the bus_out__d2 can output after this is active as this is to start new commands
+    input currentCmd_inOp_splitIn, // if the input matrix is split into multiple inputs.
 
     input bus_inOp_isReady,
     output bus_inOp_canReceive,
@@ -167,7 +168,8 @@ module memAndMul__indexHandler(
   
   // bus_inOp_
   assign bus_inOp_canReceive = (currentCmd_updateSyncIn | currentCmd_updateFSAnyIn) & index1_has_val;
-  assign bus_inOp_isLast = currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next & ~index2_has_next
+  assign bus_inOp_isLast = currentCmd_inOp_splitIn    ? ~index1_has_next
+                         : currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next & ~index2_has_next
                                                       : currentCmd_op_isLastCycle__a2;
 
   // r index
@@ -390,12 +392,14 @@ module memAndMul__core(
   wire indexHandler__w_enable;
   wor indexHandler__bus_in_isReady = bus_in_isReady;
   wor indexHandler__bus_out_canReceive = bus_out_canReceive;
+  wor indexHandler__currentCmd_inOp_splitIn;
   memAndMul__indexHandler indexHandler(
     .currentCmd(indexHandler__currentCmd),
     .currentCmd_in_isFirstCycle(indexHandler__currentCmd_in_isFirstCycle),
     .currentCmd_out_isFirstCycle(indexHandler__currentCmd_out_isFirstCycle),
     .currentCmd_in_isLastCycle(indexHandler__currentCmd_in_isLastCycle),
     .currentCmd_out_isLastCycle(indexHandler__currentCmd_out_isLastCycle),
+    .currentCmd_inOp_splitIn(indexHandler__currentCmd_inOp_splitIn),
 
     .bus_inOp_isReady(bus_inOp_isReady),
     .bus_inOp_canReceive(bus_inOp_canReceive),
@@ -626,6 +630,7 @@ module memAndMul__core(
   assign mainMemory__r_dubBus_S_mat = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] & indexHandler__r_index__useIndex1;
   assign m__doOp                    = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] & indexHandler__r_index__useIndex1 & indexHandler__r_enable;
   assign m__a__d2                   = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT] ? bus_inOp__d2 : 64'b0;
+  assign indexHandler__currentCmd_inOp_splitIn = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInAT];
 
   assign state__numStates           = currentCmd[`MemAndMulCMD_inOp_CpleqStimesInB] ? 1 : 0;
   assign indexHandler__currentCmd   = currentCmd[`MemAndMulCMD_inOp_CpleqStimesInB] ? `MemAndMulIndexCMD_updateFastMemIn : {`MemAndMulIndexCMD_SIZE{1'b0}};
@@ -643,6 +648,7 @@ module memAndMul__core(
   assign m__doOp                     = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & indexHandler__r_index__useIndex1;
   assign m__isMatrixMul2__d2         = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA];
   assign m__a__d2                    = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] ? bus_inOp__d2 : 64'b0;
+  assign indexHandler__currentCmd_inOp_splitIn = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA];
 
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_CeqUminC] ? 1 : 0;
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_CeqUminC] ? `MemAndMulIndexCMD_updateSyncMem : {`MemAndMulIndexCMD_SIZE{1'b0}};

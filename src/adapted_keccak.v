@@ -50,7 +50,7 @@ module adapted_keccak__in(
   wire [`KeccakInCMD_SIZE-1:0] cmdB;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  cmd_buffer #(.CmdSize(`KeccakInCMD_SIZE), .BufSize(2)) cmdBuf (
+  cmd_buffer #(.CmdSize(`KeccakInCMD_SIZE), .BufSize(4)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
@@ -181,7 +181,7 @@ module adapted_keccak__out(
   wire [`KeccakOutCMD_SIZE-1:0] cmdB;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  cmd_buffer #(.CmdSize(`KeccakOutCMD_SIZE), .BufSize(2)) cmdBuf (
+  cmd_buffer #(.CmdSize(`KeccakOutCMD_SIZE), .BufSize(3)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
@@ -246,7 +246,7 @@ module adapted_keccak (
   wire k__out_isReady;
   wire k__out_canReceive;
   wire k__out_isLast;
-  
+
   wire [`KeccakAdaptedCMD_SIZE-1:0] k__cmdB = k__cmd;
   wire k__cmdB_isReady = k__cmd_isReady;
   wire k__cmdB_canReceive;

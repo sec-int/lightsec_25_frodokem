@@ -45,7 +45,7 @@
 `define MainCoreCMD_NO_k     {`KeccakAdaptedCMD_SIZE{1'b0}}
 `define MainCoreCMD_NO_s     {`SeedAStorageCMD_SIZE{1'b0}}
 
-//                          15                   15                11                  2                       8                  6                    14                       2
+//                          15                   15                11                  2                       8                  6                    14                       1
 `define MainCoreCMD_SIZE  (`OuterInCMD_SIZE + `OuterOutCMD_SIZE + `KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE)
 
 
@@ -68,7 +68,7 @@ module main_core(
     // o_out: { size:15bits }
     // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:2bit } 
     // k_out: { skipIsLast:1bit, sample:1bit }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
+    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit } 
     // m:     { only command:6bit }
     // k:     { is128else256:1bit, inState:1bit, outState:1bit, mainIsInElseOut:1bit, mainNumBlocks:9bits, secondaryNumBlocks:1bits }
     // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
@@ -109,14 +109,14 @@ module main_core(
                      & ((cmd_hasAny & `MainCoreCMD_which_s) == 0 | s__cmd_canReceive)
                      & cmd_hasAny != 0;
 
-  wire o_in__cmd_isReady  = (cmd_hasAny & `MainCoreCMD_which_o_in) != 0 & o_in__cmd_canReceive;
-  wire o_out__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_o_out) != 0 & o_out__cmd_canReceive;
-  wire k_in__cmd_isReady  = (cmd_hasAny & `MainCoreCMD_which_k_in) != 0 & k_in__cmd_canReceive;
-  wire k_out__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_k_out) != 0 & k_out__cmd_canReceive;
-  wire h__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_h) != 0 & h__cmd_canReceive;
-  wire m__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_m) != 0 & m__cmd_canReceive;
-  wire k__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_k) != 0 & k__cmd_canReceive;
-  wire s__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_s) != 0 & s__cmd_canReceive;
+  wire o_in__cmd_isReady  = (cmd_hasAny & `MainCoreCMD_which_o_in) != 0 & o_in__cmd_canReceive & cmd_consume;
+  wire o_out__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_o_out) != 0 & o_out__cmd_canReceive & cmd_consume;
+  wire k_in__cmd_isReady  = (cmd_hasAny & `MainCoreCMD_which_k_in) != 0 & k_in__cmd_canReceive & cmd_consume;
+  wire k_out__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_k_out) != 0 & k_out__cmd_canReceive & cmd_consume;
+  wire h__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_h) != 0 & h__cmd_canReceive & cmd_consume;
+  wire m__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_m) != 0 & m__cmd_canReceive & cmd_consume;
+  wire k__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_k) != 0 & k__cmd_canReceive & cmd_consume;
+  wire s__cmd_isReady = (cmd_hasAny & `MainCoreCMD_which_s) != 0 & s__cmd_canReceive & cmd_consume;
 
   wire [`OuterInCMD_SIZE-1:0] o_in__cmd    = cmd[`OuterOutCMD_SIZE + `KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`OuterInCMD_SIZE];
   wire [`OuterOutCMD_SIZE-1:0] o_out__cmd  = cmd[`KeccakInCMD_SIZE + `KeccakOutCMD_SIZE + `CmdHubCMD_SIZE + `MemAndMulCMD_SIZE + `KeccakAdaptedCMD_SIZE + `SeedAStorageCMD_SIZE +:`OuterOutCMD_SIZE];
