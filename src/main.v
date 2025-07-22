@@ -747,7 +747,7 @@ module main(
     .out(out),
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
-    .config_matrixNumBlocks(9'd336), // only the parameter set 1344 is supported for now
+    .conf({ 8'd168, 3'b100 }), // only the parameter set 1344 is supported for now
     .rst(rst),
     .clk(clk)
   );

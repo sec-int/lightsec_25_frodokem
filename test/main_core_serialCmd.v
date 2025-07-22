@@ -51,7 +51,7 @@ module main_core_serialCmd(
     output out_isReady,
     input out_canReceive,
 
-    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+    input [`MainCoreCONF_SIZE-1:0] conf, // { The FrodoKEM parameter/8 : 8bits, which sampling distribution : 3bits }.
 
     input rst,
     input clk
@@ -79,7 +79,7 @@ module main_core_serialCmd(
     .out(out),
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
-    .config_matrixNumBlocks(config_matrixNumBlocks),
+    .conf(conf),
     .rst(rst),
     .clk(clk)
   );

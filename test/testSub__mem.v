@@ -5,7 +5,7 @@
 
 
 `ifdef TEST
-    `DO_RST("test__mem_k", 16)
+    `DO_RST("test__mem_k", 16, 2)
     fork : test__mem_k__p1
       begin
         // store into memory
@@ -54,7 +54,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_u", 16)
+    `DO_RST("test__mem_u", 16, 2)
     fork : test__mem_u__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_u})
@@ -89,7 +89,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_pkh", 16)
+    `DO_RST("test__mem_pkh", 16, 2)
     fork : test__mem_pkh__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_pkh})
@@ -124,7 +124,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_salt", 16)
+    `DO_RST("test__mem_salt", 16, 2)
     fork : test__mem_salt__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_salt})
@@ -159,7 +159,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_seedSE", 16)
+    `DO_RST("test__mem_seedSE", 16, 2)
     fork : test__mem_seedSE__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_seedSE})
@@ -194,7 +194,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_RNGState", 16)
+    `DO_RST("test__mem_RNGState", 16, 2)
     fork : test__mem_RNGState__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_RNGState})
@@ -229,7 +229,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_CRowFirst", 16)
+    `DO_RST("test__mem_CRowFirst", 16, 2)
     fork : test__mem_CRowFirst__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_CRowFirst})
@@ -264,7 +264,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_SSState", 16)
+    `DO_RST("test__mem_SSState", 16, 2)
     fork : test__mem_SSState__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_SSState})
@@ -299,7 +299,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_BRowFirst_straight", 16)
+    `DO_RST("test__mem_BRowFirst_straight", 16, 2)
     fork : test__mem_BRowFirst_straight__p1
       begin
         // store
@@ -336,7 +336,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_BRowFirst_transposed", 16)
+    `DO_RST("test__mem_BRowFirst_transposed", 16, 2)
     fork : test__mem_BRowFirst_transposed__p1
       begin
         // store
@@ -380,7 +380,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_BColFirst_straight", 16)
+    `DO_RST("test__mem_BColFirst_straight", 16, 2)
     fork : test__mem_BColFirst_straight__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BColFirst})
@@ -416,7 +416,7 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_BColFirst_transposed", 16)
+    `DO_RST("test__mem_BColFirst_transposed", 16, 2)
     fork : test__mem_BColFirst_transposed__p1
       begin
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_BColFirst})
@@ -475,10 +475,10 @@
 
 `define test__mem_SRowFirst__p1__mixer(a)  { a[2]^a[6]^a[9]^a[12], a[1]^a[5]^a[8]^a[11], a[0]^a[4]^a[7]^a[10] }
 `define test__mem_SRowFirst__p1__mixer__std(a, l)  { {13{a[3]}}, `test__mem_SRowFirst__p1__mixer(a)^l }
-`define test__mem_SRowFirst__p1__mixer__compact(a, l)  {a[3], a[3] ? - (`test__mem_SRowFirst__p1__mixer(a)^l) : `test__mem_SRowFirst__p1__mixer(a)^l }
+`define test__mem_SRowFirst__p1__mixer__compact(a, l)  { a[3] ? - (`test__mem_SRowFirst__p1__mixer(a)^l) : `test__mem_SRowFirst__p1__mixer(a)^l, a[3] }
 
 `ifdef TEST
-    `DO_RST("test__mem_SRowFirst", 16)
+    `DO_RST("test__mem_SRowFirst", 16, 2)
     fork : test__mem_SRowFirst__p1
       begin
         // store
@@ -526,7 +526,52 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__mem_noOverlap", 1344)
+    `DO_RST("test__mem_SRowFirst_largeS", 16, 0)
+    fork : test__mem_SRowFirst_largeS__p1
+      begin
+        // store
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+      end
+
+      begin
+        for(test__mem__in_i = 0; test__mem__in_i < 15'd32; test__mem__in_i = test__mem__in_i+1) begin
+          `TEST_UTIL__SEND({
+            32'b0,
+            { 12'b0, test__mem__in_i[0+:4] },
+            -{ 12'b0, test__mem__in_i[0+:4] }
+          })
+        end
+        `TEST_UTIL__SEND_CANT
+      end
+    join
+
+    fork : test__mem_SRowFirst_largeS__p2
+      begin
+        // load
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, `MemAndMulCMD_out_SRowFirst_DBG})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__mem__out_i = 0; test__mem__out_i < 15'd32; test__mem__out_i = test__mem__out_i+1) begin
+          `TEST_UTIL__RECEIVE({
+            48'b0,
+            { 3'b0, test__mem__out_i[0+:4] , 1'b0 },
+            { 3'b0, test__mem__out_i[0+:4] , (test__mem__out_i[0+:4] == 0 ? 1'b0 : 1'b1) }
+          })
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__mem_noOverlap", 1344, 2)
     fork : test__mem_noOverlap__p1  // store
       begin
         // S

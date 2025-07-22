@@ -20,6 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////////
 
 
+`define MemCONF_matrixNumBlocks_size 8
+
 `ATTR_MOD_GLOBAL
 module bram(
   input doRead,
@@ -187,20 +189,22 @@ module mainMem_readConnector(
     input o_bus_pkh, // 64b
     input o_bus_k, // 64b
     input o_bus_U_twoRows, // 4b2x8
-    input o_bus_S_row_DBG, // row first, the internal encoding of 4b1x4
+    input o_bus_S_row_DBG, // row first, the internal encoding of 5b1x4
     output [16*4-1:0] o_bus__d2,
 
     input o_dubBus_B_col, // 16b8x1
     input o_dubBus_C_col, // 16b8x1
     input o_dubBus_C_row, // 16b1x8
-    input o_dubBus_S_mat, // 4b8x4
     output [16*8-1:0] o_dubBus__d2,
+
+    input o_paralSBus_S_mat, // 5b8x4
+    output [5*4*8-1:0] o_paralSBus__d2,
 
     input o_paral_B_mat, // 16b8x4
     output [16*4*8-1:0] o_paral__d2,
 
-    input o_halfBus_S_col, // 4b8x1
-    output [4*8-1:0] o_halfBus__d2,
+    input o_SBus_S_col, // 5b8x1.
+    output [5*8-1:0] o_SBus__d2,
 
     input o_quarterBus_U_row, // 4b4x1
     output [4*4-1:0] o_quarterBus__d2,
@@ -211,15 +215,16 @@ module mainMem_readConnector(
     output [8-1:0] i_fromNextIndex, // if selected, the BRAM's index is the next one
     input [64*8-1:0] i_value__d2,
 
-    input [9-1:0] config_matrixNumBlocksMin1, // how many 8x4 matrixes are in B and S minus 1. The FrodoKEM parameter/4-1.
-    input [14-1:0] config_matrixNumBlocksTimes8Min1, // how many 1x4 matrixes are in B and S minus 1. The FrodoKEM parameter*2-1.
-    input [14-1:0] config_matrixNumBlocksTimes4Min1, // how many 8x1 matrixes are in B and S minus 1. The FrodoKEM parameter-1.
+    input [9-1:0] config_matrixNumCellsMin1, // how many 8x4 matrixes are in B and S minus 1. The FrodoKEM parameter/4-1.
+    input [14-1:0] config_matrixNumCellsTimes8Min1, // how many 1x4 matrixes are in B and S minus 1. The FrodoKEM parameter*2-1.
+    input [14-1:0] config_matrixNumCellsTimes4Min1, // how many 8x1 matrixes are in B and S minus 1. The FrodoKEM parameter-1.
+    input config_SUseHalfByte,
 
     input rst,
     input clk
 );
   wire [9-1:0] column_offset = (o_bus_B_row | o_bus_B_col | o_dubBus_B_col | o_paral_B_mat) ? `MainMem_OFF_B : 9'd0
-                             | (o_bus_S_row_DBG | o_dubBus_S_mat | o_halfBus_S_col) ? `MainMem_OFF_S : 9'd0
+                             | (o_bus_S_row_DBG | o_paralSBus_S_mat | o_SBus_S_col) ? `MainMem_OFF_S : 9'd0
                              | o_bus_SSState ? `MainMem_OFF_SSState : 9'd0
                              | (o_bus_C_row | o_dubBus_C_col | o_dubBus_C_row) ? `MainMem_OFF_C : 9'd0
                              | o_bus_RNGState ? `MainMem_OFF_RNGState : 9'd0
@@ -229,12 +234,11 @@ module mainMem_readConnector(
                              | (o_bus_U_twoRows | o_quarterBus_U_row) ? `MainMem_OFF_U : 9'd0
                              | o_bus_k ? `MainMem_OFF_k : 9'd0;
 
+  assign o_index_next = ((o_bus_B_row | o_bus_S_row_DBG) & (o_index[0+:9] == config_matrixNumCellsMin1)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
+                                                                                                         : o_index + 14'd1;
 
-  assign o_index_next = ((o_bus_B_row | o_bus_S_row_DBG) & (o_index[0+:9] == config_matrixNumBlocksMin1)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
-                                                                                      : o_index + 14'd1;
-
-  assign o_index_hasNext = ((o_bus_B_row | o_bus_S_row_DBG) ? o_index != {5'd7, config_matrixNumBlocksMin1} : 1'b0)
-                         | (o_bus_B_col ? o_index != config_matrixNumBlocksTimes8Min1 : 1'b0) 
+  assign o_index_hasNext = ((o_bus_B_row | o_bus_S_row_DBG) ? o_index != {5'd7, config_matrixNumCellsMin1} : 1'b0)
+                         | (o_bus_B_col ? o_index != config_matrixNumCellsTimes8Min1 : 1'b0) 
                          | ((o_bus_C_row | o_quarterBus_U_row) ? o_index != 14'd15 : 1'b0) 
                          | (o_bus_SSState ? o_index != 14'd24 : 1'b0) 
                          | (o_bus_RNGState ? o_index != 14'd7 : 1'b0) 
@@ -242,10 +246,11 @@ module mainMem_readConnector(
                          | (o_bus_seedSE ? o_index != 14'd7 : 1'b0)
                          | (o_bus_pkh ? o_index != 14'd3 : 1'b0)
                          | (o_bus_k ? o_index != 14'd3 : 1'b0)
-                         | ((o_dubBus_B_col | o_halfBus_S_col) ? o_index != config_matrixNumBlocksTimes4Min1 : 1'b0)
+                         | ((o_dubBus_B_col | o_SBus_S_col) ? o_index != config_matrixNumCellsTimes4Min1 : 1'b0)
                          | ((o_dubBus_C_col | o_dubBus_C_row) ? o_index != 14'd7 : 1'b0)
                          | (o_bus_U_twoRows ? o_index != 14'd3 : 1'b0) 
-                         | ((o_paral_B_mat | o_dubBus_S_mat) ? o_index != {5'd0, config_matrixNumBlocksMin1} : 1'b0);
+                         | ((o_paral_B_mat | o_paralSBus_S_mat) ? o_index != {5'd0, config_matrixNumCellsMin1} : 1'b0);
+
 
   wire o_bus_anyCell = o_bus_SSState
                      | o_bus_RNGState
@@ -257,30 +262,37 @@ module mainMem_readConnector(
 
   wire o_dubBus_anyCol = o_dubBus_C_col
                        | o_dubBus_B_col
-                       | o_dubBus_S_mat;
+                       | o_paralSBus_S_mat & config_SUseHalfByte
+                       | o_bus_S_row_DBG & config_SUseHalfByte;
+
+  wire o_dubBus_anyTwoCol = o_paralSBus_S_mat & ~config_SUseHalfByte
+                          | o_bus_S_row_DBG & ~config_SUseHalfByte;
 
   wire [9-1:0] unoff_index_col = (o_bus_B_row | o_paral_B_mat) ? o_index[0+:9] : 9'b0
                                | o_bus_C_row ? {8'b0, o_index[0+:1]} : 9'b0
-                               | o_dubBus_anyCol ? o_index[2+:9] : 9'b0
-                               | o_bus_S_row_DBG ? {2'b0, o_index[2+:7]} : 9'b0
+                               | o_dubBus_anyCol ? (o_bus_S_row_DBG ? {2'b0, o_index[2+:7]} : o_index[2+:9]) : 9'b0
+                               | o_dubBus_anyTwoCol ? (o_bus_S_row_DBG ? {1'b0, o_index[1+:8]} : o_index[1+:9]) : 9'b0
                                | (o_bus_B_col | o_bus_anyCell) ? o_index[3+:9] : 9'b0
-                               | o_halfBus_S_col ? o_index[4+:9] : 9'b0;
+                               | (o_SBus_S_col & config_SUseHalfByte) ? o_index[4+:9] : 9'b0
+                               | (o_SBus_S_col & ~config_SUseHalfByte) ? o_index[3+:9] : 9'b0;
 
   assign i_index = unoff_index_col + column_offset;
 
 
-  wire [2-1:0] i_byteEnable_elemIndex = ((o_dubBus_anyCol | o_bus_S_row_DBG | o_quarterBus_U_row) ? o_index[0+:2] : 2'b0)
+  wire [2-1:0] i_byteEnable_elemIndex = ((o_dubBus_anyCol | o_quarterBus_U_row) ? o_index[0+:2] : 2'b0)
                                       | (o_bus_B_col ? o_index[1+:2] : 2'b0);
   wire [8-1:0] i_byteEnable_elem;
   mem_elementIndexToByteEnable i_byteEnable_elem__c (i_byteEnable_elemIndex, i_byteEnable_elem);
   
-  wire [3-1:0] i_byteEnable_byteIndex = (o_halfBus_S_col ? o_index[1+:3] : 3'b0);
+  wire [3-1:0] i_byteEnable_byteIndex = (o_SBus_S_col & config_SUseHalfByte) ? o_index[1+:3] : 3'b0
+                                      | (o_SBus_S_col & ~config_SUseHalfByte) ? o_index[0+:3] : 3'b0;
   wire [8-1:0] i_byteEnable_byte;
   mem_byteIndexToByteEnable i_byteEnable_byte__c (i_byteEnable_byteIndex, i_byteEnable_byte);
 
   assign i_byteEnable = (o_bus_B_row | o_bus_C_row | o_paral_B_mat | o_bus_anyCell | o_dubBus_C_row) ? 8'hFF : 8'b0
-                      | (o_dubBus_anyCol | o_bus_S_row_DBG | o_bus_B_col | o_quarterBus_U_row) ? i_byteEnable_elem : 8'b0
-                      | o_halfBus_S_col ? i_byteEnable_byte : 8'b0;
+                      | (o_dubBus_anyCol | o_bus_B_col | o_quarterBus_U_row) ? i_byteEnable_elem : 8'b0
+                      | o_dubBus_anyTwoCol ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
+                      | o_SBus_S_col ? i_byteEnable_byte : 8'b0;
 
 
   wire [2-1:0] i_bramEnable_elemIndex = (o_dubBus_C_row ? o_index[1+:2] : 2'b0);
@@ -294,7 +306,7 @@ module mainMem_readConnector(
   wire [8-1:0] i_bramEnable_byte;
   mem_byteIndexToByteEnable i_bramEnable_byte__c (i_bramEnable_byteIndex, i_bramEnable_byte);
 
-  assign i_bramEnable = (o_halfBus_S_col | o_dubBus_B_col | o_dubBus_C_col | o_dubBus_S_mat | o_paral_B_mat) ? 8'b11111111 : 8'b0
+  assign i_bramEnable = (o_SBus_S_col | o_dubBus_B_col | o_dubBus_C_col | o_paralSBus_S_mat | o_paral_B_mat) ? 8'b11111111 : 8'b0
                       | o_bus_B_col ? (o_index[0] == 1'b0 ? 8'b00001111 : 8'b11110000) : 8'b0
                       | o_dubBus_C_row ? i_bramEnable_elem : 8'b0
                       | (o_bus_B_row | o_bus_C_row | o_bus_anyCell | o_quarterBus_U_row | o_bus_S_row_DBG) ? i_bramEnable_byte : 8'b0;
@@ -309,15 +321,14 @@ module mainMem_readConnector(
   assign o_paral__d2 = i_value__d2;
 
 
+  wor [32*8-1:0] mergeTwoCol__d2;
   wor [16*8-1:0] mergeCol__d2;
   wire [16*8-1:0] mergeCol_swapped__d2; // swap following pairs of rows in the column
   wor [16*4*2-1:0] mergeTwoRows__d2;
   generate
     for (row = 0; row < 8; row=row+1) begin
-      for (col = 0; col < 4; col=col+1) begin
-        assign mergeCol__d2[row*16+:16] = i_value__d2[row*64+col*16+:16];
-      end
-
+      assign mergeTwoCol__d2[row*32+:32] = i_value__d2[row*64+:32] | i_value__d2[row*64+32+:32];
+      assign mergeCol__d2[row*16+:16] = mergeTwoCol__d2[row*32+:16] | mergeTwoCol__d2[row*32+16+:16];
       assign mergeCol_swapped__d2[row*16+:16] = mergeCol__d2[(row^1)*16+:16];
     end
 
@@ -334,61 +345,89 @@ module mainMem_readConnector(
   delay o_dubBus_C_col__ff1 (o_dubBus_C_col, o_dubBus_C_col__d1, rst, clk);
   wire o_dubBus_C_col__d2;
   delay o_dubBus_C_col__ff2 (o_dubBus_C_col__d1, o_dubBus_C_col__d2, rst, clk);
-  wire [14-1:0] o_index__d1;
-  delay #(14) o_index__ff1 (o_index, o_index__d1, rst, clk);
-  wire [14-1:0] o_index__d2;
-  delay #(14) o_index__ff2 (o_index__d1, o_index__d2, rst, clk);
+  wire o_index__d1__0;
+  wire o_index__d1__2;
+  delay o_index__ff1__0 (o_index[0], o_index__d1__0, rst, clk);
+  delay o_index__ff1__2 (o_index[2], o_index__d1__2, rst, clk);
+  wire o_index__d2__0;
+  wire o_index__d2__2;
+  delay o_index__ff2__0 (o_index__d1__0, o_index__d2__0, rst, clk);
+  delay o_index__ff2__2 (o_index__d1__2, o_index__d2__2, rst, clk);
 
-  assign o_dubBus__d2 = o_dubBus_C_row__d2 & ~o_index__d2[0] ? mergeTwoRows__d2
+  assign o_dubBus__d2 = o_dubBus_C_row__d2 & ~o_index__d2__0 ? mergeTwoRows__d2
                       : o_dubBus_C_row__d2                   ? {mergeTwoRows__d2[0+:64], mergeTwoRows__d2[64+:64]}
-                      : o_dubBus_C_col__d2 &  o_index__d2[2] ? mergeCol_swapped__d2
+                      : o_dubBus_C_col__d2 &  o_index__d2__2 ? mergeCol_swapped__d2
                                                              : mergeCol__d2;
+
+  generate
+    for (row = 0; row < 8; row=row+1) begin
+      for (col = 0; col < 4; col=col+1) begin
+        assign o_paralSBus__d2[row*20+col*5+:5] = config_SUseHalfByte ? mergeCol__d2[row*16+col*4+:4] : mergeTwoCol__d2[row*32+col*8+:5];
+      end
+    end
+  endgenerate
 
   wire o_bus_B_col__d1;
   delay o_bus_B_col__ff1 (o_bus_B_col, o_bus_B_col__d1, rst, clk);
   wire o_bus_B_col__d2;
   delay o_bus_B_col__ff2 (o_bus_B_col__d1, o_bus_B_col__d2, rst, clk);
   wire [64-1:0] mergeRow__d2 = mergeTwoRows__d2[0+:64] | mergeTwoRows__d2[64+:64];
-  assign o_quarterBus__d2 = mergeRow__d2[0+:16] | mergeRow__d2[16+:16] | mergeRow__d2[32+:16] | mergeRow__d2[48+:16];
-  
+  wire [32-1:0] mergeHalfRow__d2 = mergeRow__d2[0+:32] | mergeRow__d2[32+:32];
+  assign o_quarterBus__d2 = mergeHalfRow__d2[0+:16] | mergeHalfRow__d2[16+:16];
+
   wire o_bus_S_row_DBG__d1;
   delay o_bus_S_row_DBG__ff1 (o_bus_S_row_DBG, o_bus_S_row_DBG__d1, rst, clk);
   wire o_bus_S_row_DBG__d2;
   delay o_bus_S_row_DBG__ff2 (o_bus_S_row_DBG__d1, o_bus_S_row_DBG__d2, rst, clk);
   assign o_bus__d2 = o_bus_B_col__d2     ? (mergeCol__d2[0+:16*4] | mergeCol__d2[16*4+:16*4])
-                   : o_bus_S_row_DBG__d2 ? o_quarterBus__d2
+                   : o_bus_S_row_DBG__d2 ? config_SUseHalfByte ? o_quarterBus__d2
+                                                               : mergeHalfRow__d2
                                          : mergeRow__d2;
 
-  wire o_halfBus_shift = o_index[0];
+  wire o_SBus_shift = o_index[0];
   wire [8*8-1:0] mergeByteCol__d2;
   generate
     for (row = 0; row < 8; row=row+1) begin
       assign mergeByteCol__d2[row*8+:8] = mergeCol__d2[row*16+:8] | mergeCol__d2[row*16+8+:8];
-      assign o_halfBus__d2[row*4+:4] = mergeByteCol__d2[row*8+o_halfBus_shift*4+:4];
+      assign o_SBus__d2[row*5+:5] = config_SUseHalfByte ? mergeByteCol__d2[row*8+o_SBus_shift*4+:4] : mergeByteCol__d2[row*8+:5];
     end
   endgenerate
 endmodule
 
 `ATTR_MOD_GLOBAL
 module stdToCompact_single(
-  input [16-1:0] in,
-  output [4-1:0] out
+    input [16-1:0] in,
+    output [4-1:0] out4,
+    output [8-1:0] out8
 );
-  wire ignore = | in[15-1:3];
-  assign out[3] = in[15]; // isNeg
-  assign out[2:0] = in[15] ? -in[2:0] : in[2:0];
+  wire isNeg = in[15];
+  wire ignore = | in[14:4];
+  
+  assign out8[7:5] = 0;
+  assign out8[4:1] = isNeg ? -in[3:0] : in[3:0];
+  assign out8[0] = isNeg;
+  
+  assign out4 = out8[0+:4];
 endmodule
 
 `ATTR_MOD_GLOBAL
 module stdToCompact(
+    input config_SUseHalfByte,
     input [64-1:0] in,
-    output [16-1:0] out
+    output [32-1:0] out
   );
-  stdToCompact_single s0(in[16*0+:16], out[4*0+:4]);
-  stdToCompact_single s1(in[16*1+:16], out[4*1+:4]);
-  stdToCompact_single s2(in[16*2+:16], out[4*2+:4]);
-  stdToCompact_single s3(in[16*3+:16], out[4*3+:4]);
+
+  wire [4*4-1:0] out4;
+  wire [8*4-1:0] out8;
+
+  stdToCompact_single s0(in[16*0+:16], out4[4*0+:4], out8[8*0+:8]);
+  stdToCompact_single s1(in[16*1+:16], out4[4*1+:4], out8[8*1+:8]);
+  stdToCompact_single s2(in[16*2+:16], out4[4*2+:4], out8[8*2+:8]);
+  stdToCompact_single s3(in[16*3+:16], out4[4*3+:4], out8[8*3+:8]);
+  
+  assign out = config_SUseHalfByte ? { out4, out4 } : out8;
 endmodule
+
 
 
 // it connects two side: Outside, Inside
@@ -426,9 +465,10 @@ module mainMem_writeConnector(
     output [8-1:0] i_byteEnable,
     output [64*8-1:0] i_value,
     
-    input [9-1:0] config_matrixNumBlocksMin1, // how many 8x4 matrixes are in B and S minus 1. The FrodoKEM parameter/4-1.
-    input [14-1:0] config_matrixNumBlocksTimes8Min1, // how many 1x4 matrixes are in B and S minus 1. The FrodoKEM parameter*2-1.
-    input [14-1:0] config_matrixNumBlocksTimes4Min1 // how many 8x1 matrixes are in B and S minus 1. The FrodoKEM parameter-1.
+    input [9-1:0] config_matrixNumCellsMin1, // how many 8x4 matrixes are in B and S minus 1. The FrodoKEM parameter/4-1.
+    input [14-1:0] config_matrixNumCellsTimes8Min1, // how many 1x4 matrixes are in B and S minus 1. The FrodoKEM parameter*2-1.
+    input [14-1:0] config_matrixNumCellsTimes4Min1, // how many 8x1 matrixes are in B and S minus 1. The FrodoKEM parameter-1.
+    input config_SUseHalfByte
 );
   wire [9-1:0] column_offset = (o_bus_B_row | o_bus_B_col | o_dubBus_B_col | o_paral_B_mat) ? `MainMem_OFF_B : 9'd0
                              | o_bus_S_row ? `MainMem_OFF_S : 9'd0
@@ -441,11 +481,11 @@ module mainMem_writeConnector(
                              | (o_halfBus_U_row | o_bus_U_twoRows) ? `MainMem_OFF_U : 9'd0
                              | o_bus_k ? `MainMem_OFF_k : 9'd0;
 
-  assign o_index_next = ((o_bus_B_row | o_bus_S_row) & (o_index[0+:9] == config_matrixNumBlocksMin1)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
-                                                                                  : o_index + 14'b1;
+  assign o_index_next = ((o_bus_B_row | o_bus_S_row) & (o_index[0+:9] == config_matrixNumCellsMin1)) ? { o_index[14-1:9] + 5'd1, 9'b0 }
+                                                                                                     : o_index + 14'b1;
 
-  assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index != {5'd7, config_matrixNumBlocksMin1} : 1'b0)
-                         | (o_bus_B_col ? o_index != config_matrixNumBlocksTimes8Min1 : 1'b0) 
+  assign o_index_hasNext = ((o_bus_S_row | o_bus_B_row) ? o_index != {5'd7, config_matrixNumCellsMin1} : 1'b0)
+                         | (o_bus_B_col ? o_index != config_matrixNumCellsTimes8Min1 : 1'b0) 
                          | (o_bus_C_row ? o_index != 14'd15 : 1'b0) 
                          | (o_bus_SSState ? o_index != 14'd24 : 1'b0) 
                          | (o_bus_RNGState ? o_index != 14'd7 : 1'b0) 
@@ -453,10 +493,10 @@ module mainMem_writeConnector(
                          | (o_bus_seedSE ? o_index != 14'd7 : 1'b0)
                          | (o_bus_pkh ? o_index != 14'd3 : 1'b0)
                          | (o_bus_k ? o_index != 14'd3 : 1'b0)
-                         | (o_dubBus_B_col ? o_index != config_matrixNumBlocksTimes4Min1 : 1'b0)
+                         | (o_dubBus_B_col ? o_index != config_matrixNumCellsTimes4Min1 : 1'b0)
                          | ((o_dubBus_C_col | o_halfBus_U_row) ? o_index != 14'd7 : 1'b0)
                          | (o_bus_U_twoRows ? o_index != 14'd3 : 1'b0) 
-                         | (o_paral_B_mat ? o_index != {5'd0, config_matrixNumBlocksMin1} : 1'b0);
+                         | (o_paral_B_mat ? o_index != {5'd0, config_matrixNumCellsMin1} : 1'b0);
 
   wire o_bus_anyCell = o_bus_SSState
                      | o_bus_RNGState
@@ -472,7 +512,8 @@ module mainMem_writeConnector(
   wire [9-1:0] unoff_index_col = (o_bus_B_row | o_paral_B_mat) ? o_index[0+:9] : 9'b0
                                | o_bus_C_row ? {8'b0, o_index[0+:1]} : 9'b0
                                | o_dubBus_anyCol ? o_index[2+:9] : 9'b0
-                               | o_bus_S_row ? {2'b0, o_index[2+:7]} : 9'b0
+                               | (o_bus_S_row & config_SUseHalfByte) ? {2'b0, o_index[2+:7]} : 9'b0
+                               | (o_bus_S_row & ~config_SUseHalfByte) ? {1'b0, o_index[1+:8]} : 9'b0
                                | (o_bus_B_col | o_bus_anyCell) ? o_index[3+:9] : 9'b0
                                | o_halfBus_U_row ? o_index[4+:9] : 9'b0;
 
@@ -486,8 +527,8 @@ module mainMem_writeConnector(
   mem_elementIndexToByteEnable i_byteEnable_elem__c(i_byteEnable_elemIndex, i_byteEnable_elem);
   
   assign i_byteEnable = (o_bus_B_row | o_bus_C_row | o_paral_B_mat | o_bus_anyCell) ? 8'hFF : 8'b0
-                      | o_halfBus_U_row ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
-                      | (o_dubBus_anyCol | o_bus_S_row | o_bus_B_col) ? i_byteEnable_elem : 8'b0;
+                      | (o_halfBus_U_row | o_bus_S_row & ~config_SUseHalfByte) ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
+                      | (o_dubBus_anyCol | o_bus_S_row & config_SUseHalfByte | o_bus_B_col) ? i_byteEnable_elem : 8'b0;
 
 
   wire [3-1:0] i_bramEnable_byteIndex = ((o_bus_B_row | o_bus_S_row) ? o_index[9+:3] : 3'b0)
@@ -497,8 +538,8 @@ module mainMem_writeConnector(
   wire [8-1:0] i_bramEnable_byte;
   mem_byteIndexToByteEnable i_bramEnable_byte__c(i_bramEnable_byteIndex, i_bramEnable_byte);
 
-  assign i_bramEnable = (o_dubBus_B_col | o_dubBus_C_col | o_paral_B_mat) ? 8'b11111111 : 8'b0
-                      | o_bus_B_col ? (o_index[0] == 1'b0 ? 8'b00001111 : 8'b11110000) : 8'b0
+  assign i_bramEnable = (o_dubBus_B_col | o_dubBus_C_col | o_paral_B_mat) ? 8'hFF : 8'b0
+                      | o_bus_B_col ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
                       | (o_bus_B_row | o_bus_C_row | o_bus_anyCell | o_halfBus_U_row | o_bus_S_row) ? i_bramEnable_byte : 8'b0;
 
 
@@ -527,10 +568,10 @@ module mainMem_writeConnector(
 
   assign i_value__w = o_halfBus_U_row ? {16{o_halfBus}} : 512'b0;
   
-  wire [16-1:0] o_bus_sampledCompact;
-  stdToCompact o_bus_sampledCompact__c (o_bus, o_bus_sampledCompact);
+  wire [32-1:0] o_bus_sampledCompact;
+  stdToCompact o_bus_sampledCompact__c (config_SUseHalfByte, o_bus, o_bus_sampledCompact);
   
-  assign i_value__w = o_bus_S_row ? {4*8{o_bus_sampledCompact}} : 512'b0;
+  assign i_value__w = o_bus_S_row ? {2*8{o_bus_sampledCompact}} : 512'b0;
 endmodule
 
 `define MainMemCMD_bus_B_row 0
@@ -561,14 +602,16 @@ module mainMem(
     input r_dubBus_B_col, // 16b8x1
     input r_dubBus_C_col, // 16b8x1
     input r_dubBus_C_row, // 16b1x8
-    input r_dubBus_S_mat, // 4b8x4
     output [16*8-1:0] r_dubBus__d2,
+
+    input r_paralSBus_S_mat, // 5b8x4
+    output [5*4*8-1:0] r_paralSBus__d2,
 
     input r_paral_B_mat, // 16b8x4
     output [16*4*8-1:0] r_paral__d2,
 
-    input r_halfBus_S_col, // 4b8x1
-    output [4*8-1:0] r_halfBus__d2,
+    input r_SBus_S_col, // 5b8x1
+    output [5*8-1:0] r_SBus__d2,
 
     input r_quarterBus_U_row, // 4b4x1
     output [4*4-1:0] r_quarterBus__d2,
@@ -591,14 +634,15 @@ module mainMem(
     input w_halfBus_U_row, // 4b1x8
     input [4*8-1:0] w_halfBus,
 
-    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+    input [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks, // how many 8x8 matrixes are in B and S. The FrodoKEM parameter/8.
+    input config_SUseHalfByte,
 
     input rst,
     input clk
   );
-  wire [9-1:0] config_matrixNumBlocksMin1 = config_matrixNumBlocks - 9'd1;
-  wire [14-1:0] config_matrixNumBlocksTimes8Min1 = (config_matrixNumBlocks << 3) - 14'd1;
-  wire [14-1:0] config_matrixNumBlocksTimes4Min1 = (config_matrixNumBlocks << 2) - 14'd1;
+  wire [ 9-1:0] config_matrixNumCellsMin1       = (config_matrixNumBlocks << 1) -  9'd1;
+  wire [14-1:0] config_matrixNumCellsTimes8Min1 = (config_matrixNumBlocks << 4) - 14'd1;
+  wire [14-1:0] config_matrixNumCellsTimes4Min1 = (config_matrixNumBlocks << 3) - 14'd1;
 
 
   wire [9-1:0] b__r_index;
@@ -643,12 +687,13 @@ module mainMem(
     .o_dubBus_B_col(r_dubBus_B_col),
     .o_dubBus_C_col(r_dubBus_C_col),
     .o_dubBus_C_row(r_dubBus_C_row),
-    .o_dubBus_S_mat(r_dubBus_S_mat),
     .o_dubBus__d2(r_dubBus__d2),
+    .o_paralSBus_S_mat(r_paralSBus_S_mat),
+    .o_paralSBus__d2(r_paralSBus__d2),
     .o_paral_B_mat(r_paral_B_mat),
     .o_paral__d2(r_paral__d2),
-    .o_halfBus_S_col(r_halfBus_S_col),
-    .o_halfBus__d2(r_halfBus__d2),
+    .o_SBus_S_col(r_SBus_S_col),
+    .o_SBus__d2(r_SBus__d2),
     .o_quarterBus_U_row(r_quarterBus_U_row),
     .o_quarterBus__d2(r_quarterBus__d2),
     .i_index(b__r_index),
@@ -656,9 +701,10 @@ module mainMem(
     .i_byteEnable(b__r_byteEnable),
     .i_fromNextIndex(b__r_fromNextIndex),
     .i_value__d2(b__r_value__d2),
-    .config_matrixNumBlocksMin1(config_matrixNumBlocksMin1),
-    .config_matrixNumBlocksTimes8Min1(config_matrixNumBlocksTimes8Min1),
-    .config_matrixNumBlocksTimes4Min1(config_matrixNumBlocksTimes4Min1),
+    .config_matrixNumCellsMin1(config_matrixNumCellsMin1),
+    .config_matrixNumCellsTimes8Min1(config_matrixNumCellsTimes8Min1),
+    .config_matrixNumCellsTimes4Min1(config_matrixNumCellsTimes4Min1),
+    .config_SUseHalfByte(config_SUseHalfByte),
     .rst(rst),
     .clk(clk)
   );
@@ -690,9 +736,10 @@ module mainMem(
     .i_bramEnable(b__w_bramEnable),
     .i_byteEnable(b__w_byteEnable),
     .i_value(b__w_value),
-    .config_matrixNumBlocksMin1(config_matrixNumBlocksMin1),
-    .config_matrixNumBlocksTimes8Min1(config_matrixNumBlocksTimes8Min1),
-    .config_matrixNumBlocksTimes4Min1(config_matrixNumBlocksTimes4Min1)
+    .config_matrixNumCellsMin1(config_matrixNumCellsMin1),
+    .config_matrixNumCellsTimes8Min1(config_matrixNumCellsTimes8Min1),
+    .config_matrixNumCellsTimes4Min1(config_matrixNumCellsTimes4Min1),
+    .config_SUseHalfByte(config_SUseHalfByte)
   );
 
 endmodule

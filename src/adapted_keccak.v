@@ -101,60 +101,132 @@ endmodule
 
 `define KeccakOutCMD_SIZE  2
 
-`define FRODO_T0 15'd9142
-`define FRODO_T1 15'd23462
-`define FRODO_T2 15'd30338
-`define FRODO_T3 15'd32361
-`define FRODO_T4 15'd32725
-`define FRODO_T5 15'd32765
+`define FRODO_0T0 15'd04643
+`define FRODO_0T1 15'd13363
+`define FRODO_0T2 15'd20579
+`define FRODO_0T3 15'd25843
+`define FRODO_0T4 15'd29227
+`define FRODO_0T5 15'd31145
+`define FRODO_0T6 15'd32103
+`define FRODO_0T7 15'd32525
+`define FRODO_0T8 15'd32689
+`define FRODO_0T9 15'd32745
+`define FRODO_0T10 15'd32762
+`define FRODO_0T11 15'd32766
 
-// LUT4    2
-// LUT6   17
-// Sl.LUT 19
+`define FRODO_1T0 15'd05638
+`define FRODO_1T1 15'd15915
+`define FRODO_1T2 15'd23689
+`define FRODO_1T3 15'd28571
+`define FRODO_1T4 15'd31116
+`define FRODO_1T5 15'd32217
+`define FRODO_1T6 15'd32613
+`define FRODO_1T7 15'd32731
+`define FRODO_1T8 15'd32760
+`define FRODO_1T9 15'd32766
+
+`define FRODO_2T0 15'd09142
+`define FRODO_2T1 15'd23462
+`define FRODO_2T2 15'd30338
+`define FRODO_2T3 15'd32361
+`define FRODO_2T4 15'd32725
+`define FRODO_2T5 15'd32765
+
+
+`define SamplerCONF_SIZE 3
+
+
 `ATTR_MOD_GLOBAL
 module sampler_single(
+    input [`SamplerCONF_SIZE-1:0] config_whichSampling,
     input [16-1:0] in,
-    output [4-1:0] out
+    output [16-1:0] out
   );
   wire [15-1:0] val = in[15:1];
 
-  assign out[3] = in[0]; // isNeg
-  assign out[2] = val > `FRODO_T3;
-  assign out[1] = val > `FRODO_T1 && val <= `FRODO_T3
-               || val > `FRODO_T5;
-  assign out[0] = val > `FRODO_T0 && val <= `FRODO_T1
-               || val > `FRODO_T2 && val <= `FRODO_T3
-               || val > `FRODO_T4 && val <= `FRODO_T5;
-endmodule
+  wire isNeg = in[0];
 
-`ATTR_MOD_GLOBAL
-module compactToStd_single(
-  input [4-1:0] in,
-  output [16-1:0] out
-);
-  wire isNeg = in[3];
-  wire [16-1:0] mod = {13'b0, in[3-1:0]};
-
-  assign out = isNeg ? -mod : mod;
+  assign out[15:4] = {12{isNeg}};
+  assign out[3:0] = (config_whichSampling[0] ? isNeg ? val <= `FRODO_0T0  ? -4'd0
+                                                     : val <= `FRODO_0T1  ? -4'd1
+                                                     : val <= `FRODO_0T2  ? -4'd2
+                                                     : val <= `FRODO_0T3  ? -4'd3
+                                                     : val <= `FRODO_0T4  ? -4'd4
+                                                     : val <= `FRODO_0T5  ? -4'd5
+                                                     : val <= `FRODO_0T6  ? -4'd6
+                                                     : val <= `FRODO_0T7  ? -4'd7
+                                                     : val <= `FRODO_0T8  ? -4'd8
+                                                     : val <= `FRODO_0T9  ? -4'd9
+                                                     : val <= `FRODO_0T10 ? -4'd10
+                                                     : val <= `FRODO_0T11 ? -4'd11
+                                                                          : -4'd12
+                                                     : val <= `FRODO_0T0  ? 4'd0
+                                                     : val <= `FRODO_0T1  ? 4'd1
+                                                     : val <= `FRODO_0T2  ? 4'd2
+                                                     : val <= `FRODO_0T3  ? 4'd3
+                                                     : val <= `FRODO_0T4  ? 4'd4
+                                                     : val <= `FRODO_0T5  ? 4'd5
+                                                     : val <= `FRODO_0T6  ? 4'd6
+                                                     : val <= `FRODO_0T7  ? 4'd7
+                                                     : val <= `FRODO_0T8  ? 4'd8
+                                                     : val <= `FRODO_0T9  ? 4'd9
+                                                     : val <= `FRODO_0T10 ? 4'd10
+                                                     : val <= `FRODO_0T11 ? 4'd11
+                                                                          : 4'd12
+                                             : 4'd0)
+                  | (config_whichSampling[1] ? isNeg ? val <= `FRODO_1T0 ? -4'd0
+                                                     : val <= `FRODO_1T1 ? -4'd1
+                                                     : val <= `FRODO_1T2 ? -4'd2
+                                                     : val <= `FRODO_1T3 ? -4'd3
+                                                     : val <= `FRODO_1T4 ? -4'd4
+                                                     : val <= `FRODO_1T5 ? -4'd5
+                                                     : val <= `FRODO_1T6 ? -4'd6
+                                                     : val <= `FRODO_1T7 ? -4'd7
+                                                     : val <= `FRODO_1T8 ? -4'd8
+                                                     : val <= `FRODO_1T9 ? -4'd9
+                                                                         : -4'd10
+                                                     : val <= `FRODO_1T0 ? 4'd0
+                                                     : val <= `FRODO_1T1 ? 4'd1
+                                                     : val <= `FRODO_1T2 ? 4'd2
+                                                     : val <= `FRODO_1T3 ? 4'd3
+                                                     : val <= `FRODO_1T4 ? 4'd4
+                                                     : val <= `FRODO_1T5 ? 4'd5
+                                                     : val <= `FRODO_1T6 ? 4'd6
+                                                     : val <= `FRODO_1T7 ? 4'd7
+                                                     : val <= `FRODO_1T8 ? 4'd8
+                                                     : val <= `FRODO_1T9 ? 4'd9
+                                                                         : 4'd10
+                                             : 4'd0)
+                  | (config_whichSampling[2] ? isNeg ? val <= `FRODO_2T0 ? -4'd0
+                                                     : val <= `FRODO_2T1 ? -4'd1
+                                                     : val <= `FRODO_2T2 ? -4'd2
+                                                     : val <= `FRODO_2T3 ? -4'd3
+                                                     : val <= `FRODO_2T4 ? -4'd4
+                                                     : val <= `FRODO_2T5 ? -4'd5
+                                                                         : -4'd6
+                                                     : val <= `FRODO_2T0 ? 4'd0
+                                                     : val <= `FRODO_2T1 ? 4'd1
+                                                     : val <= `FRODO_2T2 ? 4'd2
+                                                     : val <= `FRODO_2T3 ? 4'd3
+                                                     : val <= `FRODO_2T4 ? 4'd4
+                                                     : val <= `FRODO_2T5 ? 4'd5
+                                                                         : 4'd6
+                                             : 4'd0);
 endmodule
 
 `ATTR_MOD_GLOBAL
 module sampler(
     input enable,
+    input [`SamplerCONF_SIZE-1:0] config_whichSampling,
     input [64-1:0] in,
     output [64-1:0] out
   );
-  wire [16-1:0] out_sampled;
-  wire [64-1:0] out_std;
-  sampler_single s0(in[16*0+:16], out_sampled[4*0+:4]);
-  sampler_single s1(in[16*1+:16], out_sampled[4*1+:4]);
-  sampler_single s2(in[16*2+:16], out_sampled[4*2+:4]);
-  sampler_single s3(in[16*3+:16], out_sampled[4*3+:4]);
-  compactToStd_single c0(out_sampled[4*0+:4], out_std[16*0+:16]);
-  compactToStd_single c1(out_sampled[4*1+:4], out_std[16*1+:16]);
-  compactToStd_single c2(out_sampled[4*2+:4], out_std[16*2+:16]);
-  compactToStd_single c3(out_sampled[4*3+:4], out_std[16*3+:16]);
-  assign out = enable ? out_std : in;
+  wire [64-1:0] out_sampled;
+  sampler_single s0(config_whichSampling, in[16*0+:16], out_sampled[16*0+:16]);
+  sampler_single s1(config_whichSampling, in[16*1+:16], out_sampled[16*1+:16]);
+  sampler_single s2(config_whichSampling, in[16*2+:16], out_sampled[16*2+:16]);
+  sampler_single s3(config_whichSampling, in[16*3+:16], out_sampled[16*3+:16]);
+  assign out = enable ? out_sampled : in;
 endmodule
 
 `ATTR_MOD_GLOBAL
@@ -162,6 +234,7 @@ module adapted_keccak__out(
     input [`KeccakOutCMD_SIZE-1:0] cmd, // {skipIsLast:1bit, sample:1bit}
     input cmd_isReady,
     output cmd_canReceive,
+    input [`SamplerCONF_SIZE-1:0] config_whichSampling,
 
     output [64-1:0] h__in,
     output h__in_isReady,
@@ -197,7 +270,7 @@ module adapted_keccak__out(
 
   assign cmdB_consume = h__in_isLast_out;
 
-  sampler sampler(cmdB_sample, k__out, h__in);
+  sampler sampler(config_whichSampling, cmdB_sample, k__out, h__in);
 
   assign h__in_isReady = cmdB_forward & k__out_isReady;
   assign h__in_isLast_in = 1'b0; // disabled
@@ -220,6 +293,8 @@ module adapted_keccak (
     input [`KeccakAdaptedCMD_SIZE-1:0] k__cmd, // { is128else256:1bit, inState:1bit, outState:1bit, mainIsInElseOut:1bit, mainNumBlocks:9bits, secondaryNumBlocks:1bits }
     input k__cmd_isReady,
     output k__cmd_canReceive,
+
+    input [`SamplerCONF_SIZE-1:0] config_whichSampling,
 
     input [64-1:0] h__out,
     input h__out_isReady,
@@ -270,6 +345,7 @@ module adapted_keccak (
   wire [3-1:0] k__cmd__param = k__cmdB[1+`Keccak_BlockCounterSize+1+:3];
   wire [`KeccakCMD_SIZE-1:0] k__cmd__expanded = k__cmd__mainIsInElseOut ? { k__cmd__param, k__cmd__mainNumBlocks,      k__cmd__secondaryNumBlocks }
                                                                         : { k__cmd__param, k__cmd__secondaryNumBlocks, k__cmd__mainNumBlocks      };
+
   keccak k(
     .cmd(k__cmd__expanded),
     .cmd_isReady(k__cmdB_isReady),
@@ -309,6 +385,7 @@ module adapted_keccak (
     .cmd(k_out__cmd),
     .cmd_isReady(k_out__cmd_isReady),
     .cmd_canReceive(k_out__cmd_canReceive),
+    .config_whichSampling(config_whichSampling),
     .h__in(h__in),
     .h__in_isReady(h__in_isReady),
     .h__in_canReceive(h__in_canReceive),

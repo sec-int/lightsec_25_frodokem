@@ -57,7 +57,8 @@ module testSub();
   wire [64-1:0] out;
   wire out_isReady;
   reg out_canReceive = 1'b0;
-  reg [9-1:0] config_matrixNumBlocks = 1'b0;
+  reg [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks = 8'b0;
+  reg [`SamplerCONF_SIZE-1:0] config_samplingDistribution = 8'b0;
   reg rst = 1'b0;
   main_core_serialCmd toTest(
     .cmd(cmd),
@@ -69,7 +70,7 @@ module testSub();
     .out(out),
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
-    .config_matrixNumBlocks(config_matrixNumBlocks),
+    .conf({ config_matrixNumBlocks, config_samplingDistribution }),
     .rst(rst),
     .clk(clk)
   );
@@ -84,10 +85,11 @@ module testSub();
 
 
 `define TEST
-`define DO_RST(testName, matrixSize) \
+`define DO_RST(testName, matrixSize, samplingDistNum) \
         @(negedge clk); \
         rst <= 1'b1; \
-        config_matrixNumBlocks <= (matrixSize) >> 2; \
+        config_matrixNumBlocks <= (matrixSize) >> 3; \
+        config_samplingDistribution <= 1 << (samplingDistNum); \
         @(posedge clk); \
         test_name <= (testName); \
         @(negedge clk); \
@@ -174,7 +176,7 @@ module testSub();
 `include "testSub__keccak.v"
 `include "testSub__mem.v"
 `include "testSub__memOp.v"
-    `DO_RST("DONE!", 0)
+    `DO_RST("DONE!", 0, 2)
     #3;
     $finish();
   end

@@ -60,6 +60,8 @@
 
 `define MainCoreCMD_which_SIZE  8
 
+//                                   8                       3
+`define MainCoreCONF_SIZE   (`MemCONF_matrixNumBlocks_size + `SamplerCONF_SIZE)
 
 
 `ATTR_MOD_GLOBAL
@@ -84,12 +86,17 @@ module main_core(
     output out_isReady,
     input out_canReceive,
 
-    input [9-1:0] config_matrixNumBlocks, // how many 8x4 matrixes are in B and S. The FrodoKEM parameter/4.
+    input [`MainCoreCONF_SIZE-1:0] conf, // { The FrodoKEM parameter/8 : 8bits, which sampling distribution : 3bits }.   distr 0,1 have max FrodoKEM param of 1344.  distr 2 has max FrodoKEM param of 1330.
 
     input rst,
     input clk
   );
   wor ignore;
+
+  wire [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks = conf[`SamplerCONF_SIZE+:`MemCONF_matrixNumBlocks_size];
+  wire [`SamplerCONF_SIZE-1:0] config_whichSampling = conf[0+:`SamplerCONF_SIZE];
+
+  wire config_SUseHalfByte = config_whichSampling[2];
 
   wire o_in__cmd_canReceive;
   wire o_out__cmd_canReceive;
@@ -203,6 +210,7 @@ module main_core(
     .k_out__cmd(k_out__cmd),
     .k_out__cmd_isReady(k_out__cmd_isReady),
     .k_out__cmd_canReceive(k_out__cmd_canReceive),
+    .config_whichSampling(config_whichSampling),
     .k__cmd(k__cmd),
     .k__cmd_isReady(k__cmd_isReady),
     .k__cmd_canReceive(k__cmd_canReceive),
@@ -234,6 +242,7 @@ module main_core(
     .out(h__in[1*64+:64]),
     .out_canReceive(h__in_canReceive[1]),
     .config_matrixNumBlocks(config_matrixNumBlocks),
+    .config_SUseHalfByte(config_SUseHalfByte),
     .rst(rst),
     .clk(clk)
   );

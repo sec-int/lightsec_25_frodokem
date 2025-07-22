@@ -21,16 +21,16 @@
 
 `ATTR_MOD_GLOBAL
 module frodoMulSingle(
-    input [3:0] s,
-    input [15:0] a,
-    output [15:0] z
+    input [5-1:0] s,
+    input [16-1:0] a,
+    output [16-1:0] z
   );
 
-  wire [15:0] a1,a2,r;
-  assign a1 = s[0] ? a : s[1] ? (a << 1) : {16{1'b0}};
-  assign a2 = s[1]&s[0] ? (a << 1) : s[2] ? (a << 2) : {16{1'b0}};
-  assign r = (a1 + a2);
-  assign z = (s[3] ? -r : r);
+  wire [16-1:0] r = (s[1] ? a << 0 : 16'b0)
+                  + (s[2] ? a << 1 : 16'b0)
+                  + (s[3] ? a << 2 : 16'b0)
+                  + (s[4] ? a << 3 : 16'b0);
+  assign z = s[0] ? -r : r;
 endmodule
 
 
@@ -43,8 +43,8 @@ module frodoMul #(
   )(
     input [16*A-1:0] a, // 16b1x4 | 16b4x1
     input [16*S-1:0] accVec, // 16b8x1
-    input [4*S-1:0] sCol, // 4b8x1
-    input [4*A*S-1:0] sMat, // 4b8x4
+    input [5*S-1:0] sCol, // 5b8x1
+    input [5*A*S-1:0] sMat, // 5b8x4
     input [16*A*S-1:0] accMat, // 16b8x4
     output [16*A*S-1:0] outMat, // 16b8x4
     output [16*S-1:0] outVec, // 16b8x1
@@ -64,7 +64,7 @@ module frodoMul #(
   genvar j;
   genvar i;
 
-  wire  [16*S-1:0] state; // 4b or 16b vals that are 16b aligned
+  wire  [16*S-1:0] state; // 5b or 16b vals that are 16b aligned
   wire  [16*S-1:0] state__init;
   wire  [16*S-1:0] state__new;
   wire  [16*S-1:0] state__a1 = setStorage          ? state__init
@@ -74,21 +74,21 @@ module frodoMul #(
 
   generate
     for (j = 0; j < S; j=j+1) begin
-      assign state__init[j*16+:16] = isMatrixMul1 ? accVec[j*16+:16] : {12'b0, sCol[j*4+:4]};
+      assign state__init[j*16+:16] = isMatrixMul1 ? accVec[j*16+:16] : {11'b0, sCol[j*5+:5]};
     end
   endgenerate
 
-  wire [4*A*S-1:0] mul_op1; // b4 mul_op1[S][A]
+  wire [5*A*S-1:0] mul_op1; // b5 mul_op1[S][A]
   wire [16*A-1:0] mul_op2 = a;
   wire [16*A*S-1:0] mul_out;
 
-  wire [4-1:0] optionalSignInverter = {~isPos, 3'b0};
+  wire [5-1:0] optionalSignInverter = {4'b0, ~isPos};
 
   generate
     for (j = 0; j < S; j=j+1) begin
       for (i = 0; i < A; i=i+1) begin
-        assign mul_op1[(j*A+i)*4+:4] = (isMatrixMul1 ? sMat[(j*A+i)*4+:4] : state[j*16+:4]) ^ optionalSignInverter;
-        frodoMulSingle mul(mul_op1[(j*A+i)*4+:4], mul_op2[i*16+:16], mul_out[(j*A+i)*16+:16]);
+        assign mul_op1[(j*A+i)*5+:5] = (isMatrixMul1 ? sMat[(j*A+i)*5+:5] : state[j*16+:5]) ^ optionalSignInverter;
+        frodoMulSingle mul(mul_op1[(j*A+i)*5+:5], mul_op2[i*16+:16], mul_out[(j*A+i)*16+:16]);
       end
     end
   endgenerate

@@ -5,7 +5,7 @@
 
 
 `ifdef TEST
-    `DO_RST("test__keccak_single256", 0)
+    `DO_RST("test__keccak_single256", 0, 2)
     fork : test__keccak_single256
       begin
         // send the data to hash
@@ -42,7 +42,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_largeIn256", 0)
+    `DO_RST("test__keccak_largeIn256", 0, 2)
     fork : test__keccak_largeIn256
       begin
         // send the data to hash
@@ -83,7 +83,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_largeOut256", 0)
+    `DO_RST("test__keccak_largeOut256", 0, 2)
     fork : test__keccak_largeOut256
       begin
         // send the data to hash
@@ -124,7 +124,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_small128", 0)
+    `DO_RST("test__keccak_small128", 0, 2)
     fork : test__keccak_small128
       begin
         // send the data to hash
@@ -165,7 +165,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_splitIO128", 0)
+    `DO_RST("test__keccak_splitIO128", 0, 2)
     fork : test__keccak_splitIO128
       begin
         // do hash
@@ -217,7 +217,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_multiple", 0)
+    `DO_RST("test__keccak_multiple", 0, 2)
     fork : test__keccak_multiple
       begin
         // send the data to hash
@@ -276,7 +276,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_simpleState1", 0)
+    `DO_RST("test__keccak_simpleState1", 0, 2)
     fork : test__keccak_simpleState1
       begin
         // do hash
@@ -320,7 +320,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_simpleState2", 0)
+    `DO_RST("test__keccak_simpleState2", 0, 2)
     fork : test__keccak_simpleState2
       begin
         // do hash
@@ -364,7 +364,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_simpleState3", 0)
+    `DO_RST("test__keccak_simpleState3", 0, 2)
     fork : test__keccak_simpleState3
       begin
         // do hash
@@ -408,7 +408,7 @@
 `endif
 
 `ifdef TEST
-    `DO_RST("test__keccak_state", 0)
+    `DO_RST("test__keccak_state", 0, 2)
     fork : test__keccak_state
       begin
         // do hash
@@ -468,5 +468,8 @@
       end
     join
 `endif
+
+
+// TODO: test sampling
 
 
