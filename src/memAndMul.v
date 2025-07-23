@@ -267,7 +267,7 @@ endmodule
 `define MemAndMulCMD_out_u         6'd33
 `define MemAndMulCMD_out_k         6'd34
 
-`define MemAndMulCMD_SIZE       6
+`define MemAndMulCMD_SIZE       7 /* 1 bit isPack + 6 bit main cmd */
 `define MemAndMulCMD_FULLSIZE  35
 `define MemAndMulCMD_mask_op       35'h00000007F
 `define MemAndMulCMD_mask_inOp     35'h000001F80
@@ -798,9 +798,36 @@ module memAndMul__outAdapter(
   assign buffer__a1 = bus_out_canReceive ? merged[1*64+:64*2] : merged[0*64+:64*2];
 endmodule
 
+
+module memAndMul__unpack ( // TODO: add support 15 bit packing
+    input isPack,
+    input [64-1:0] in,
+    output [64-1:0] out
+  );
+  wire [64-1:0] out_packed;
+  swapBits #(16) s0 (in[0*16+:16], out_packed[0*16+:16]);
+  swapBits #(16) s1 (in[1*16+:16], out_packed[1*16+:16]);
+  swapBits #(16) s2 (in[2*16+:16], out_packed[2*16+:16]);
+  swapBits #(16) s3 (in[3*16+:16], out_packed[3*16+:16]);
+  assign out = isPack ? out_packed : in;
+endmodule
+
+module memAndMul__pack ( // TODO: add support 15 bit packing
+    input isPack,
+    input [64-1:0] in,
+    output [64-1:0] out
+  );
+  wire [64-1:0] out_packed;
+  swapBits #(16) s0 (in[0*16+:16], out_packed[0*16+:16]);
+  swapBits #(16) s1 (in[1*16+:16], out_packed[1*16+:16]);
+  swapBits #(16) s2 (in[2*16+:16], out_packed[2*16+:16]);
+  swapBits #(16) s3 (in[3*16+:16], out_packed[3*16+:16]);
+  assign out = isPack ? out_packed : in;
+endmodule
+
 `ATTR_MOD_GLOBAL
 module memAndMul(
-    input [`MemAndMulCMD_SIZE-1:0] cmd,
+    input [`MemAndMulCMD_SIZE-1:0] cmd, // { isPack: 1bit, main cmd : 6 bit }
     input cmd_isReady,
     output cmd_canReceive,
 
@@ -834,7 +861,9 @@ module memAndMul(
     .rst(rst),
     .clk(clk)
   );
-  wire [`MemAndMulCMD_FULLSIZE-1:0] cmdB = 1 << cmdB__raw;
+  wire [`MemAndMulCMD_FULLSIZE-1:0] cmdB = 1 << cmdB__raw[0+:`MemAndMulCMD_SIZE-1];
+  wire cmdB__isPack = cmdB__raw[`MemAndMulCMD_SIZE-1];
+
 
   wire currentCmd_in_isLastCycle;
   wire currentCmd_out_isLastCycle;
@@ -882,11 +911,17 @@ module memAndMul(
     .clk(clk)
   );
 
+  wire in_isPack;
+  ff_en_imm in_isPack__ff (currentCmd_in_isFirstCycle, cmdB__isPack, in_isPack, rst, clk);
+  wire out_isPack;
+  ff_en_imm out_isPack__ff (currentCmd_out_isFirstCycle, cmdB__isPack, out_isPack, rst, clk);
+
   //wire currentCMD__isOp = | (currentCmd & `MemAndMulCMD_mask_op);
   //wire currentCMD__isInOp = | (currentCmd & `MemAndMulCMD_mask_inOp);
   //wire currentCMD__isIn = | (currentCmd & `MemAndMulCMD_mask_in);
   wire currentCMD__isOut = | (currentCmd & `MemAndMulCMD_mask_out);
   
+  wire [64-1:0] o__out;
   memAndMul__outAdapter o(
     .currentCMD__isOut(currentCMD__isOut),
     .currentCmd_out_isLastCycle(currentCmd_out_isLastCycle),
@@ -895,17 +930,18 @@ module memAndMul(
 
     .bus_out_isReady(out_isReady),
     .bus_out_isLast(out_isLast),
-    .bus_out(out),
+    .bus_out(o__out),
     .bus_out_canReceive(out_canReceive),
 
     .rst(rst),
     .clk(clk)
   );
+  memAndMul__pack pack (out_isPack, o__out, out);
 
   assign in_canReceive = core__bus_in_canReceive;
   assign in_isLast = core__bus_in_isLast;
   assign core__bus_in_isReady = in_isReady;
-  assign core__bus_in = in;
+  memAndMul__unpack unpack(in_isPack, in, core__bus_in);
 endmodule
 
 

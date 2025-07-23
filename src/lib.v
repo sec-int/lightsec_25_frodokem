@@ -431,6 +431,18 @@ module cmd_buffer1 #(parameter CmdSize = 1) (
   delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
 endmodule
 
+module swapBits #(parameter N = 1) (
+    input [N-1:0] in,
+    output [N-1:0] out
+  );
+  genvar j;
+  generate
+    for (j = 0; j < N; j=j+1) begin
+      assign out[j] = in[N-1-j];
+    end
+  endgenerate
+endmodule
+
 `endif // LIB_V
 
 
