@@ -51,7 +51,7 @@
 
 
 // Inner Outer
-`ATTR_MOD_GLOBAL
+
 module command_expansion(
     input [`MainExpCMD_SIZE-1:0] o,
 
@@ -147,7 +147,7 @@ endmodule
 
 
 // Inner Outer
-`ATTR_MOD_GLOBAL
+
 module command_sequences(
     input [`MainSeqCMD_SIZE-1:0] o,
     input o_isReady,
@@ -536,7 +536,7 @@ endmodule
 
 
 // Inner Outer
-`ATTR_MOD_GLOBAL
+
 module command_flattener(
     input [`MainFltCMD_SIZE-1:0] o_cmd,
     input o_isTest,
@@ -584,7 +584,7 @@ module command_flattener(
 endmodule
 
 
-`ATTR_MOD_GLOBAL
+
 module command_main(
     input [`MainCMD_SIZE-1:0] o_cmd,
     input o_isReady, // must be false unless o_canReceive
@@ -655,7 +655,7 @@ endmodule
 
 
 
-`ATTR_MOD_GLOBAL
+
 module main(
     input [`MainCMD_SIZE-1:0] cmd,
     input cmd_isReady, // must be false unless cmd_canReceive

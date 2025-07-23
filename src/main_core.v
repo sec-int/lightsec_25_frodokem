@@ -64,7 +64,7 @@
 `define MainCoreCONF_SIZE   (`MemCONF_matrixNumBlocks_size + `SamplerCONF_SIZE)
 
 
-`ATTR_MOD_GLOBAL
+
 module main_core(
     // o_in:  { size:15bits }
     // o_out: { size:15bits }

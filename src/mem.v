@@ -22,7 +22,7 @@
 
 `define MemCONF_matrixNumBlocks_size 8
 
-`ATTR_MOD_GLOBAL
+
 module bram(
   input doRead,
   input [9-1:0] read_index, // 512 values
@@ -81,7 +81,7 @@ module bram(
 endmodule
 
 // two interfaces: Read, Write
-`ATTR_MOD_GLOBAL
+
 module bram8(
   input [9-1:0] r_index, // 512 values
   input [8-1:0] r_bramEnable,
@@ -133,7 +133,7 @@ module bram8(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module mem_elementIndexToByteEnable(
   input [2-1:0] elemIndex,
   output [8-1:0] byteEnable
@@ -146,7 +146,7 @@ module mem_elementIndexToByteEnable(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module mem_byteIndexToByteEnable(
   input [3-1:0] byteIndex,
   output [8-1:0] byteEnable
@@ -173,7 +173,7 @@ endmodule
 
 
 // it connects two side: Outside, Inside
-`ATTR_MOD_GLOBAL
+
 module mainMem_readConnector(
     input [14-1:0] o_index,
     output [14-1:0] o_index_next,
@@ -394,7 +394,7 @@ module mainMem_readConnector(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module stdToCompact_single(
     input [16-1:0] in,
     output [4-1:0] out4,
@@ -410,7 +410,7 @@ module stdToCompact_single(
   assign out4 = out8[0+:4];
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module stdToCompact(
     input config_SUseHalfByte,
     input [64-1:0] in,
@@ -431,7 +431,7 @@ endmodule
 
 
 // it connects two side: Outside, Inside
-`ATTR_MOD_GLOBAL
+
 module mainMem_writeConnector(
     input [14-1:0] o_index,
     output [14-1:0] o_index_next,
@@ -590,7 +590,7 @@ endmodule
 
 
 // two interfaces: Read, Write
-`ATTR_MOD_GLOBAL
+
 module mainMem(
     input [14-1:0] r_index,
     output [14-1:0] r_index_next,

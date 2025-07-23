@@ -36,7 +36,7 @@
 `define MemAndMulIndexCMD_SIZE 5
 
 
-`ATTR_MOD_GLOBAL
+
 module memAndMul__indexHandler(
     input [`MemAndMulIndexCMD_SIZE-1:0] currentCmd,
     input currentCmd_in_isFirstCycle,
@@ -282,7 +282,7 @@ endmodule
 
 
 
-`ATTR_MOD_GLOBAL
+
 module encode(
   input [4-1:0] in,
   output [16-1:0] out
@@ -290,7 +290,7 @@ module encode(
   assign out = {in, 12'b0};
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module encode4(
   input [4*4-1:0] in,
   output [16*4-1:0] out
@@ -301,7 +301,7 @@ module encode4(
   encode e3(in[3*4+:4], out[3*16+:16]);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module decode(
   input [16-1:0] in,
   output [4-1:0] out
@@ -310,7 +310,7 @@ module decode(
   assign out = {(in[11+:5] + 5'b1) >> 1};
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module decode8(
   input [16*8-1:0] in,
   output [4*8-1:0] out
@@ -327,7 +327,7 @@ endmodule
 
 `define MEMANDMUL__CORE__MAX_NUM_STATES 3
 
-`ATTR_MOD_GLOBAL
+
 module memAndMul__core(
     input [`MemAndMulCMD_FULLSIZE-1:0] currentCmd,
     input currentCmd_in_isFirstCycle,
@@ -727,7 +727,7 @@ module memAndMul__core(
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_op_Erase3] & state[1] & indexHandler__w_enable;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module memAndMul__outAdapter(
     input currentCMD__isOut,
     input currentCmd_out_isLastCycle,
@@ -825,7 +825,7 @@ module memAndMul__pack ( // TODO: add support 15 bit packing
   assign out = isPack ? out_packed : in;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module memAndMul(
     input [`MemAndMulCMD_SIZE-1:0] cmd, // { isPack: 1bit, main cmd : 6 bit }
     input cmd_isReady,

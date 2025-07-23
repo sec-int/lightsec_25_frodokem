@@ -25,7 +25,7 @@
 `include "config.v"
 
 
-`ATTR_MOD_GLOBAL
+
 module delay #(parameter N = 1) (
   input [N-1:0] in,
   output [N-1:0] out,
@@ -39,7 +39,7 @@ module delay #(parameter N = 1) (
   assign out = r;  
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module optionalDelay #(parameter N = 1) (
   input doDelay,
   input [N-1:0] in,
@@ -52,7 +52,7 @@ module optionalDelay #(parameter N = 1) (
   assign out = doDelay ? in__d1 : in;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_en_next #(parameter N = 1) (
   input enable,
   input [N-1:0] newVal,
@@ -64,7 +64,7 @@ module ff_en_next #(parameter N = 1) (
   delay #(N) val__ff (val__a1, val, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_en_imm #(parameter N = 1) (
   input enable,
   input [N-1:0] newVal,
@@ -77,7 +77,7 @@ module ff_en_imm #(parameter N = 1) (
   delay #(N) val__ff (val, val__d1, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_sr_next (
   input set,
   input reset,
@@ -91,7 +91,7 @@ module ff_sr_next (
   delay val__ff (val__a1, val, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_sr_imm (
   input set,
   input reset,
@@ -106,7 +106,7 @@ module ff_sr_imm (
   delay val__ff (val, val__d1, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_rs_next (
   input reset,
   input set,
@@ -120,7 +120,7 @@ module ff_rs_next (
   delay val__ff (val__a1, val, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_rs_imm (
   input reset,
   input set,
@@ -135,7 +135,7 @@ module ff_rs_imm (
   delay val__ff (val, val__d1, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module ff_s_r ( // set immediate, reset while going into the next cycle
   input set,
   input reset,
@@ -149,7 +149,7 @@ module ff_s_r ( // set immediate, reset while going into the next cycle
   delay preSet__ff (preSet__a1, preSet, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module counter_bus #(parameter N = 1) ( // N bits must be able to store the highest 'numSteps', and at least 1.
     input restart,  // can't interupt
     input [N-1:0] numSteps,
@@ -177,7 +177,7 @@ module counter_bus #(parameter N = 1) ( // N bits must be able to store the high
 endmodule
 
 
-`ATTR_MOD_GLOBAL
+
 module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to store the highest  restart_steps+1
     input restart,  // can't interupt
     output canRestart,
@@ -202,7 +202,7 @@ module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to 
   );
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module counter_bus_diff #(parameter N = 1) ( // N bits must be able to store the highest 'numSteps', and at least 1.
     input restart,
     input [N-1:0] numSteps,
@@ -226,7 +226,7 @@ module counter_bus_diff #(parameter N = 1) ( // N bits must be able to store the
   );
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module counter_bus_state #(parameter MAX_NUM_STEPS = 1) (
     input restart,  // can't interupt
     input [$clog2(MAX_NUM_STEPS+1)-1:0] numStates, // must be active throughtout the whole counter operation.
@@ -256,7 +256,7 @@ module counter_bus_state #(parameter MAX_NUM_STEPS = 1) (
   
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module serdes #(parameter N = 1) ( // the startSer and startDes can be true together
   input cmd_startDes,
   input cmd_startSer,
@@ -306,7 +306,7 @@ module serdes #(parameter N = 1) ( // the startSer and startDes can be true toge
                                           : {buffer_read[64-1:0], buffer_read[64*N-1:64]};
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module cmd_buffer #(parameter CmdSize = 1, parameter BufSize = 2) (
   input [CmdSize-1:0] i,
   input i_isReady,
@@ -345,7 +345,7 @@ module cmd_buffer #(parameter CmdSize = 1, parameter BufSize = 2) (
   delay #(BufSize) buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module cmd_buffer_std #(parameter CmdSize = 1, parameter BufSize = 2) (
   input [CmdSize-1:0] i,
   input i_isReady,
@@ -373,7 +373,7 @@ module cmd_buffer_std #(parameter CmdSize = 1, parameter BufSize = 2) (
   );
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module cmd_buffer_unstd #(parameter CmdSize = 1, parameter BufSize = 2) (
   input [CmdSize-1:0] i,
   input i_hasAny,
@@ -401,7 +401,7 @@ module cmd_buffer_unstd #(parameter CmdSize = 1, parameter BufSize = 2) (
   );
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module cmd_buffer1 #(parameter CmdSize = 1) (
   input [CmdSize-1:0] i,
   input i_isReady,

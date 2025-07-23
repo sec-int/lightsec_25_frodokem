@@ -21,7 +21,7 @@
 
 `include "lib.v"
 
-`ATTR_MOD_GLOBAL
+
 module keccak_rc(
   input	  cycle_first,
   output  [7-1:0] rc, // the first rc is outputted in the same cycle as cycle_first
@@ -50,7 +50,7 @@ endmodule
 
 `define KECCAK_INDEX(x,y,z)  ( 64*(5*y+x) + z )
 
-`ATTR_MOD_GLOBAL
+
 module keccak_theta(
   input	  [1600-1:0] si,
   output  [1600-1:0] so
@@ -84,7 +84,7 @@ endmodule
 
 `define keccak_rho_op(x,y,shift,z)    assign so[`KECCAK_INDEX(x,y,(z + shift) % 64)] = si[`KECCAK_INDEX(x,y,z)]
 
-`ATTR_MOD_GLOBAL
+
 module keccak_rho(
   input	  [1600-1:0] si,
   output  [1600-1:0] so
@@ -125,7 +125,7 @@ module keccak_rho(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_pi(
   input	  [1600-1:0] si,
   output  [1600-1:0] so
@@ -144,7 +144,7 @@ module keccak_pi(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_chi(
   input	  [1600-1:0] si,
   output  [1600-1:0] so
@@ -164,7 +164,7 @@ module keccak_chi(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_iota(
   input	  [1600-1:0] si,
   input   [6:0] rc,
@@ -197,7 +197,7 @@ module keccak_iota(
   endgenerate
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_fn(
   input	  [1600-1:0] si,
   input   [6:0] rc,
@@ -212,7 +212,7 @@ module keccak_fn(
   keccak_iota iota(s4, rc, so);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_iter(
   input cmd_start,
   input cmd_continue,
@@ -264,7 +264,7 @@ endmodule
 
 // TODO make clear that:
 //   isReady can't be true unless canReceive isn't true
-`ATTR_MOD_GLOBAL
+
 module keccak_busInConverter_addTerminator(
   input [64-1:0] in, // the unused must be 0
   input in_isSingleByte,
@@ -290,7 +290,7 @@ module keccak_busInConverter_addTerminator(
   assign out_isReady = in_isReady | out_isLast & out_canReceive;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busInConverter_align(
   input [64-1:0] in, // the unused must be 0
   input in_isSingleByte,
@@ -334,7 +334,7 @@ module keccak_busInConverter_align(
                                                       : usedBytes;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busInConverter_padEndingAndEnd(
   input [64-1:0] in,
   input in_isReady,
@@ -364,7 +364,7 @@ endmodule
 `define SHAKE128_R64 21 /*1344 bits*/
 `define SHAKE256_R64 17 /*1088 bits*/
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busInConverter_padCycle(
   input start128,  // can't interrupt
   input start256,
@@ -425,7 +425,7 @@ module keccak_busInConverter_padCycle(
   assign out = in & {64{in_isReady}};
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busInConverter(
   input start128,  // can't interrupt
   input start256,
@@ -523,7 +523,7 @@ module keccak_busInConverter(
   );
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busOutConverter(
   input start128,  // can't interrupt
   input start256,
@@ -586,7 +586,7 @@ module keccak_busOutConverter(
   assign out_isReady = (c256__canReceive | cDiff__canReceive & ~is256else128) & in_isReady & ~noMoreOut;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busTwoIn(
   input startA,
   input startB,
@@ -624,7 +624,7 @@ module keccak_busTwoIn(
   assign out_isReady = inA_isReady | inB_isReady;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_busTwoOut(
   input startA,
   input startB,
@@ -674,7 +674,7 @@ endmodule
 //            /-+\
 //             ./-\
 //                |-\
-`ATTR_MOD_GLOBAL
+
 module keccak_block(
   output cmd_canReceive,
   // the various commands for a given block must be set together during the first cycle
@@ -886,7 +886,7 @@ module keccak_block(
                         & (~isAnyState__d1 | state__canReceive);
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_planToFree #(parameter BUFF = 3) (
   input [BUFF-1:0] plan,
   output [BUFF-1:0] free
@@ -905,7 +905,7 @@ module keccak_planToFree #(parameter BUFF = 3) (
   assign free = ~anyThisOrAfterIsScheduled;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module keccak_delayWithShift #(parameter BUFF = 3) (
   input doShift,
   input [BUFF-1:0] in,
@@ -919,7 +919,7 @@ endmodule
 
 `define Keccak_BlockCounterSize  9
 
-`ATTR_MOD_GLOBAL
+
 module keccak_ctrl #(parameter BUFF=3) (
   output in_cmd_canReceive,
   input in_cmd_isReady, // ready for a new command
@@ -1091,7 +1091,7 @@ endmodule
 
 `define KeccakCMD_SIZE  (3+2*`Keccak_BlockCounterSize)
 
-`ATTR_MOD_GLOBAL
+
 module keccak(
     input [`KeccakCMD_SIZE-1:0] cmd, // { is128else256: 1bit, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
     input cmd_isReady,

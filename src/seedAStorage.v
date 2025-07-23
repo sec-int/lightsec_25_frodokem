@@ -23,7 +23,7 @@
 
 `define SeedAStorageCMD_SIZE 1
 
-`ATTR_MOD_GLOBAL
+
 module seedAStorage (
     input [`SeedAStorageCMD_SIZE-1:0] cmd, // { cmd_startInElseOut:1bit }
     input cmd_isReady,

@@ -19,7 +19,7 @@
 // 
 //////////////////////////////////////////////////////////////////////////////////
 
-`ATTR_MOD_GLOBAL
+
 module frodoMulSingle(
     input [5-1:0] s,
     input [16-1:0] a,
@@ -36,7 +36,7 @@ endmodule
 
 // mul1: *'  outVec = accVec + \sum_i sMat_i * a_i
 // mul2: *"  outMat_i = accMat_i + sCol * a_i.
-`ATTR_MOD_GLOBAL
+
 module frodoMul #(
     parameter A=4,
     parameter S=8

@@ -26,7 +26,7 @@
 `define KeccakInCMD_forward   2'b10
 `define KeccakInCMD_SIZE  (8+1+2)
 
-`ATTR_MOD_GLOBAL
+
 module adapted_keccak__in(
     input [`KeccakInCMD_SIZE-1:0] cmd,  // {byteVal:8bits, skipIsLast:1bit, CMD:2bit}
     input cmd_isReady,
@@ -136,7 +136,7 @@ endmodule
 `define SamplerCONF_SIZE 3
 
 
-`ATTR_MOD_GLOBAL
+
 module sampler_single(
     input [`SamplerCONF_SIZE-1:0] config_whichSampling,
     input [16-1:0] in,
@@ -214,7 +214,7 @@ module sampler_single(
   assign out[15:4] = {12{isNeg & (out[3:0] != 0) }};
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module sampler(
     input [`SamplerCONF_SIZE-1:0] config_whichSampling,
     input enable,
@@ -229,7 +229,7 @@ module sampler(
   assign out = enable ? out_sampled : in;
 endmodule
 
-`ATTR_MOD_GLOBAL
+
 module adapted_keccak__out(
     input [`KeccakOutCMD_SIZE-1:0] cmd, // {skipIsLast:1bit, sample:1bit}
     input cmd_isReady,
@@ -280,7 +280,7 @@ endmodule
 
 `define KeccakAdaptedCMD_SIZE  (4 + `Keccak_BlockCounterSize + 1)
 
-`ATTR_MOD_GLOBAL
+
 module adapted_keccak (
     input [`KeccakInCMD_SIZE-1:0] k_in__cmd,  // {byteVal:8bits, skipIsLast:1bit, CMD:1bit}
     input k_in__cmd_isReady,

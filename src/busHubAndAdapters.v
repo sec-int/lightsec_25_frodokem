@@ -21,7 +21,7 @@
 
 `include "lib.v"
 
-`ATTR_MOD_GLOBAL
+
 module busSwitch #(parameter N = 1) (
     input [N*2-1:0] cmd, // more than one can be selected at the same time, but with only one source. lowest bits are the source, the highest ones are destination.
     input cmd_isReady,
@@ -124,7 +124,7 @@ endmodule
 
 
 
-`ATTR_MOD_GLOBAL
+
 module main_adapter_outer_out(
     input [`OuterInCMD_SIZE-1:0] cmd, //  {size:`Outer_MaxWordLen bits}  // size of 0 for automatic
     input cmd_isReady,
@@ -180,7 +180,7 @@ endmodule
 `define OuterOutCMD_SIZE  (`Outer_MaxWordLen)
 
 
-`ATTR_MOD_GLOBAL
+
 module main_adapter_outer_in(
     input [`OuterOutCMD_SIZE-1:0] cmd,  //  {size:`Outer_MaxWordLen bits}   // size of 0 means automatic
     input cmd_isReady,

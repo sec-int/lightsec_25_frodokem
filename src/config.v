@@ -25,19 +25,9 @@
 
 // uncomment to enable:
 //
-//`define USE_DONT_TOUCH
 //`define USE_BRAM_IP      // TODO: this is bugged
 //`define USE_NO_KECCAK
 //`define USE_NO_KECCAK_PERMUTATION
-
-
-
-
-`ifdef USE_DONT_TOUCH
-`define ATTR_MOD_GLOBAL (* DONT_TOUCH = "yes" *)
-`else
-`define ATTR_MOD_GLOBAL
-`endif
 
 
 `endif // LIB_V
