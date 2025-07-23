@@ -150,7 +150,7 @@ module command_sequences(
     input [`MainSeqCMD_SIZE-1:0] o,
     input o_isReady,
     output o_canReceive,
-    input [16-1:0] genA__counter,
+    input [16-1:0] o__genA__counter,
 
     output [`MainExpCMD_SIZE-1:0] i,
     output i__k_isLast,
@@ -262,15 +262,15 @@ module command_sequences(
   always @(*) begin
     `SET_CMD__NONE
     if(oCurr == `MainSeqCMD_genA_iter) begin
-      //--// _A = GEN(seedA)  -- only one row
-      if(state[ 0]) `SET_CMD__KI_BYTE(genA__counter[0+:8])
-      if(state[ 1]) `SET_CMD__KI_BYTE(genA__counter[8+:8])
+      //--// _A = GEN(seedA)  -- only one row:  _A[o__genA__counter] <- SHAKE128(o__genA__counter | seedA)
+      if(state[ 0]) `SET_CMD__KI_BYTE(o__genA__counter[0+:8])
+      if(state[ 1]) `SET_CMD__KI_BYTE(o__genA__counter[8+:8])
       if(state[ 2]) `SET_CMD__S2K(`SET_CMD__IS_LAST)
       if(state[ 3]) `SET_CMD__GENA__KOUT
     end
     //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_keygen_PRNG) begin
-      //--// OUT(sk.s) : 256b | BRAM.seedSE : 512b | seedA : 128b (=z) <- SHAKE256(0 : 8b | BRAM.RNG_state)
+      //--// OUT(sk.s) : 256b | BRAM.seedSE : 512b | seedA : 128b [=z] <- SHAKE256(0 : 8b | BRAM.RNG_state)
       if(state[ 0]) `SET_CMD__KI_BYTE(8'h00)
       if(state[ 1]) `SET_CMD__M2K(`MemAndMulCMD_out_RNGState, `SET_CMD__IS_LAST)
       if(state[ 2]) `SET_CMD__K_SINGLE
@@ -285,31 +285,32 @@ module command_sequences(
       if(state[ 9]) `SET_CMD__K2M(`MemAndMulCMD_in_RNGState, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
     end
     if(oCurr == `MainSeqCMD_keygen_noPRNG) begin
-      //--// OUT(sk.s) : 256b <- BRAM.u (=s)
+      //--// OUT(sk.s) : 256b <- BRAM.u [=s]
       if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_u)
     end
     if(oCurr == `MainSeqCMD_keygen_mid) begin
-      //--// BRAM.S' <- SampleMatrix(_r) // =S^T
-      //--// OUT(S^T) <- BRAM.S' // while it's being generated
-      //--// BRAM.B' <- SampleMatrix(_r)^T // =E^T
+      //--// _r <- SHAKE256(0x5F | BRAM.seedSE)
+      //--// BRAM.S' [=S^T] <- SampleMatrix(_r)
+      //--// OUT(S^T) <- BRAM.S' [=S^T]
+      //--// BRAM.B' [=E^T] <- ( SampleMatrix(_r) [=E] )^T
       if(state[ 0]) `SET_CMD__K_LONGOUT(9'd317)
       if(state[ 1]) `SET_CMD__KI_BYTE(8'h5F)
       if(state[ 2]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
       if(state[ 3]) `SET_CMD__K2MO(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__K2M(`MemAndMulCMD_in_BColFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__IS_LAST)
       
-      //--// seedA <- SHAKE256(seedA)
-      //--// OUT(seedA) <- seedA // can out while being generated
+      //--// seedA <- SHAKE256(seedA [=z])
+      //--// OUT(seedA) <- seedA
       if(state[ 5]) `SET_CMD__K_SINGLE
       if(state[ 6]) `SET_CMD__S2K(`SET_CMD__IS_LAST)
       if(state[ 7]) `SET_CMD__K2SO(`SET_CMD__IS_LAST)
       if(state[ 8]) `SET_CMD__K_NO_OVERLAP
       
-      //--// BRAM.B' += BRAM.S' *' _A^T // =B^T
+      //--// BRAM.B' [=B^T] = BRAM.B' [=E^T] + BRAM.S' [=S^T] *' _A^T
       if(state[ 9]) `SET_CMD__M(`MemAndMulCMD_inOp_BpleqStimesInAT)
     end
     if(oCurr == `MainSeqCMD_keygen_postGenA) begin
-      //--// OUT(B) <- BRAM.B'^T
+      //--// OUT(B) <- (BRAM.B' [=B^T]  )^T
       //--// OUT(pkh) : 256b <- SHAKE256(seedA | BRAM.B'^T)
       if(state[ 0]) `SET_CMD__K_NO_OVERLAP
       if(state[ 1]) `SET_CMD__K_LONGIN(9'd159)
@@ -531,7 +532,7 @@ module command_flattener(
     output [`MainSeqCMD_SIZE-1:0] i,
     output i_isReady,
     input i_canReceive,
-    output [16-1:0] genA__counter,
+    output [16-1:0] i__genA__counter,
     
     input rst,
     input clk
@@ -560,10 +561,12 @@ module command_flattener(
 
   wire [16-1:0] genA__counter__d1;
   assign genA__counter__canConsume = genA__counter__d1 == 16'd1343;
-  assign genA__counter = (o_cmd != `MainFltCMD_genA) || ~i_isReady ? genA__counter__d1
-                       : genA__counter__d1 == 16'd1343             ? 16'd0
-                                                                   : genA__counter__d1 + 16'b1;
-  delay #(16) genA__counter__ff (genA__counter, genA__counter__d1, rst, clk); 
+  wire  [16-1:0] genA__counter = (o_cmd != `MainFltCMD_genA) || ~i_isReady ? genA__counter__d1
+                               : genA__counter__d1 == 16'd1343             ? 16'd0
+                                                                           : genA__counter__d1 + 16'b1;
+  delay #(16) genA__counter__ff (genA__counter, genA__counter__d1, rst, clk);
+  
+  ff_en_imm #(16) i__genA__counter__ff (i_isReady, genA__counter__d1, i__genA__counter, rst, clk);
 endmodule
 
 
@@ -657,7 +660,7 @@ module main(
 
   wire currCmd_isTest__set = cmd == `MainCMD_setupTest;
   wire currCmd_isTest__d1;
-  ff_rs_next currCmd_isTest__ff(cmd_isReady, currCmd_isTest__set, currCmd_isTest__d1, rst, clk);
+  ff_sr_next currCmd_isTest__ff(currCmd_isTest__set, cmd_isReady, currCmd_isTest__d1, rst, clk);
   wire lastCmd_wasTest;
   ff_en_imm lastCmd_isTest__ff(cmd_isReady, currCmd_isTest__d1, lastCmd_wasTest, rst, clk);
 
@@ -687,7 +690,7 @@ module main(
     .i(seq_cmd),
     .i_isReady(seq_isReady),
     .i_canReceive(seq_canReceive),
-    .genA__counter(seq_genA__counter),
+    .i__genA__counter(seq_genA__counter),
     .rst(rst),
     .clk(clk)
   );
@@ -705,7 +708,7 @@ module main(
     .o(seq_cmd),
     .o_isReady(seq_isReady),
     .o_canReceive(seq_canReceive),
-    .genA__counter(seq_genA__counter),
+    .o__genA__counter(seq_genA__counter),
     .i(exp_cmd),
     .i__k_isLast(exp__k_isLast),
     .i__k_isSampled(exp__k_isSampled),
