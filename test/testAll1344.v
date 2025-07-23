@@ -82,7 +82,7 @@ module testAll1344();
   wire [0:1024-1] ct_c2 [0:99];
   wire [0:512-1] ct_salt [0:99];
   wire [0:256-1] dec_ss [0:99];  
-`include "testAll1344_vectors.v"
+`include "vectors1344.v"
 
 
 `define TEST
