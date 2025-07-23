@@ -146,7 +146,6 @@ module sampler_single(
 
   wire isNeg = in[0];
 
-  assign out[15:4] = {12{isNeg}};
   assign out[3:0] = (config_whichSampling[0] ? isNeg ? val <= `FRODO_0T0  ? -4'd0
                                                      : val <= `FRODO_0T1  ? -4'd1
                                                      : val <= `FRODO_0T2  ? -4'd2
@@ -212,12 +211,13 @@ module sampler_single(
                                                      : val <= `FRODO_2T5 ? 4'd5
                                                                          : 4'd6
                                              : 4'd0);
+  assign out[15:4] = {12{isNeg & (out[3:0] != 0) }};
 endmodule
 
 `ATTR_MOD_GLOBAL
 module sampler(
-    input enable,
     input [`SamplerCONF_SIZE-1:0] config_whichSampling,
+    input enable,
     input [64-1:0] in,
     output [64-1:0] out
   );

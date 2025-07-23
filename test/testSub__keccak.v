@@ -469,7 +469,49 @@
     join
 `endif
 
+//-----------------------------------------------------------------------------------
 
-// TODO: test sampling
+`ifdef TEST_VARS
+    reg [0:256-1] test__keccak_sample2__in = 256'h6ae23f058f0f2264a18cd609acc26dd4dbc00f5c3ee9e13ecaea2bb5a2f0bb6b;
+//  reg [0:1984-1]                          = 1984'hb9b9_2544_fb25_cfe4__ec6f_e437_d8da_2bbe__00f7_bdaf_ace3_de97__b877_5a44_d753_c3ad__ca3f7c6f183cc8647e229070439aa9539ae1f8f13470c9d3527fffdeef6c94f9f0520ff0c1ba8b16e16014e1af43ac6d94cb7929188cce9d7b02f81a2746f52ba16988e5f6d93298d778dfe05ea0ef256ae3728643ce3e29c794a0370e9ca6a8bf3e7a41e86770676ac106f7ae79e67027ce7b7b38efe27d253a52b5cb54d6eb4367a87736ed48cb45ef27f42683da140ed3295dfc575d3ea38cfc2a3697cc92864305407369b4abac054e497378dd9fd0c4b352ea3185ce1178b3dc1599df69db29259d4735320c8e7d33e8226620c9a1d22761f1d35bdf;
+    reg [0:192-1] test__keccak_sample2__out = 192'hfeff_0000_0000_feff__0100_0000_0200_feff__0300_ffff_0200_0100;
+`endif
+
+`ifdef TEST
+    `DO_RST("test__keccak_sample2", 0, 2)
+    fork : test__keccak_sample2
+      begin
+        // send the data to hash
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd4})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_keccak, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_in, 8'b0, 1'b0, `KeccakInCMD_forward})
+
+        // do hash
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0000, 9'd2, 1'b1})
+        
+        // receive hashed data
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd3})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_keccak})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k_out, 2'b01})
+      end
+
+      begin
+        for(test__keccak__in_i = 0; test__keccak__in_i < 4; test__keccak__in_i = test__keccak__in_i+1) begin
+          `TEST_UTIL__SEND(swapBytes64(test__keccak_sample2__in[64*test__keccak__in_i+:64]))
+        end
+        `TEST_UTIL__SEND_CANT
+      end
+
+      begin
+        for(test__keccak__out_i = 0; test__keccak__out_i < 3; test__keccak__out_i = test__keccak__out_i+1) begin
+          `TEST_UTIL__RECEIVE(swapBytes64(test__keccak_sample2__out[64*test__keccak__out_i+:64]))
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+
+// TODO: test sampling for distribution 1 and 0
 
 
