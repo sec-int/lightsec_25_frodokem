@@ -26,10 +26,15 @@ module frodoMulSingle(
     output [16-1:0] z
   );
 
+`ifndef USE_DSP
   wire [16-1:0] r = (s[1] ? a << 0 : 16'b0)
                   + (s[2] ? a << 1 : 16'b0)
                   + (s[3] ? a << 2 : 16'b0)
                   + (s[4] ? a << 3 : 16'b0);
+`else
+  wire [16-1:0] r = s[1+:4] * a;
+`endif
+
   assign z = s[0] ? -r : r;
 endmodule
 
