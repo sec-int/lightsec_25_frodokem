@@ -307,107 +307,39 @@ module serdes #(parameter N = 1) ( // the startSer and startDes can be true toge
 endmodule
 
 
-module cmd_buffer #(parameter CmdSize = 1, parameter BufSize = 2) (
-  input [CmdSize-1:0] i,
+module bus_delay_std1 #(parameter BusSize = 1) (
+  input [BusSize-1:0] i,
   input i_isReady,
   output i_canReceive,
 
-  output [CmdSize-1:0] o,
-  output o_hasAny,
-  input o_consume,
-
-  input rst,
-  input clk
-);
-  wire [BufSize-1:0] buffer_isUsed;
-  wire [CmdSize*BufSize-1:0] buffer;
-
-  assign o_hasAny = buffer_isUsed[0];
-  assign o = buffer[0+:CmdSize];
-  
-  assign i_canReceive = ~buffer_isUsed[BufSize-1] | o_consume;
-  wire [BufSize-1:0] buffer_isUsed__postConsume = buffer_isUsed >> o_consume * 1;
-  wire [CmdSize*BufSize-1:0] buffer__postConsume = buffer >> o_consume * CmdSize;
-
-  wire [BufSize-1:0] whereToInsert = i_isReady ? (buffer_isUsed__postConsume << 1 | 1'b1) & ~buffer_isUsed__postConsume : {BufSize{1'b0}};
-//  wire [BufSize-1:0] whereToInsert = { buffer_isUsed__postConsume[0+:BufSize-1], 1'b1 } & ~buffer_isUsed__postConsume;
-
-  wire [BufSize-1:0] buffer_isUsed__a1 = buffer_isUsed__postConsume | whereToInsert;
-  wor [CmdSize*BufSize-1:0] buffer__a1 = buffer__postConsume;
-  genvar pos;
-  generate
-    for (pos = 0; pos < BufSize; pos=pos+1) begin
-      assign buffer__a1[pos*CmdSize+:CmdSize] = whereToInsert[pos] ? i : {CmdSize{1'b0}};
-    end
-  endgenerate
-
-  delay #(CmdSize*BufSize) buffer__ff (buffer__a1, buffer, rst, clk);
-  delay #(BufSize) buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
-endmodule
-
-
-module cmd_buffer_std #(parameter CmdSize = 1, parameter BufSize = 2) (
-  input [CmdSize-1:0] i,
-  input i_isReady,
-  output i_canReceive,
-
-  output [CmdSize-1:0] o,
+  output [BusSize-1:0] o,
   output o_isReady,
   input o_canReceive,
 
   input rst,
   input clk
 );
-  wire o_hasAny;
-  wire o_consume = o_hasAny & o_canReceive;
-  assign o_isReady = o_hasAny & o_canReceive;
-  cmd_buffer #(CmdSize, BufSize) actualBuffer (
-    .i(i),
-    .i_isReady(i_isReady),
-    .i_canReceive(i_canReceive),
-    .o(o),
-    .o_hasAny(o_hasAny),
-    .o_consume(o_consume),
-    .rst(rst),
-    .clk(clk)
-  );
+  wire buffer_isUsed;
+  wire [BusSize-1:0] buffer;
+
+  assign o_isReady = buffer_isUsed & o_canReceive;
+  assign i_canReceive = ~buffer_isUsed;
+
+  assign o = buffer;
+
+  wire buffer_isUsed__a1        = buffer_isUsed ? ~o_canReceive : i_isReady;
+  wire [BusSize-1:0] buffer__a1 = buffer_isUsed ? buffer        : i;
+  
+  delay #(BusSize) buffer__ff (buffer__a1, buffer, rst, clk);
+  delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
 endmodule
 
-
-module cmd_buffer_unstd #(parameter CmdSize = 1, parameter BufSize = 2) (
-  input [CmdSize-1:0] i,
+module bus_delay_unstd1 #(parameter BusSize = 1) (
+  input [BusSize-1:0] i,
   input i_hasAny,
   output i_consume,
 
-  output [CmdSize-1:0] o,
-  output o_hasAny,
-  input o_consume,
-
-  input rst,
-  input clk
-);
-  wire i_canReceive;
-  assign i_consume = i_hasAny & i_canReceive;
-  wire i_isReady = i_hasAny & i_canReceive;
-  cmd_buffer #(CmdSize, BufSize) actualBuffer (
-    .i(i),
-    .i_isReady(i_isReady),
-    .i_canReceive(i_canReceive),
-    .o(o),
-    .o_hasAny(o_hasAny),
-    .o_consume(o_consume),
-    .rst(rst),
-    .clk(clk)
-  );
-endmodule
-
-
-module cmd_buffer1 #(parameter CmdSize = 1) (
-  input [CmdSize-1:0] i,
-  input i_isReady,
-  output i_canReceive,
-
-  output [CmdSize-1:0] o,
+  output [BusSize-1:0] o,
   output o_hasAny,
   input o_consume,
 
@@ -415,20 +347,180 @@ module cmd_buffer1 #(parameter CmdSize = 1) (
   input clk
 );
   wire buffer_isUsed;
-  wire [CmdSize-1:0] buffer;
+  wire [BusSize-1:0] buffer;
 
-  assign o = buffer;
+  assign i_consume = i_hasAny & ~buffer_isUsed;
   assign o_hasAny = buffer_isUsed;
 
-  assign i_canReceive = ~buffer_isUsed | o_consume;
-  wire buffer_isUsed__postConsume        = o_consume ?    1'b0         : buffer_isUsed;
-  wire [CmdSize-1:0] buffer__postConsume = o_consume ? {CmdSize{1'b0}} : buffer;
+  assign o = buffer;
 
-  wire buffer_isUsed__a1        = buffer_isUsed__postConsume |  i_isReady;
-  wire [CmdSize-1:0] buffer__a1 = buffer__postConsume        | (i_isReady ? i : {CmdSize{1'b0}});
+  wire buffer_isUsed__a1        = buffer_isUsed ? ~o_consume : i_hasAny;
+  wire [BusSize-1:0] buffer__a1 = buffer_isUsed ? buffer     : i;
 
-  delay #(CmdSize) buffer__ff (buffer__a1, buffer, rst, clk);
+  delay #(BusSize) buffer__ff (buffer__a1, buffer, rst, clk);
   delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
+endmodule
+
+module bus_delay_fromstd1 #(parameter BusSize = 1) (
+  input [BusSize-1:0] i,
+  input i_isReady,
+  output i_canReceive,
+
+  output [BusSize-1:0] o,
+  output o_hasAny,
+  input o_consume,
+
+  input rst,
+  input clk
+);
+  wire buffer_isUsed;
+  wire [BusSize-1:0] buffer;
+
+  assign i_canReceive = ~buffer_isUsed;
+  assign o_hasAny = buffer_isUsed;
+
+  assign o = buffer;
+
+  wire buffer_isUsed__a1        = buffer_isUsed ? ~o_consume : i_isReady;
+  wire [BusSize-1:0] buffer__a1 = buffer_isUsed ? buffer     : i;
+
+  delay #(BusSize) buffer__ff (buffer__a1, buffer, rst, clk);
+  delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
+endmodule
+
+
+module bus_delay_std #(parameter BusSize = 1, N = 0) (
+  input [BusSize-1:0] i,
+  input i_isReady,
+  output i_canReceive,
+
+  output [BusSize-1:0] o,
+  output o_isReady,
+  input o_canReceive,
+
+  input rst,
+  input clk
+);
+
+  wire [BusSize*(N+1)-1:0] s;
+  wire [N+1-1:0] s_isReady;
+  wire [N+1-1:0] s_canReceive;
+
+  assign s[0+:BusSize] = i;
+  assign s_isReady[0] = i_isReady;
+  assign i_canReceive = s_canReceive[0];
+  assign o = s[BusSize*N+:BusSize];
+  assign o_isReady = s_isReady[N];
+  assign s_canReceive[N] = o_canReceive;
+
+  genvar pos;
+  generate
+    for (pos = 0; pos < N; pos=pos+1) begin
+
+      bus_delay_std1 #(.BusSize(BusSize)) del (
+        .i(s[pos*BusSize+:BusSize]),
+        .i_isReady(s_isReady[pos]),
+        .i_canReceive(s_canReceive[pos]),
+
+        .o(s[(pos+1)*BusSize+:BusSize]),
+        .o_isReady(s_isReady[pos+1]),
+        .o_canReceive(s_canReceive[pos+1]),
+
+        .rst(rst),
+        .clk(clk)
+      );
+
+    end
+  endgenerate
+
+endmodule
+
+
+module bus_delay_unstd #(parameter BusSize = 1, N = 0) (
+  input [BusSize-1:0] i,
+  input i_hasAny,
+  output i_consume,
+
+  output [BusSize-1:0] o,
+  output o_hasAny,
+  input o_consume,
+
+  input rst,
+  input clk
+);
+
+  wire [BusSize*(N+1)-1:0] s;
+  wire [N+1-1:0] s_hasAny;
+  wire [N+1-1:0] s_consume;
+
+  assign s[0+:BusSize] = i;
+  assign s_hasAny[0] = i_hasAny;
+  assign i_consume = s_consume[0];
+  assign o = s[BusSize*N+:BusSize];
+  assign o_hasAny = s_hasAny[N];
+  assign s_consume[N] = o_consume;
+
+  genvar pos;
+  generate
+    for (pos = 0; pos < N; pos=pos+1) begin
+
+      bus_delay_unstd1 #(.BusSize(BusSize)) del (
+        .i(s[pos*BusSize+:BusSize]),
+        .i_hasAny(s_hasAny[pos]),
+        .i_consume(s_consume[pos]),
+
+        .o(s[(pos+1)*BusSize+:BusSize]),
+        .o_hasAny(s_hasAny[pos+1]),
+        .o_consume(s_consume[pos+1]),
+
+        .rst(rst),
+        .clk(clk)
+      );
+
+    end
+  endgenerate
+
+endmodule
+
+
+module bus_delay_fromstd #(parameter BusSize = 1, N = 1) (
+  input [BusSize-1:0] i,
+  input i_isReady,
+  output i_canReceive,
+
+  output [BusSize-1:0] o,
+  output o_hasAny,
+  input o_consume,
+
+  input rst,
+  input clk
+);
+  wire [BusSize-1:0] m;
+  wire m_hasAny;
+  wire m_consume;
+
+  bus_delay_fromstd1 #(.BusSize(BusSize)) adapter (
+    .i(i),
+    .i_isReady(i_isReady),
+    .i_canReceive(i_canReceive),
+    .o(m),
+    .o_hasAny(m_hasAny),
+    .o_consume(m_consume),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  bus_delay_unstd #(.BusSize(BusSize), .N(N-1)) mainBuff (
+    .i(m),
+    .i_hasAny(m_hasAny),
+    .i_consume(m_consume),
+    .o(o),
+    .o_hasAny(o_hasAny),
+    .o_consume(o_consume),
+    .rst(rst),
+    .clk(clk)
+  );
+
 endmodule
 
 module swapBits #(parameter N = 1) (
@@ -442,6 +534,8 @@ module swapBits #(parameter N = 1) (
     end
   endgenerate
 endmodule
+
+
 
 `endif // LIB_V
 

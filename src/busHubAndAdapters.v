@@ -48,7 +48,7 @@ module busSwitch #(parameter N = 1) (
   wire [N*2-1:0] cmdB;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  cmd_buffer1 #(.CmdSize(N*2)) cmdBuf (
+  bus_delay_fromstd1 #(.BusSize(N*2)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),

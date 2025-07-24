@@ -45,7 +45,7 @@ module seedAStorage (
   wire [`SeedAStorageCMD_SIZE-1:0] cmdB;
   wire cmdB_isReady;
   wire cmdB_canReceive;
-  cmd_buffer_std #(.CmdSize(`SeedAStorageCMD_SIZE), .BufSize(2)) cmdBuffer (
+  bus_delay_std #(.BusSize(`SeedAStorageCMD_SIZE), .N(2)) cmdBuffer (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),

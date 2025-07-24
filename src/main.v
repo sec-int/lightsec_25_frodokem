@@ -221,10 +221,10 @@ module command_sequences(
   reg i__k_isLast__r;
   reg i__k_isSampled__r;
   reg [9-1:0] i__param__r;
-  reg [`MemAndMulCMD_SIZE-1:0] i__m_cmd__r;
+  reg [6-1:0] i__m_cmd__r;
+  reg i__m_isPack__r;
   reg [4-1:0] i__h_dst__r;
   reg [4-1:0] i__h_src__r;
-  reg i__m_isPack__r;
   assign i = i__r;
   assign i__k_isLast = i__k_isLast__r;
   assign i__k_isSampled = i__k_isSampled__r;
@@ -773,6 +773,20 @@ module main(
     .rst(rst),
     .clk(clk)
   );
+
+/*
+  bus_delay_unstd #(.BusSize(`MainCoreCMD_SIZE), .N(1)) preCoreDelay (
+    .i(),
+    .i_hasAny(),
+    .i_consume(),
+    .o(),
+    .o_hasAny(),
+    .o_consume(),
+
+    .rst(rst),
+    .clk(clk)
+  );
+*/
 
   wire [`MainCoreCMD_SIZE-1:0] core__cmd;
   wire [`MainCoreCMD_which_SIZE-1:0] core__cmd_hasAny;

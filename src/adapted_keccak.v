@@ -50,7 +50,7 @@ module adapted_keccak__in(
   wire [`KeccakInCMD_SIZE-1:0] cmdB;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  cmd_buffer #(.CmdSize(`KeccakInCMD_SIZE), .BufSize(4)) cmdBuf (
+  bus_delay_fromstd #(.BusSize(`KeccakInCMD_SIZE), .N(4)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
@@ -254,7 +254,7 @@ module adapted_keccak__out(
   wire [`KeccakOutCMD_SIZE-1:0] cmdB;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  cmd_buffer #(.CmdSize(`KeccakOutCMD_SIZE), .BufSize(3)) cmdBuf (
+  bus_delay_fromstd #(.BusSize(`KeccakOutCMD_SIZE), .N(3)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
@@ -322,12 +322,10 @@ module adapted_keccak (
   wire k__out_canReceive;
   wire k__out_isLast;
 
-  wire [`KeccakAdaptedCMD_SIZE-1:0] k__cmdB = k__cmd;
-  wire k__cmdB_isReady = k__cmd_isReady;
+  wire [`KeccakAdaptedCMD_SIZE-1:0] k__cmdB;
+  wire k__cmdB_isReady;
   wire k__cmdB_canReceive;
-  assign k__cmd_canReceive = k__cmdB_canReceive;
-  /*
-  cmd_buffer_std #(.CmdSize(`KeccakAdaptedCMD_SIZE), .BufSize(2)) k__buffer (
+  bus_delay_std #(.BusSize(`KeccakAdaptedCMD_SIZE), .N(0)) k__buffer (
     .i(k__cmd),
     .i_isReady(k__cmd_isReady),
     .i_canReceive(k__cmd_canReceive),
@@ -337,7 +335,6 @@ module adapted_keccak (
     .rst(rst),
     .clk(clk)
   );
-  */
 
   wire [`Keccak_BlockCounterSize-1:0] k__cmd__secondaryNumBlocks = {{`Keccak_BlockCounterSize-1{1'b0}}, k__cmdB[0]};
   wire [`Keccak_BlockCounterSize-1:0] k__cmd__mainNumBlocks = k__cmdB[1+:`Keccak_BlockCounterSize];

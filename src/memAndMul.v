@@ -851,7 +851,7 @@ module memAndMul(
   wire [`MemAndMulCMD_SIZE-1:0] cmdB__raw;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  cmd_buffer1 #(.CmdSize(`MemAndMulCMD_SIZE)) cmdBuf (
+  bus_delay_fromstd #(.BusSize(`MemAndMulCMD_SIZE), .N(1)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
