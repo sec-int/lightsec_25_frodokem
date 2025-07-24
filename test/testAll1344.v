@@ -171,6 +171,7 @@ module testAll1344();
 
 
   reg [30*8-1:0] test_name = "";
+  reg [30*8-1:0] IO_name = "";
   integer testNum = 0;
   integer j = 0;
   initial begin : body
@@ -186,11 +187,17 @@ module testAll1344();
 
       `TEST_UTIL__CMD_SEND(`MainCMD_keygen)
 
+      IO_name = "sk_s";
       `TEST_UTIL__RECEIVE_ARRAY(sk_s[testNum], j, 256)
+      IO_name = "sk_S";
       `TEST_UTIL__RECEIVE_ARRAY(sk_S[testNum], j, 172032)
+      IO_name = "pk_seedA";
       `TEST_UTIL__RECEIVE_ARRAY(pk_seedA[testNum], j, 128)
+      IO_name = "pk_b";
       `TEST_UTIL__RECEIVE_ARRAY(pk_b[testNum], j, 172032)
+      IO_name = "sk_pkh";
       `TEST_UTIL__RECEIVE_ARRAY(sk_pkh[testNum], j, 256)
+
       #5;
     end
 /*
