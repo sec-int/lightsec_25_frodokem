@@ -28,6 +28,7 @@
 //`define USE_BRAM_IP      // TODO: this is bugged
 //`define USE_NO_KECCAK
 //`define USE_NO_KECCAK_PERMUTATION
+//`define OUTPUT_INTERNALS_FOR_TEST
 
 
 `endif // LIB_V

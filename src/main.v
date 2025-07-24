@@ -46,6 +46,7 @@
 `define MainExpCMD_k_noOverlap 4'd8
 `define MainExpCMD_m           4'd9
 `define MainExpCMD_genA_kOut   4'd10
+`define MainExpCMD_genA_kOut_DBG 4'd11
 
 `define MainExpCMD_SIZE  4
 
@@ -82,6 +83,9 @@ module command_expansion(
   assign i_hasAny = o_hasAny ? i_hasAny__raw : hasNone;
 
   assign i_hasAny__raw = o == `MainExpCMD_genA_kOut ? `MainCoreCMD_which_k | `MainCoreCMD_which_h | `MainCoreCMD_which_k_out
+`ifdef OUTPUT_INTERNALS_FOR_TEST
+                       : o == `MainExpCMD_genA_kOut_DBG ? `MainCoreCMD_which_k | `MainCoreCMD_which_h | `MainCoreCMD_which_k_out | `MainCoreCMD_which_o_out
+`endif
                        : ((o__h_dst & `CmdHubCMD_keccak) != 0         ? `MainCoreCMD_which_k_in : hasNone)
                        | ((o__h_src & `CmdHubCMD_keccak) != 0         ? `MainCoreCMD_which_k_out : hasNone)
                        | ((o__h_dst & `CmdHubCMD_outer) != 0          ? `MainCoreCMD_which_o_out : hasNone)
@@ -115,6 +119,9 @@ module command_expansion(
     o__m_cmd,
     //  k
        (o == `MainExpCMD_genA_kOut   ? {4'b1000, 9'd16, 1'b1}    : 13'b0)
+`ifdef OUTPUT_INTERNALS_FOR_TEST
+     | (o == `MainExpCMD_genA_kOut_DBG ? {4'b1000, 9'd16, 1'b1}    : 13'b0)
+`endif
      | (o == `MainExpCMD_k_single    ? {4'b0000, 9'd1, 1'b1}     : 13'b0)
      | (o == `MainExpCMD_k_longIn    ? {4'b0001, o__param, 1'b1} : 13'b0)
      | (o == `MainExpCMD_k_longOut   ? {4'b0000, o__param, 1'b1} : 13'b0)
@@ -179,7 +186,11 @@ module command_sequences(
                                 | (oCurr == `MainSeqCMD_keygen_PRNG ? 10 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_noPRNG ? 1 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_mid ? 10 : 0)
+`ifndef OUTPUT_INTERNALS_FOR_TEST
                                 | (oCurr == `MainSeqCMD_keygen_postGenA ? 6 : 0)
+`else
+                                | (oCurr == `MainSeqCMD_keygen_postGenA ? 7 : 0)
+`endif
                                 | (oCurr == `MainSeqCMD_encaps_prePRNG ? 4 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_PRNG ? 10 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_mid ? 15 : 0)
@@ -251,6 +262,7 @@ module command_sequences(
 `define SET_CMD__K_INSTATE                      `SET_CMD(`MainExpCMD_k_inState,   1'b0,     1'b0,      9'b0,           5'b0,     1'b0,     4'b0,                                      4'b0)
 `define SET_CMD__K_NO_OVERLAP                   `SET_CMD(`MainExpCMD_k_noOverlap, 1'b0,     1'b0,      9'b0,           5'b0,     1'b0,     4'b0,                                      4'b0)
 `define SET_CMD__GENA__KOUT                     `SET_CMD(`MainExpCMD_genA_kOut,   1'b1,     1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_memAndMul,                      `CmdHubCMD_keccak)
+`define SET_CMD__GENA__KOUT_DBG                 `SET_CMD(`MainExpCMD_genA_kOut_DBG, 1'b1,   1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_memAndMul | `CmdHubCMD_outer,   `CmdHubCMD_keccak)
 `define SET_CMD__M(memCmd)                      `SET_CMD(`MainExpCMD_m,           1'b0,     1'b0,      9'b0,           (memCmd), 1'b0,     4'b0,                                      4'b0)
 `define SET_CMD__M2O(memCmd)                    `SET_CMD(`MainExpCMD_generic,     1'b0,     1'b0,      9'b0,           (memCmd), 1'b0,     `CmdHubCMD_outer,                          `CmdHubCMD_memAndMul)
 `define SET_CMD__M2K(memCmd, isLast)            `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           (memCmd), 1'b0,     `CmdHubCMD_keccak,                         `CmdHubCMD_memAndMul)
@@ -274,7 +286,11 @@ module command_sequences(
       if(state[ 0]) `SET_CMD__KI_BYTE(o__genA__counter[0+:8])
       if(state[ 1]) `SET_CMD__KI_BYTE(o__genA__counter[8+:8])
       if(state[ 2]) `SET_CMD__S2K(`SET_CMD__IS_LAST)
+`ifndef OUTPUT_INTERNALS_FOR_TEST
       if(state[ 3]) `SET_CMD__GENA__KOUT
+`else
+      if(state[ 3]) `SET_CMD__GENA__KOUT_DBG
+`endif
     end
     //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_keygen_PRNG) begin
@@ -305,7 +321,11 @@ module command_sequences(
       if(state[ 1]) `SET_CMD__KI_BYTE(8'h5F)
       if(state[ 2]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
       if(state[ 3]) `SET_CMD__K2MO(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
+`ifndef OUTPUT_INTERNALS_FOR_TEST
       if(state[ 4]) `SET_CMD__K2M(`MemAndMulCMD_in_BColFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__IS_LAST)
+`else
+      if(state[ 4]) `SET_CMD__K2MO(`MemAndMulCMD_in_BColFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__IS_LAST)
+`endif
       
       //--// seedA <- SHAKE256(seedA [=z])
       //--// OUT(seedA) <- seedA
@@ -318,6 +338,7 @@ module command_sequences(
       if(state[ 9]) `SET_CMD__M(`MemAndMulCMD_inOp_BpleqStimesInAT)
     end
     if(oCurr == `MainSeqCMD_keygen_postGenA) begin
+`ifndef OUTPUT_INTERNALS_FOR_TEST
       //--// _b <- pack( (BRAM.B' [=B^T])^T [=B] )
       //--// OUT(b) <- _b
       //--// OUT(pkh) : 256b <- SHAKE256(seedA | b)
@@ -329,6 +350,21 @@ module command_sequences(
       
       //--// BRAM.S' = 0
       if(state[ 5]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
+`else
+      if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_BColFirst)
+
+      //--// _b <- pack( (BRAM.B' [=B^T])^T [=B] )
+      //--// OUT(b) <- _b
+      //--// OUT(pkh) : 256b <- SHAKE256(seedA | b)
+      if(state[ 1]) `SET_CMD__K_NO_OVERLAP
+      if(state[ 2]) `SET_CMD__K_LONGIN(9'd159)
+      if(state[ 3]) `SET_CMD__S2K(`SET_CMD__NOT_LAST)
+      if(state[ 4]) `SET_CMD__M2KO(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_PACKED, `SET_CMD__IS_LAST)
+      if(state[ 5]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      
+      //--// BRAM.S' = 0
+      if(state[ 6]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
+`endif
     end
     //////////////////////////////////////////////////
     if(oCurr == `MainSeqCMD_encaps_prePRNG) begin
