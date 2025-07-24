@@ -158,7 +158,7 @@ module command_sequences(
     output i__k_isLast,
     output i__k_isSampled,
     output [9-1:0] i__param,
-    output [`MemAndMulCMD_SIZE-1:0] i__m_cmd,
+    output [6-1:0] i__m_cmd,
     output i__m_isPack,
     output [4-1:0] i__h_dst,
     output [4-1:0] i__h_src,
@@ -713,12 +713,12 @@ module main(
   wire exp__k_isLast;
   wire exp__k_isSampled;
   wire [9-1:0] exp__param;
-  wire [`MemAndMulCMD_SIZE-1:0] exp__m_cmd;
+  wire [6-1:0] exp__m_cmd;
+  wire exp__m_isPack;
   wire [4-1:0] exp__h_dst;
   wire [4-1:0] exp__h_src;
   wire exp_hasAny;
   wire exp_consume;  
-  wire exp__m_isPack;
   command_sequences seq(
     .o(seq_cmd),
     .o_isReady(seq_isReady),
