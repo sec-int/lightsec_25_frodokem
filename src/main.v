@@ -704,27 +704,71 @@ module main(
     output out_isReady,
     input out_canReceive,
 
-    input rst,
+    input rst, // needs a 1 clock delay.
     input clk
   );
+  delay rst__ff(rst, rst__d1, 1'b0, clk);
 
-  wire currCmd_isTest__set = cmd == `MainCMD_setupTest;
+  wire [`MainCMD_SIZE-1:0] cmdB;
+  wire cmdB_isReady;
+  wire cmdB_canReceive;
+  bus_delay_std #(.BusSize(`MainCMD_SIZE), .N(1)) cmdDelay (
+    .i(cmd),
+    .i_isReady(cmd_isReady),
+    .i_canReceive(cmd_canReceive),
+    .o(cmdB),
+    .o_isReady(cmdB_isReady),
+    .o_canReceive(cmdB_canReceive),
+    .rst(rst__d1),
+    .clk(clk)
+  );
+  
+  wire [64-1:0] outB;
+  wire outB_isReady;
+  wire outB_canReceive;
+  bus_delay_std #(.BusSize(64), .N(1)) outDelay (
+    .i(outB),
+    .i_isReady(outB_isReady),
+    .i_canReceive(outB_canReceive),
+    .o(out),
+    .o_isReady(out_isReady),
+    .o_canReceive(out_canReceive),
+    .rst(rst__d1),
+    .clk(clk)
+  );
+
+
+  wire currCmd_isTest__set = cmdB == `MainCMD_setupTest;
   wire currCmd_isTest__d1;
-  ff_sr_next currCmd_isTest__ff(currCmd_isTest__set, cmd_isReady, currCmd_isTest__d1, rst, clk);
+  ff_sr_next currCmd_isTest__ff(currCmd_isTest__set, cmdB_isReady, currCmd_isTest__d1, rst__d1, clk);
   wire lastCmd_wasTest;
-  ff_en_imm lastCmd_isTest__ff(cmd_isReady, currCmd_isTest__d1, lastCmd_wasTest, rst, clk);
+  ff_en_imm lastCmd_isTest__ff(cmdB_isReady, currCmd_isTest__d1, lastCmd_wasTest, rst__d1, clk);
 
-  wire [`MainSeqCMD_SIZE-1:0] flt_cmd;
+  wire [`MainFltCMD_SIZE-1:0] cmdmDelay_cmd;
+  wire cmdmDelay_hasAny;
+  wire cmdmDelay_consume;
+  command_main cmdm(
+    .o_cmd(cmdB),
+    .o_isReady(cmdB_isReady),
+    .o_canReceive(cmdB_canReceive),
+    .i_cmd(cmdmDelay_cmd),
+    .i_hasAny(cmdmDelay_hasAny),
+    .i_consume(cmdmDelay_consume),
+    .rst(rst__d1),
+    .clk(clk)
+  );
+
+  wire [`MainFltCMD_SIZE-1:0] flt_cmd;
   wire flt_hasAny;
   wire flt_consume;
-  command_main cmdm(
-    .o_cmd(cmd),
-    .o_isReady(cmd_isReady),
-    .o_canReceive(cmd_canReceive),
-    .i_cmd(flt_cmd),
-    .i_hasAny(flt_hasAny),
-    .i_consume(flt_consume),
-    .rst(rst),
+  bus_delay_unstd #(.BusSize(`MainFltCMD_SIZE), .N(1)) cmdmDelay (
+    .i(cmdmDelay_cmd),
+    .i_hasAny(cmdmDelay_hasAny),
+    .i_consume(cmdmDelay_consume),
+    .o(flt_cmd),
+    .o_hasAny(flt_hasAny),
+    .o_consume(flt_consume),
+    .rst(rst__d1),
     .clk(clk)
   );
 
@@ -741,7 +785,7 @@ module main(
     .i_isReady(seq_isReady),
     .i_canReceive(seq_canReceive),
     .i__genA__counter(seq_genA__counter),
-    .rst(rst),
+    .rst(rst__d1),
     .clk(clk)
   );
 
@@ -770,23 +814,9 @@ module main(
     .i__h_src(exp__h_src),
     .i_hasAny(exp_hasAny),
     .i_consume(exp_consume),
-    .rst(rst),
+    .rst(rst__d1),
     .clk(clk)
   );
-
-/*
-  bus_delay_unstd #(.BusSize(`MainCoreCMD_SIZE), .N(1)) preCoreDelay (
-    .i(),
-    .i_hasAny(),
-    .i_consume(),
-    .o(),
-    .o_hasAny(),
-    .o_consume(),
-
-    .rst(rst),
-    .clk(clk)
-  );
-*/
 
   wire [`MainCoreCMD_SIZE-1:0] core__cmd;
   wire [`MainCoreCMD_which_SIZE-1:0] core__cmd_hasAny;
@@ -814,11 +844,11 @@ module main(
     .in(in),
     .in_isReady(in_isReady),
     .in_canReceive(in_canReceive),
-    .out(out),
-    .out_isReady(out_isReady),
-    .out_canReceive(out_canReceive),
+    .out(outB),
+    .out_isReady(outB_isReady),
+    .out_canReceive(outB_canReceive),
     .conf({ 8'd168, 3'b100 }), // only the parameter set 1344 is supported for now
-    .rst(rst),
+    .rst(rst__d1),
     .clk(clk)
   );
 endmodule

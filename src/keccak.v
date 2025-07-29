@@ -363,6 +363,7 @@ endmodule
 
 `define SHAKE128_R64 21 /*1344 bits*/
 `define SHAKE256_R64 17 /*1088 bits*/
+`define SHAKESTATE_R64 25 /* to output the whole state*/
 
 
 module keccak_busInConverter_padCycle(
@@ -527,6 +528,8 @@ endmodule
 module keccak_busOutConverter(
   input start128,  // can't interrupt
   input start256,
+  input startState,
+  output canRestart,
 
   input [64-1:0] in,
   input in_isReady,
@@ -540,11 +543,12 @@ module keccak_busOutConverter(
   input rst,
   input clk
 );
-  wire canRestart;
-  wire startAny = (start128 | start256) & canRestart;
+  wire startAny = (start128 | start256 | startState) & canRestart;
 
   wire is256else128;
   ff_en_imm is256else128__ff(startAny, start256, is256else128, rst, clk);
+  wire isState;
+  ff_en_imm isState__ff(startAny, startState, isState, rst, clk);
 
   wire c256__canRestart, c256__canReceive;
   wire c256__isLast;
@@ -574,16 +578,34 @@ module keccak_busOutConverter(
     .clk(clk)
   );
 
-  assign canRestart = c256__canRestart & cDiff__canRestart;
+  wire cStateDiff__restart;
+  wire cStateDiff__restart__a1 = isState & cDiff__canReceive_isLast;
+  delay cStateDiff__ff(cStateDiff__restart__a1, cStateDiff__restart, rst, clk);
+  wire cStateDiff__canRestart, cStateDiff__canReceive;
+  wire cStateDiff__isReady = in_isReady & cStateDiff__canReceive;
+  wire cStateDiff__canReceive_isLast;
+  counter_bus_fixed #(`SHAKESTATE_R64 - `SHAKE128_R64) cStateDiff (
+    .restart(cStateDiff__restart),
+    .canRestart(cStateDiff__canRestart),
+    .canReceive(cStateDiff__canReceive),
+    .canReceive_isLast(cStateDiff__canReceive_isLast),
+    .isReady(cStateDiff__isReady),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  assign canRestart = c256__canRestart & cDiff__canRestart & cStateDiff__canRestart;
   assign out = in;
 
   wire noMoreOut;
-  ff_rs_next noMoreOut__ff (cDiff__canReceive_isLast, out_isLast, noMoreOut, rst, clk);
+  wire noMoreOut__reset = isState ? cStateDiff__canReceive_isLast : cDiff__canReceive_isLast;
+  ff_rs_next noMoreOut__ff (noMoreOut__reset, out_isLast, noMoreOut, rst, clk);
 
   assign in_canReceive = c256__canReceive & (out_canReceive | noMoreOut)
-                       | cDiff__canReceive & (is256else128 | out_canReceive | noMoreOut);
+                       | cDiff__canReceive & (is256else128 | out_canReceive | noMoreOut)
+                       | cStateDiff__canReceive & (out_canReceive | noMoreOut);
 
-  assign out_isReady = (c256__canReceive | cDiff__canReceive & ~is256else128) & in_isReady & ~noMoreOut;
+  assign out_isReady = (c256__canReceive | cDiff__canReceive & ~is256else128 | cStateDiff__canReceive) & in_isReady & ~noMoreOut;
 endmodule
 
 
@@ -594,17 +616,14 @@ module keccak_busTwoIn(
   input [64-1:0] inA,
   input inA_isReady,
   output inA_canReceive,
-  output inA_isLast,
 
   input [64-1:0] inB,
   input inB_isReady,
   output inB_canReceive,
-  output inB_isLast,
 
   output [64-1:0] out,
   output out_isReady,
   input out_canReceive,
-  input out_isLast,
 
   input rst,
   input clk
@@ -616,9 +635,7 @@ module keccak_busTwoIn(
   ff_en_imm isB__ff(startAny, startB, isB, rst, clk);
 
   assign inA_canReceive = out_canReceive & isA;
-  assign inA_isLast = out_isLast & isA;
   assign inB_canReceive = out_canReceive & isB;
-  assign inB_isLast = out_isLast & isB;
   assign out = (isA ? inA : 64'b0)
              | (isB ? inB : 64'b0);
   assign out_isReady = inA_isReady | inB_isReady;
@@ -708,14 +725,36 @@ module keccak_block(
   wire cmd_serBuf = cmd_ser128 | cmd_ser256;
   wire cmd_anyBuf = cmd_serBuf | cmd_desBuf;
   wire cmd_anyState = cmd_serState | cmd_desState;
+  wire cmd_anySer = cmd_serBuf | cmd_serState;
   wire cmd_keccakAny = (cmd_keccakStart | cmd_keccakContinue) & ~cmd_serState;
   wire cmd_any = cmd_anyBuf | cmd_anyState | cmd_keccakAny;
 
-  wire isAnyState, isAnyState__d1, isAnyBuf__d1, isKeccakAny__d1;
+  wire isAnyState, isAnyState__d1, isAnyBuf__d1, isKeccakAny__d1, isAnySer__d1;
   ff_en_imm isAnyState__ff1(cmd_any, cmd_anyState, isAnyState, rst, clk);
   delay isAnyState__ff2(isAnyState, isAnyState__d1, rst, clk);
   ff_en_next isAnyBuf__ff(cmd_any, cmd_anyBuf, isAnyBuf__d1, rst, clk);
   ff_en_next isKeccakAny__ff(cmd_any, cmd_keccakAny, isKeccakAny__d1, rst, clk);
+  ff_en_next isAnySer__ff(cmd_any, cmd_anySer, isAnySer__d1, rst, clk);
+
+
+
+
+
+  wire [64-1:0] inB;
+  wire inB_isSingleByte;
+  wire inB_isLast;
+  wire inB_isReady;
+  wire inB_canReceive;
+  bus_delay_std #(.BusSize(64+2), .N(0)) inDelay (
+    .i({ in_isSingleByte, in_isLast, in }),
+    .i_isReady(in_isReady),
+    .i_canReceive(in_canReceive),
+    .o({ inB_isSingleByte, inB_isLast, inB }),
+    .o_isReady(inB_isReady),
+    .o_canReceive(inB_canReceive),
+    .rst(rst),
+    .clk(clk)
+  );
 
   wire [64-1:0] inRawBuf;
   wire inRawBuf_isSingleByte;
@@ -730,11 +769,11 @@ module keccak_block(
   keccak_busTwoOut twoOut(
     .startA(cmd_desBuf),
     .startB(cmd_desState),
-    .in(in),
-    .in_isSingleByte(in_isSingleByte),
-    .in_isLast(in_isLast),
-    .in_isReady(in_isReady),
-    .in_canReceive(in_canReceive),
+    .in(inB),
+    .in_isSingleByte(inB_isSingleByte),
+    .in_isLast(inB_isLast),
+    .in_isReady(inB_isReady),
+    .in_canReceive(inB_canReceive),
     .outA(inRawBuf),
     .outA_isSingleByte(inRawBuf_isSingleByte),
     .outA_isLast(inRawBuf_isLast),
@@ -749,37 +788,10 @@ module keccak_block(
     .clk(clk)
   );
 
-  wire [64-1:0] outRawBuf;
-  wire outRawBuf_isReady;
-  wire outRawBuf_canReceive;
-  wire outRawBuf_isLast;
-  wire [64-1:0] outSta;
-  wire outSta_isReady;
-  wire outSta_canReceive;
-  wire ignore3;
-  keccak_busTwoIn twoIn(
-    .startA(cmd_serBuf),
-    .startB(cmd_serState),
-    .inA(outRawBuf),
-    .inA_isLast(outRawBuf_isLast),
-    .inA_isReady(outRawBuf_isReady),
-    .inA_canReceive(outRawBuf_canReceive),
-    .inB(outSta),
-    .inB_isReady(outSta_isReady),
-    .inB_canReceive(outSta_canReceive),
-    .inB_isLast(ignore3),
-    .out(out),
-    .out_isLast(out_isLast),
-    .out_isReady(out_isReady),
-    .out_canReceive(out_canReceive),
-    .rst(rst),
-    .clk(clk)
-  );
-  
   wire [64-1:0] inBuf;
   wire inBuf_isReady;
   wire inBuf_canReceive;
-  keccak_busInConverter inC(
+  keccak_busInConverter inConv(
     .start128(cmd_des128),
     .start256(cmd_des256),
     .in(inRawBuf),
@@ -793,23 +805,65 @@ module keccak_block(
     .rst(rst),
     .clk(clk)
   );
-  
-  wire [64-1:0] outBuf;
-  wire outBuf_isReady;
-  wire outBuf_canReceive;
-  keccak_busOutConverter outC(
+
+
+  wire [64-1:0] outB;
+  wire outB_isReady;
+  wire outB_canReceive;
+  wire outConv_canRestart;
+  keccak_busOutConverter outConv(
     .start128(cmd_ser128),
     .start256(cmd_ser256),
-    .in(outBuf),
-    .in_isReady(outBuf_isReady),
-    .in_canReceive(outBuf_canReceive),
-    .out(outRawBuf),
-    .out_isReady(outRawBuf_isReady),
-    .out_canReceive(outRawBuf_canReceive),
-    .out_isLast(outRawBuf_isLast),
+    .startState(cmd_serState),
+    .canRestart(outConv_canRestart),
+    .in(outB),
+    .in_isReady(outB_isReady),
+    .in_canReceive(outB_canReceive),
+    .out(out),
+    .out_isReady(out_isReady),
+    .out_canReceive(out_canReceive),
+    .out_isLast(out_isLast),
     .rst(rst),
     .clk(clk)
   );
+
+  wire [64-1:0] outC;
+  wire outC_isReady;
+  wire outC_canReceive;
+  bus_delay_std #(.BusSize(64), .N(0)) outDelay (
+    .i(outC),
+    .i_isReady(outC_isReady),
+    .i_canReceive(outC_canReceive),
+    .o(outB),
+    .o_isReady(outB_isReady),
+    .o_canReceive(outB_canReceive),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  wire [64-1:0] outBuf;
+  wire outBuf_isReady;
+  wire outBuf_canReceive;
+  wire outRawBuf_isLast;
+  wire [64-1:0] outSta;
+  wire outSta_isReady;
+  wire outSta_canReceive;
+  keccak_busTwoIn twoIn(
+    .startA(cmd_serBuf),
+    .startB(cmd_serState),
+    .inA(outBuf),
+    .inA_isReady(outBuf_isReady),
+    .inA_canReceive(outBuf_canReceive),
+    .inB(outSta),
+    .inB_isReady(outSta_isReady),
+    .inB_canReceive(outSta_canReceive),
+    .out(outC),
+    .out_isReady(outC_isReady),
+    .out_canReceive(outC_canReceive),
+    .rst(rst),
+    .clk(clk)
+  );
+  
   
   wire cmd_serState__d1;
   delay cmd_serState__ff (cmd_serState, cmd_serState__d1, rst, clk);
@@ -883,7 +937,8 @@ module keccak_block(
 
   assign cmd_canReceive = (~isKeccakAny__d1 | core__cmd_canReceive)
                         & (~isAnyBuf__d1 | buff__canReceive)
-                        & (~isAnyState__d1 | state__canReceive);
+                        & (~isAnyState__d1 | state__canReceive)
+                        & (~isAnySer__d1 | outConv_canRestart);
 endmodule
 
 
@@ -1149,17 +1204,42 @@ module keccak(
     .rst(rst),
     .clk(clk)
   );
+  wire c__isReady = c__des128 | c__des256 | c__desState | c__ser128 | c__ser256 | c__serState | c__keccakStart | c__keccakContinue;
+
+  wire d__isReady;
+  wire d__canReceive;
+  wire [8-1:0] d;
+  bus_delay_std #(.BusSize(8), .N(1)) cmdDelay (
+    .i({c__des128, c__des256, c__desState, c__ser128, c__ser256, c__serState, c__keccakStart, c__keccakContinue}),
+    .i_isReady(c__isReady),
+    .i_canReceive(c__canReceive),
+    .o(d),
+    .o_isReady(d__isReady),
+    .o_canReceive(d__canReceive),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  wire d__des128;
+  wire d__des256;
+  wire d__desState;
+  wire d__ser128;
+  wire d__ser256;
+  wire d__serState;
+  wire d__keccakStart;
+  wire d__keccakContinue;
+  assign {d__des128, d__des256, d__desState, d__ser128, d__ser256, d__serState, d__keccakStart, d__keccakContinue} = d & {8{d__isReady}};
 
   keccak_block block(
-    .cmd_canReceive(c__canReceive),
-    .cmd_des128(c__des128),
-    .cmd_des256(c__des256),
-    .cmd_desState(c__desState),
-    .cmd_ser128(c__ser128),
-    .cmd_ser256(c__ser256),
-    .cmd_serState(c__serState),
-    .cmd_keccakStart(c__keccakStart),
-    .cmd_keccakContinue(c__keccakContinue),
+    .cmd_canReceive(d__canReceive),
+    .cmd_des128(d__des128),
+    .cmd_des256(d__des256),
+    .cmd_desState(d__desState),
+    .cmd_ser128(d__ser128),
+    .cmd_ser256(d__ser256),
+    .cmd_serState(d__serState),
+    .cmd_keccakStart(d__keccakStart),
+    .cmd_keccakContinue(d__keccakContinue),
     .in(in),
     .in_isSingleByte(in_isSingleByte),
     .in_isReady(in_isReady),

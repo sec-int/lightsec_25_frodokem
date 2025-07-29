@@ -325,7 +325,7 @@ module adapted_keccak (
   wire [`KeccakAdaptedCMD_SIZE-1:0] k__cmdB;
   wire k__cmdB_isReady;
   wire k__cmdB_canReceive;
-  bus_delay_std #(.BusSize(`KeccakAdaptedCMD_SIZE), .N(0)) k__buffer (
+  bus_delay_std #(.BusSize(`KeccakAdaptedCMD_SIZE), .N(1)) k__buffer (
     .i(k__cmd),
     .i_isReady(k__cmd_isReady),
     .i_canReceive(k__cmd_canReceive),
