@@ -876,5 +876,3 @@ module main(
   );
 endmodule
 
-
-// TODO: change the tests to send the cmd to config the parameter set

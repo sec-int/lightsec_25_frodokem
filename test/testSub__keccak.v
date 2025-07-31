@@ -280,7 +280,7 @@
     fork : test__keccak_simpleState1
       begin
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0011, 9'd1, 1'b0})  // TODO: BUG: no out & out state
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0011, 9'd1, 1'b0})
 
         // send the data to hash
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd17})
@@ -324,7 +324,7 @@
     fork : test__keccak_simpleState2
       begin
         // do hash
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0011, 9'd1, 1'b0})  // TODO: BUG: no out & out state
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_k, 4'b0011, 9'd1, 1'b0})
 
         // send the data to hash
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd1})
