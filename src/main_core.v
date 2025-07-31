@@ -60,8 +60,8 @@
 
 `define MainCoreCMD_which_SIZE  8
 
-//                                   8                       3
-`define MainCoreCONF_SIZE   (`MemCONF_matrixNumBlocks_size + `SamplerCONF_SIZE)
+//                                   8                       3                   3                        3                    3
+`define MainCoreCONF_SIZE   (`MemCONF_matrixNumBlocks_size + `SamplerCONF_SIZE + `MemCONF_lenSec_size + `MemCONF_lenSE_size + `MemCONF_lenSalt_size)
 
 
 
@@ -86,15 +86,21 @@ module main_core(
     output out_isReady,
     input out_canReceive,
 
-    input [`MainCoreCONF_SIZE-1:0] conf, // { The FrodoKEM parameter/8 : 8bits, which sampling distribution : 3bits }.   distr 0,1 have max FrodoKEM param of 1344.  distr 2 has max FrodoKEM param of 1330.
+    input [`MainCoreCONF_SIZE-1:0] conf, // { The FrodoKEM parameter/8 : 8bits, which sampling distribution : 3bits, which lenSec : 3bits, which lenSE : 3bits, which lenSalt : 3bits }.   distr 0,1 have max FrodoKEM param of 1344.  distr 2 has max FrodoKEM param of 1330.
 
     input rst,
     input clk
   );
   wor ignore;
 
-  wire [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks = conf[`SamplerCONF_SIZE+:`MemCONF_matrixNumBlocks_size];
-  wire [`SamplerCONF_SIZE-1:0] config_whichSampling = conf[0+:`SamplerCONF_SIZE];
+  wire [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks;
+  wire [`SamplerCONF_SIZE-1:0] config_whichSampling;
+  wire [`MemCONF_lenSec_size-1:0] config_lenSec;
+  wire [`MemCONF_lenSE_size-1:0] config_lenSE;
+  wire [`MemCONF_lenSalt_size-1:0] config_lenSalt;
+
+  assign {config_matrixNumBlocks, config_whichSampling, config_lenSec, config_lenSE, config_lenSalt} = conf;
+
 
   wire config_SUseHalfByte = config_whichSampling[2];
 
@@ -243,6 +249,9 @@ module main_core(
     .out_canReceive(h__in_canReceive[1]),
     .config_matrixNumBlocks(config_matrixNumBlocks),
     .config_SUseHalfByte(config_SUseHalfByte),
+    .config_lenSec(config_lenSec),
+    .config_lenSE(config_lenSE),
+    .config_lenSalt(config_lenSalt),
     .rst(rst),
     .clk(clk)
   );

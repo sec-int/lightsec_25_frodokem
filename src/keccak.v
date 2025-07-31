@@ -844,7 +844,6 @@ module keccak_block(
   wire [64-1:0] outBuf;
   wire outBuf_isReady;
   wire outBuf_canReceive;
-  wire outRawBuf_isLast;
   wire [64-1:0] outSta;
   wire outSta_isReady;
   wire outSta_canReceive;

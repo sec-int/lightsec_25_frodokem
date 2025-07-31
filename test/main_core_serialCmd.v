@@ -50,7 +50,7 @@ module main_core_serialCmd(
     output out_isReady,
     input out_canReceive,
 
-    input [`MainCoreCONF_SIZE-1:0] conf, // { The FrodoKEM parameter/8 : 8bits, which sampling distribution : 3bits }.
+    input [`MainCoreCONF_SIZE-1:0] conf,
 
     input rst,
     input clk

@@ -58,7 +58,7 @@ module testSub();
   wire out_isReady;
   reg out_canReceive = 1'b0;
   reg [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks = 8'b0;
-  reg [`SamplerCONF_SIZE-1:0] config_samplingDistribution = 8'b0;
+  reg [3-1:0] config_parameter = 3'b0;
   reg rst = 1'b0;
   main_core_serialCmd toTest(
     .cmd(cmd),
@@ -70,7 +70,7 @@ module testSub();
     .out(out),
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
-    .conf({ config_matrixNumBlocks, config_samplingDistribution }),
+    .conf({ config_matrixNumBlocks, config_parameter, config_parameter, config_parameter, config_parameter }),
     .rst(rst),
     .clk(clk)
   );
@@ -85,11 +85,11 @@ module testSub();
 
 
 `define TEST
-`define DO_RST(testName, matrixSize, samplingDistNum) \
+`define DO_RST(testName, matrixSize, param) \
         @(negedge clk); \
         rst <= 1'b1; \
         config_matrixNumBlocks <= (matrixSize) >> 3; \
-        config_samplingDistribution <= 1 << (samplingDistNum); \
+        config_parameter <= 1 << (param); \
         @(posedge clk); \
         test_name <= (testName); \
         @(negedge clk); \

@@ -847,7 +847,7 @@ module main(
     .out(outB),
     .out_isReady(outB_isReady),
     .out_canReceive(outB_canReceive),
-    .conf({ 8'd168, 3'b100 }), // only the parameter set 1344 is supported for now
+    .conf({ 8'd168, 3'b100, 3'b100, 3'b100, 3'b100 }), // parameter set 1344
     .rst(rst__d1),
     .clk(clk)
   );

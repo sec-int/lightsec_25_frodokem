@@ -229,7 +229,7 @@ endmodule
 
 
 `define MemAndMulCMD_op_CpleqStimesBT  6'd0 /* BRAM.C = BRAM.C + BRAM.S' *' BRAM.B'^T */
-`define MemAndMulCMD_op_UeqCminBtimesS 6'd1 /* BRAM.u = decode(BRAM.C - (BRAM.S' *' BRAM.B'^T)^T) */  // TODO: use only used bits, for Frodo-640
+`define MemAndMulCMD_op_UeqCminBtimesS 6'd1 /* BRAM.u = decode(BRAM.C - (BRAM.S' *' BRAM.B'^T)^T) */
 `define MemAndMulCMD_op_CeqUminC       6'd2 /* BRAM.C = Encode(BRAM.u) - BRAM.C */
 `define MemAndMulCMD_op_CeqU           6'd3 /* BRAM.C = Encode(BRAM.u) */
 `define MemAndMulCMD_op_Erase1         6'd4 /* BRAM.S' = 0 */
@@ -284,45 +284,53 @@ endmodule
 
 
 module encode(
-  input [4-1:0] in,
-  output [16-1:0] out
-);
-  assign out = {in, 12'b0};
+    input [4-1:0] in,
+    output [16-1:0] out,
+    input [`MemCONF_lenSec_size-1:0] config_lenSec
+  );
+  assign out = (config_lenSec[0] ? {1'b0, in[0+:2], 13'b0} : 16'b0)
+             | (config_lenSec[1] ? {      in[0+:3], 13'b0} : 16'b0)
+             | (config_lenSec[2] ? {      in[0+:4], 12'b0} : 16'b0);
 endmodule
 
 
 module encode4(
-  input [4*4-1:0] in,
-  output [16*4-1:0] out
-);
-  encode e0(in[0*4+:4], out[0*16+:16]);
-  encode e1(in[1*4+:4], out[1*16+:16]);
-  encode e2(in[2*4+:4], out[2*16+:16]);
-  encode e3(in[3*4+:4], out[3*16+:16]);
+    input [4*4-1:0] in,
+    output [16*4-1:0] out,
+    input [`MemCONF_lenSec_size-1:0] config_lenSec
+  );
+  encode e0(in[0*4+:4], out[0*16+:16], config_lenSec);
+  encode e1(in[1*4+:4], out[1*16+:16], config_lenSec);
+  encode e2(in[2*4+:4], out[2*16+:16], config_lenSec);
+  encode e3(in[3*4+:4], out[3*16+:16], config_lenSec);
 endmodule
 
 
 module decode(
-  input [16-1:0] in,
-  output [4-1:0] out
-);
+    input [16-1:0] in,
+    output [4-1:0] out,
+    input [`MemCONF_lenSec_size-1:0] config_lenSec
+  );
   wire ignore = in[11-1:0];
-  assign out = {(in[11+:5] + 5'b1) >> 1};
+
+  assign out = (config_lenSec[0] ? {2'b0, (in[14:12] + 3'b1) >> 1} : 4'b0)
+             | (config_lenSec[1] ? {1'b0, (in[15:12] + 4'b1) >> 1} : 4'b0)
+             | (config_lenSec[2] ? {      (in[15:11] + 5'b1) >> 1} : 4'b0);
 endmodule
 
-
 module decode8(
-  input [16*8-1:0] in,
-  output [4*8-1:0] out
-);
-  decode d0(in[0*16+:16], out[0*4+:4]);
-  decode d1(in[1*16+:16], out[1*4+:4]);
-  decode d2(in[2*16+:16], out[2*4+:4]);
-  decode d3(in[3*16+:16], out[3*4+:4]);
-  decode d4(in[4*16+:16], out[4*4+:4]);
-  decode d5(in[5*16+:16], out[5*4+:4]);
-  decode d6(in[6*16+:16], out[6*4+:4]);
-  decode d7(in[7*16+:16], out[7*4+:4]);
+    input [16*8-1:0] in,
+    output [4*8-1:0] out,
+    input [`MemCONF_lenSec_size-1:0] config_lenSec
+  );
+  decode d0(in[0*16+:16], out[0*4+:4], config_lenSec);
+  decode d1(in[1*16+:16], out[1*4+:4], config_lenSec);
+  decode d2(in[2*16+:16], out[2*4+:4], config_lenSec);
+  decode d3(in[3*16+:16], out[3*4+:4], config_lenSec);
+  decode d4(in[4*16+:16], out[4*4+:4], config_lenSec);
+  decode d5(in[5*16+:16], out[5*4+:4], config_lenSec);
+  decode d6(in[6*16+:16], out[6*4+:4], config_lenSec);
+  decode d7(in[7*16+:16], out[7*4+:4], config_lenSec);
 endmodule
 
 `define MEMANDMUL__CORE__MAX_NUM_STATES 3
@@ -345,6 +353,9 @@ module memAndMul__core(
 
     input [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks, // how many 8x8 matrixes are in B and S. The FrodoKEM parameter/8.
     input config_SUseHalfByte,
+    input [`MemCONF_lenSec_size-1:0] config_lenSec,
+    input [`MemCONF_lenSE_size-1:0] config_lenSE,
+    input [`MemCONF_lenSalt_size-1:0] config_lenSalt,
 
     input rst,
     input clk
@@ -471,7 +482,7 @@ module memAndMul__core(
   wor mainMemory__r_paralSBus_S_mat;
   wor mainMemory__r_paral_B_mat;
   wor mainMemory__r_SBus_S_col;
-  wor mainMemory__r_quarterBus_U_row;
+  wor mainMemory__r_quarterBus_U_halfRow;
   wor mainMemory__w_dubBus_B_col;
   wor mainMemory__w_dubBus_C_col;
   wor mainMemory__w_paral_B_mat;
@@ -505,7 +516,7 @@ module memAndMul__core(
     .r_paralSBus_S_mat(mainMemory__r_paralSBus_S_mat),
     .r_paral_B_mat(mainMemory__r_paral_B_mat),
     .r_SBus_S_col(mainMemory__r_SBus_S_col),
-    .r_quarterBus_U_row(mainMemory__r_quarterBus_U_row),
+    .r_quarterBus_U_halfRow(mainMemory__r_quarterBus_U_halfRow),
 
     .r_dubBus__d2(mainMemory__r_dubBus__d2),
     .r_paral__d2(mainMemory__r_paral__d2),
@@ -524,6 +535,9 @@ module memAndMul__core(
 
     .config_matrixNumBlocks(config_matrixNumBlocks),
     .config_SUseHalfByte(config_SUseHalfByte),
+    .config_lenSec(config_lenSec),
+    .config_lenSE(config_lenSE),
+    .config_lenSalt(config_lenSalt),
 
     .rst(rst),
     .clk(clk)
@@ -564,14 +578,14 @@ module memAndMul__core(
     .clk(clk)
   );
   assign mainMemory__w_dubBus = m__outVec;
-  decode8 decode(m__outVec, mainMemory__w_halfBus);
+  decode8 decode(m__outVec, mainMemory__w_halfBus, config_lenSec);
 
   // encoding and delayed in bus
   wor r_encoded_U__d2d3__doDelay;
   wire [4*4-1:0] r_quarterBus__d2d3;
   optionalDelay #(16) r_quarterBus__ff (r_encoded_U__d2d3__doDelay, mainMemory__r_quarterBus__d2, r_quarterBus__d2d3, rst, clk);
   wire [16*4-1:0] r_encoded_U__d2d3;
-  encode4 encode(r_quarterBus__d2d3, r_encoded_U__d2d3);
+  encode4 encode(r_quarterBus__d2d3, r_encoded_U__d2d3, config_lenSec);
 
   wire [64-1:0] bus_in__d1;
   delay #(64) bus_inOp__ff1 (bus_in, bus_in__d1, rst, clk);
@@ -592,7 +606,7 @@ module memAndMul__core(
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_seedSE] = currentCmd[`MemAndMulCMD_in_seedSE] & bus_in_isReady;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_pkh] = currentCmd[`MemAndMulCMD_in_pkh] & bus_in_isReady;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_in_k] & bus_in_isReady;
-  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_U_twoRows] = currentCmd[`MemAndMulCMD_in_u] & bus_in_isReady;
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_u] = currentCmd[`MemAndMulCMD_in_u] & bus_in_isReady;
 
   assign indexHandler__currentCmd = (currentCmd & `MemAndMulCMD_mask_out) != 0 ? `MemAndMulIndexCMD_out : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_B_row] = currentCmd[`MemAndMulCMD_out_BRowFirst] & bus_out_canReceive;
@@ -605,7 +619,7 @@ module memAndMul__core(
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_seedSE] = currentCmd[`MemAndMulCMD_out_seedSE] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_pkh] = currentCmd[`MemAndMulCMD_out_pkh] & bus_out_canReceive;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_out_k] & bus_out_canReceive;
-  assign mainMemory__r_bus_cmd[`MainMemCMD_bus_U_twoRows] = currentCmd[`MemAndMulCMD_out_u] & bus_out_canReceive;
+  assign mainMemory__r_bus_cmd[`MainMemCMD_bus_u] = currentCmd[`MemAndMulCMD_out_u] & bus_out_canReceive;
 
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_CpleqStimesBT] ? 1 : 0;
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_CpleqStimesBT] ? `MemAndMulIndexCMD_updateFastMemMem : {`MemAndMulIndexCMD_SIZE{1'b0}};
@@ -646,7 +660,7 @@ module memAndMul__core(
   assign state__numStates            = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] ? 1 : 0;
   assign indexHandler__currentCmd    = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] ? `MemAndMulIndexCMD_updateSlowMemIn : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__w_paral_B_mat   = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & indexHandler__w_enable;
-  assign mainMemory__r_SBus_S_col = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & ~indexHandler__r_index__useIndex1;
+  assign mainMemory__r_SBus_S_col    = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & ~indexHandler__r_index__useIndex1;
   assign mainMemory__r_paral_B_mat   = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & indexHandler__r_index__useIndex1;
   assign m__doOp                     = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA] & indexHandler__r_index__useIndex1;
   assign m__isMatrixMul2__d2         = currentCmd[`MemAndMulCMD_inOp_BpleqStimesInA];
@@ -657,7 +671,7 @@ module memAndMul__core(
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_CeqUminC] ? `MemAndMulIndexCMD_updateSyncMem : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_op_CeqUminC] & indexHandler__w_enable;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_op_CeqUminC] & indexHandler__index1__toggle;
-  assign mainMemory__r_quarterBus_U_row               = currentCmd[`MemAndMulCMD_op_CeqUminC] & ~indexHandler__index1__toggle;
+  assign mainMemory__r_quarterBus_U_halfRow           = currentCmd[`MemAndMulCMD_op_CeqUminC] & ~indexHandler__index1__toggle;
   assign mainMemory__w_bus__useAdder                  = currentCmd[`MemAndMulCMD_op_CeqUminC];
   assign r_encoded_U__d2d3__doDelay                   = currentCmd[`MemAndMulCMD_op_CeqUminC];
   assign adder__op1                                   = currentCmd[`MemAndMulCMD_op_CeqUminC] ? r_encoded_U__d2d3 : 64'b0;
@@ -667,7 +681,7 @@ module memAndMul__core(
   assign state__numStates                             = currentCmd[`MemAndMulCMD_op_CeqU] ? 1 : 0;
   assign indexHandler__currentCmd                     = currentCmd[`MemAndMulCMD_op_CeqU] ? `MemAndMulIndexCMD_updateSync : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_C_row] = currentCmd[`MemAndMulCMD_op_CeqU] & indexHandler__w_enable;
-  assign mainMemory__r_quarterBus_U_row               = currentCmd[`MemAndMulCMD_op_CeqU];
+  assign mainMemory__r_quarterBus_U_halfRow           = currentCmd[`MemAndMulCMD_op_CeqU];
   assign mainMemory__w_bus__useAdder                  = currentCmd[`MemAndMulCMD_op_CeqU];
   assign adder__op1                                   = currentCmd[`MemAndMulCMD_op_CeqU] ? r_encoded_U__d2d3 : 64'b0;
 
@@ -715,7 +729,7 @@ module memAndMul__core(
   assign mainMemory__w_bus__toZero                        = currentCmd[`MemAndMulCMD_op_Erase2];
   assign indexHandler__currentCmd                         = currentCmd[`MemAndMulCMD_op_Erase2] ? `MemAndMulIndexCMD_in : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign indexHandler__bus_in_isReady                     = currentCmd[`MemAndMulCMD_op_Erase2];
-  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_U_twoRows] = currentCmd[`MemAndMulCMD_op_Erase2] & state[0] & indexHandler__w_enable;
+  assign mainMemory__w_bus_cmd[`MainMemCMD_bus_u]         = currentCmd[`MemAndMulCMD_op_Erase2] & state[0] & indexHandler__w_enable;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_seedSE]    = currentCmd[`MemAndMulCMD_op_Erase2] & state[1] & indexHandler__w_enable;
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k]         = currentCmd[`MemAndMulCMD_op_Erase2] & state[2] & indexHandler__w_enable;
 
@@ -843,6 +857,9 @@ module memAndMul(
 
     input [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks, // how many 8x8 matrixes are in B and S. The FrodoKEM parameter/8.
     input config_SUseHalfByte,
+    input [`MemCONF_lenSec_size-1:0] config_lenSec,
+    input [`MemCONF_lenSE_size-1:0] config_lenSE,
+    input [`MemCONF_lenSalt_size-1:0] config_lenSalt,
 
     input rst,
     input clk
@@ -907,6 +924,9 @@ module memAndMul(
     .bus_out__d2(core__bus_out__d2),
     .config_matrixNumBlocks(config_matrixNumBlocks),
     .config_SUseHalfByte(config_SUseHalfByte),
+    .config_lenSec(config_lenSec),
+    .config_lenSE(config_lenSE),
+    .config_lenSalt(config_lenSalt),
     .rst(rst),
     .clk(clk)
   );
