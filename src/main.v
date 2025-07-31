@@ -28,7 +28,7 @@
 `define MainCMD_decaps       3'd2
 `define MainCMD_setupTest    3'd3
 `define MainCMD_addEntropy   3'd4
-`define MainCMD_setParam640  3'd5 /*TODO: not supported yet*/
+`define MainCMD_setParam640  3'd5
 `define MainCMD_setParam976  3'd6
 `define MainCMD_setParam1344 3'd7
 
@@ -74,7 +74,9 @@ module command_expansion(
 
     output [`MainCoreCMD_SIZE-1:0] i,
     output [`MainCoreCMD_which_SIZE-1:0] i_hasAny,
-    input i_consume
+    input i_consume,
+    
+    input config_useShake128
   );
 
   wire [4-1:0] o__h_either = o__h_src | o__h_dst;
@@ -125,11 +127,11 @@ module command_expansion(
 `ifdef OUTPUT_INTERNALS_FOR_TEST
      | (o == `MainExpCMD_genA_kOut_DBG ? {4'b1000, 9'd16, 1'b1}    : 13'b0)
 `endif
-     | (o == `MainExpCMD_k_single    ? {4'b0000, 9'd1, 1'b1}     : 13'b0)
-     | (o == `MainExpCMD_k_longIn    ? {4'b0001, o__param, 1'b1} : 13'b0)
-     | (o == `MainExpCMD_k_longOut   ? {4'b0000, o__param, 1'b1} : 13'b0)
-     | (o == `MainExpCMD_k_outState  ? {4'b0011, o__param, 1'b0} : 13'b0)
-     | (o == `MainExpCMD_k_inState   ? {4'b0101, o__param, 1'b1} : 13'b0)
+     | (o == `MainExpCMD_k_single    ? {config_useShake128, 3'b000, 9'd1, 1'b1}     : 13'b0)
+     | (o == `MainExpCMD_k_longIn    ? {config_useShake128, 3'b001, o__param, 1'b1} : 13'b0)
+     | (o == `MainExpCMD_k_longOut   ? {config_useShake128, 3'b000, o__param, 1'b1} : 13'b0)
+     | (o == `MainExpCMD_k_outState  ? {config_useShake128, 3'b011, o__param, 1'b0} : 13'b0)
+     | (o == `MainExpCMD_k_inState   ? {config_useShake128, 3'b101, o__param, 1'b1} : 13'b0)
      | (o == `MainExpCMD_k_noOverlap ? {4'b0000, 9'd0, 1'b0}     : 13'b0),
     // s
     | (o__h_dst & `CmdHubCMD_seedA)
@@ -322,7 +324,7 @@ module command_sequences(
       //--// BRAM.S' [=S^T] <- SampleMatrix(_r)
       //--// OUT(S^T) <- BRAM.S' [=S^T]
       //--// BRAM.B' [=E^T] <- ( SampleMatrix(_r) [=E] )^T
-      if(state[ 0]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd317 : config_frodoParam[1] ? 9'd230 : 9'd151)
+      if(state[ 0]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd317 : config_frodoParam[1] ? 9'd230 : 9'd122)
       if(state[ 1]) `SET_CMD__KI_BYTE(8'h5F)
       if(state[ 2]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
       if(state[ 3]) `SET_CMD__K2MO(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
@@ -348,7 +350,7 @@ module command_sequences(
       //--// OUT(b) <- _b
       //--// OUT(pkh) : 256b <- SHAKE256(seedA | _b)
       if(state[ 0]) `SET_CMD__K_NO_OVERLAP
-      if(state[ 1]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd71)
+      if(state[ 1]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd58)
       if(state[ 2]) `SET_CMD__S2K(`SET_CMD__NOT_LAST)
       if(state[ 3]) `SET_CMD__M2KO(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_PACKED, `SET_CMD__IS_LAST)
       if(state[ 4]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
@@ -362,7 +364,7 @@ module command_sequences(
       //--// OUT(b) <- _b
       //--// OUT(pkh) : 256b <- SHAKE256(seedA | _b)
       if(state[ 1]) `SET_CMD__K_NO_OVERLAP
-      if(state[ 2]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd71)
+      if(state[ 2]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd58)
       if(state[ 3]) `SET_CMD__S2K(`SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__M2KO(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_PACKED, `SET_CMD__IS_LAST)
       if(state[ 5]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
@@ -377,7 +379,7 @@ module command_sequences(
       //--// _b <- IN(pk.b)
       //--// BRAM.B' [=B^T] = unpack(_b)^T
       //--// BRAM.pkh = SHAKE256(seedA|_b)
-      if(state[ 0]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd71)
+      if(state[ 0]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd58)
       if(state[ 1]) `SET_CMD__O2SK(`SET_CMD__NOT_LAST)
       if(state[ 2]) `SET_CMD__O2MK(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_PACKED, `SET_CMD__IS_LAST)
       if(state[ 3]) `SET_CMD__K2M(`MemAndMulCMD_in_pkh, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
@@ -414,7 +416,7 @@ module command_sequences(
       //--// BRAM.C [=C-E''] = BRAM.C [=U] + BRAM.S' *' BRAM.B'^T // end of B
       //--// BRAM.B' [=E'] = SampleMatrix(_r)
       //--// BRAM.C [=C] = BRAM.C + SampleMatrix(_r)
-      if(state[ 7]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd318 : config_frodoParam[1] ? 9'd231 : 9'd152)
+      if(state[ 7]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd318 : config_frodoParam[1] ? 9'd231 : 9'd123)
       if(state[ 8]) `SET_CMD__KI_BYTE(8'h96)
       if(state[ 9]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
       if(state[10]) `SET_CMD__K2M(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
@@ -432,7 +434,7 @@ module command_sequences(
       //--// OUT(c2) <- _c2
       //--// OUT(salt) <- BRAM.salt
       //--// OUT(ss) : 256b <- SHAKE(_c1 | _c2 | BRAM.salt | BRAM.k)
-      if(state[ 0]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd160 : config_frodoParam[1] ? 9'd117 : 9'd72)
+      if(state[ 0]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd160 : config_frodoParam[1] ? 9'd117 : 9'd59)
       if(state[ 1]) `SET_CMD__M2KO(`MemAndMulCMD_out_BRowFirst, `SET_CMD__IS_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 2]) `SET_CMD__M2KO(`MemAndMulCMD_out_CRowFirst, `SET_CMD__IS_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 3]) `SET_CMD__M2KO(`MemAndMulCMD_out_salt, `SET_CMD__NOT_PACKED, `SET_CMD__NOT_LAST)
@@ -458,11 +460,11 @@ module command_sequences(
       //--// BRAM.C <- unpack(_c2)
       //--// BRAM.salt <- IN(c.salt)
       //--// BRAM.ss_state = SHAKE_partial(_c1 | _c2 | BRAM.salt)
-      if(state[ 1]) `SET_CMD__K_OUTSTATE(config_frodoParam[2] ? 9'd160 : config_frodoParam[1] ? 9'd117 : 9'd72)
+      if(state[ 1]) `SET_CMD__K_OUTSTATE(config_frodoParam[2] ? 9'd160 : config_frodoParam[1] ? 9'd117 : 9'd59)
       if(state[ 2]) `SET_CMD__O2MK(`MemAndMulCMD_in_BRowFirst, `SET_CMD__IS_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 3]) `SET_CMD__O2MK(`MemAndMulCMD_in_CRowFirst, `SET_CMD__IS_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__O2MK(`MemAndMulCMD_in_salt, `SET_CMD__NOT_PACKED, `SET_CMD__NOT_LAST)
-      if(state[ 5]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd8 : config_frodoParam[1] ? 8'd15 : 8'd5)
+      if(state[ 5]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd8 : config_frodoParam[1] ? 8'd15 : 8'd20)
       if(state[ 6]) `SET_CMD__K2M(`MemAndMulCMD_in_SSState, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
       
       //--// BRAM.u = decode(( BRAM.C^T - BRAM.S' *' BRAM.B'^T )^T)
@@ -488,7 +490,7 @@ module command_sequences(
       //--// BRAM.C += BRAM.S' *' _B
       //--//   BRAM.B' = SampleMatrix(_r) - BRAM.B'
       //--// BRAM.C += SampleMatrix(_r)
-      if(state[16]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd318 : config_frodoParam[1] ? 9'd231 : 9'd152)
+      if(state[16]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd318 : config_frodoParam[1] ? 9'd231 : 9'd123)
       if(state[17]) `SET_CMD__KI_BYTE(8'h96)
       if(state[18]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
       if(state[19]) `SET_CMD__K2M(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
@@ -512,7 +514,7 @@ module command_sequences(
       //--// OUT(ss) <- BRAM.k
       if(state[ 1]) `SET_CMD__K_INSTATE(9'd1)
       if(state[ 2]) `SET_CMD__M2K(`MemAndMulCMD_out_SSState, `SET_CMD__NOT_LAST)
-      if(state[ 3]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd9 : config_frodoParam[1] ? 8'd2 : 8'd12)
+      if(state[ 3]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd9 : config_frodoParam[1] ? 8'd2 : 8'd1)
       if(state[ 4]) `SET_CMD__M2K(`MemAndMulCMD_out_k, `SET_CMD__IS_LAST)
       if(state[ 5]) `SET_CMD__K2MO(`MemAndMulCMD_in_k, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
     end
@@ -695,7 +697,7 @@ module command_main(
 endmodule
 
 
-
+// TODO: do not change the parameter set while the computation is ongoing
 
 module main(
     input [`MainCMD_SIZE-1:0] cmd,
@@ -854,7 +856,8 @@ module main(
     .o_consume(exp_consume),
     .i(core__cmd),
     .i_hasAny(core__cmd_hasAny),
-    .i_consume(core__cmd_consume)
+    .i_consume(core__cmd_consume),
+    .config_useShake128(frodoParam[0])
   );
 
   wire [8-1:0] frodo_n = frodoParam[0] ? 8'd80

@@ -240,7 +240,7 @@ endmodule
 `define MemAndMulCMD_inOp_BpleqStimesInA  6'd8 /* BRAM.B' = BRAM.B' + BRAM.S' *'' _A */
 `define MemAndMulCMD_inOp_CpleqStimesInB  6'd9 /* BRAM.C = BRAM.C + BRAM.S' *' _B */
 `define MemAndMulCMD_inOp_addCRowFirst    6'd10 /* BRAM.C = BRAM.C + _C */
-`define MemAndMulCMD_inOp_selectKey       6'd11 /* BRAM.k = BRAM.B' == 0 && BRAM.C == 0 ? BRAM.k : _s */   // TODO: check only the used bits, for Frodo-640
+`define MemAndMulCMD_inOp_selectKey       6'd11 /* BRAM.k = BRAM.B' == 0 && BRAM.C == 0 ? BRAM.k : _s */
 `define MemAndMulCMD_inOp_BeqInMinB       6'd12 /* BRAM.B' = _B - BRAM.B' */
 
 `define MemAndMulCMD_in_BRowFirst 6'd13
@@ -702,16 +702,18 @@ module memAndMul__core(
   assign adder__op1                                   = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] ? bus_in__d2 : 64'b0;
   assign adder__op2                                   = currentCmd[`MemAndMulCMD_inOp_addCRowFirst] ? mainMemory__r_bus__d2 : 64'b0;
 
+  wire [16-1:0] cmpMask = config_lenSec[0] == 1'b1 ? 16'h7FFF : 16'hFFFF;
+
   assign state__numStates                             = currentCmd[`MemAndMulCMD_inOp_selectKey] ? 3 : 0;
   assign indexHandler__currentCmd          = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[0] ? `MemAndMulIndexCMD_out : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign indexHandler__bus_out_canReceive  = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[0];
   assign mainMemory__r_dubBus_B_col        = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[0];
   assign isNotZero__isFirst                = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[0] & state__isFirstCycle;
-  assign isNotZero__set                    = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[0] & indexHandler__r_enable__d2 & mainMemory__r_dubBus__d2 != 0;
+  assign isNotZero__set                    = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[0] & indexHandler__r_enable__d2 & (mainMemory__r_dubBus__d2 & {8{cmpMask}}) != 0;
   assign indexHandler__currentCmd              = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[1] ? `MemAndMulIndexCMD_out : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign indexHandler__bus_out_canReceive      = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[1];
   assign mainMemory__r_dubBus_C_col            = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[1];
-  assign isNotZero__set                        = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[1] & indexHandler__r_enable__d2 & mainMemory__r_dubBus__d2 != 0;
+  assign isNotZero__set                        = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[1] & indexHandler__r_enable__d2 & (mainMemory__r_dubBus__d2 & {8{cmpMask}}) != 0;
   assign indexHandler__currentCmd                 = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] ? `MemAndMulIndexCMD_updateSyncIn : {`MemAndMulIndexCMD_SIZE{1'b0}};
   assign mainMemory__w_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2] & indexHandler__w_enable;
   assign mainMemory__r_bus_cmd[`MainMemCMD_bus_k] = currentCmd[`MemAndMulCMD_inOp_selectKey] & state[2];
@@ -813,30 +815,239 @@ module memAndMul__outAdapter(
 endmodule
 
 
-module memAndMul__unpack ( // TODO: add support 15 bit packing
-    input isPack,
+module memAndMul__unpack16 (
     input [64-1:0] in,
     output [64-1:0] out
   );
-  wire [64-1:0] out_packed;
-  swapBits #(16) s0 (in[0*16+:16], out_packed[0*16+:16]);
-  swapBits #(16) s1 (in[1*16+:16], out_packed[1*16+:16]);
-  swapBits #(16) s2 (in[2*16+:16], out_packed[2*16+:16]);
-  swapBits #(16) s3 (in[3*16+:16], out_packed[3*16+:16]);
-  assign out = isPack ? out_packed : in;
+  swapBits #(16) s0 (in[0*16+:16], out[0*16+:16]);
+  swapBits #(16) s1 (in[1*16+:16], out[1*16+:16]);
+  swapBits #(16) s2 (in[2*16+:16], out[2*16+:16]);
+  swapBits #(16) s3 (in[3*16+:16], out[3*16+:16]);
 endmodule
 
-module memAndMul__pack ( // TODO: add support 15 bit packing
-    input isPack,
+module memAndMul__pack16 (
     input [64-1:0] in,
     output [64-1:0] out
   );
-  wire [64-1:0] out_packed;
-  swapBits #(16) s0 (in[0*16+:16], out_packed[0*16+:16]);
-  swapBits #(16) s1 (in[1*16+:16], out_packed[1*16+:16]);
-  swapBits #(16) s2 (in[2*16+:16], out_packed[2*16+:16]);
-  swapBits #(16) s3 (in[3*16+:16], out_packed[3*16+:16]);
-  assign out = isPack ? out_packed : in;
+  swapBits #(16) s0 (in[0*16+:16], out[0*16+:16]);
+  swapBits #(16) s1 (in[1*16+:16], out[1*16+:16]);
+  swapBits #(16) s2 (in[2*16+:16], out[2*16+:16]);
+  swapBits #(16) s3 (in[3*16+:16], out[3*16+:16]);
+endmodule
+
+
+module realligner_core #(parameter BLOCK_SIZE = 1, NUM_IN_BLOCKS = 1, NUM_OUT_BLOCKS = 1) (
+    in,
+    in_canReceive,
+    in_isReady,
+    out,
+    out_canReceive,
+    out_isReady,
+    in_buff,
+    out_buff,
+    in_buff_size,
+    out_buff_size
+  );
+  
+  localparam NUM_MAX_BLOCKS = NUM_IN_BLOCKS > NUM_OUT_BLOCKS ? NUM_IN_BLOCKS : NUM_OUT_BLOCKS;
+  localparam NUM_MAX_BLOCKS_SIZE = $clog2(NUM_MAX_BLOCKS+1);
+  localparam NUM_SUM_BLOCKS = NUM_IN_BLOCKS + NUM_OUT_BLOCKS;
+  localparam NUM_SUM_BLOCKS_SIZE = $clog2(NUM_SUM_BLOCKS+1);
+
+  input [BLOCK_SIZE*NUM_IN_BLOCKS-1:0] in;
+  output in_canReceive;
+  input in_isReady;
+  output [BLOCK_SIZE*NUM_OUT_BLOCKS-1:0] out;
+  input out_canReceive;
+  output out_isReady;
+  input  [BLOCK_SIZE*NUM_MAX_BLOCKS-1:0] in_buff;
+  output [BLOCK_SIZE*NUM_MAX_BLOCKS-1:0] out_buff;
+  input  [NUM_MAX_BLOCKS_SIZE-1:0] in_buff_size;
+  output [NUM_MAX_BLOCKS_SIZE-1:0] out_buff_size;
+
+
+  assign in_canReceive = out_canReceive & (in_buff_size < NUM_OUT_BLOCKS);
+
+  wire [BLOCK_SIZE*NUM_SUM_BLOCKS-1:0] combined_in =             (in << (BLOCK_SIZE * in_buff_size))            |    in_buff;
+  wire [NUM_SUM_BLOCKS_SIZE-1:0] combined_in_size  = (in_isReady ? NUM_IN_BLOCKS : {NUM_SUM_BLOCKS_SIZE{1'b0}}) + in_buff_size;
+
+  assign out_isReady = out_canReceive & (combined_in_size >= NUM_OUT_BLOCKS);
+  assign out = combined_in[0+:BLOCK_SIZE*NUM_OUT_BLOCKS];
+
+  assign out_buff_size = out_isReady ? combined_in_size - NUM_OUT_BLOCKS
+                                     : combined_in_size;
+  assign out_buff = out_isReady ? { {BLOCK_SIZE*NUM_OUT_BLOCKS{1'b0}} , combined_in[BLOCK_SIZE*NUM_OUT_BLOCKS+:BLOCK_SIZE*NUM_IN_BLOCKS] }
+                                : combined_in[0+:BLOCK_SIZE*NUM_MAX_BLOCKS];
+endmodule
+
+
+module memAndMul__unpack15 (
+    input [64-1:0] in,
+    input in_isReady,
+    output in_canReceive,
+    output [64-1:0] out,
+    output out_isReady,
+    input out_canReceive,
+    input rst,
+    input clk
+  );
+  wire [60-1:0] out_w;
+  
+  wire [64-1:0] store__a1;
+  wire [64-1:0] store;
+  delay #(64) store__ff (store__a1, store, rst, clk);
+  wire [5-1:0] store_size__a1;
+  wire [5-1:0] store_size;
+  delay #(5) store_size__ff (store_size__a1, store_size, rst, clk);
+
+  realligner_core #(.BLOCK_SIZE(4), .NUM_IN_BLOCKS(16), .NUM_OUT_BLOCKS(15)) realign (
+    .in(in),
+    .in_isReady(in_isReady),
+    .in_canReceive(in_canReceive),
+    .out(out_w),
+    .out_isReady(out_isReady),
+    .out_canReceive(out_canReceive),
+    .in_buff(store),
+    .out_buff(store__a1),
+    .in_buff_size(store_size),
+    .out_buff_size(store_size__a1)
+  );
+
+  assign out = {1'b0, out_w[3*15+:15], 1'b0, out_w[2*15+:15], 1'b0, out_w[1*15+:15], 1'b0, out_w[0*15+:15]};
+endmodule
+
+module memAndMul__pack15 (
+    input [64-1:0] in,
+    input in_isReady,
+    output in_canReceive,
+    output [64-1:0] out,
+    output out_isReady,
+    input out_canReceive,
+    input rst,
+    input clk
+  );
+  wire [60-1:0] in_w = {in[3*16+:15], in[2*16+:15], in[1*16+:15], in[0*16+:15]};
+  wire [4-1:0] ignore = {in[3*16+15], in[2*16+15], in[1*16+15], in[0*16+15]};
+
+  wire [64-1:0] store__a1;
+  wire [64-1:0] store;
+  delay #(64) store__ff (store__a1, store, rst, clk);
+  wire [5-1:0] store_size__a1;
+  wire [5-1:0] store_size;
+  delay #(5) store_size__ff (store_size__a1, store_size, rst, clk);
+
+  realligner_core #(.BLOCK_SIZE(4), .NUM_IN_BLOCKS(15), .NUM_OUT_BLOCKS(16)) realign (
+    .in(in_w),
+    .in_isReady(in_isReady),
+    .in_canReceive(in_canReceive),
+    .out(out),
+    .out_isReady(out_isReady),
+    .out_canReceive(out_canReceive),
+    .in_buff(store),
+    .out_buff(store__a1),
+    .in_buff_size(store_size),
+    .out_buff_size(store_size__a1)
+  );
+endmodule
+
+
+
+module memAndMul__unpack (
+    input isPack,
+
+    input [64-1:0] in,
+    input in_isReady,
+    output in_canReceive,
+    output in_isLast,
+    output [64-1:0] out,
+    output out_isReady,
+    input out_canReceive,
+    input out_isLast,
+
+    input [`MemCONF_lenSec_size-1:0] config_lenSec,
+
+    input rst,
+    input clk
+  );
+  wire isP15 = isPack & config_lenSec[0];
+  
+  wire [64-1:0] p16_out;
+  memAndMul__unpack16 p16(in, p16_out);
+  wire [64-1:0] p15_out;
+  wire p15_in_isReady = in_isReady & isP15;
+  wire p15_in_canReceive;
+  wire p15_out_isReady;
+  wire p15_out_canReceive = out_canReceive & isP15;
+  memAndMul__unpack15 p15(
+    .in(in),
+    .in_isReady(p15_in_isReady),
+    .in_canReceive(p15_in_canReceive),
+    .out(p15_out),
+    .out_isReady(p15_out_isReady),
+    .out_canReceive(p15_out_canReceive),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  assign out = ~isPack          ? in
+             : config_lenSec[0] ? p15_out
+                                : p16_out;
+  assign in_canReceive = isP15 ? p15_in_canReceive
+                               : out_canReceive;
+  assign out_isReady = isP15 ? p15_out_isReady
+                             : in_isReady;
+  
+  assign in_isLast = out_isLast;
+endmodule
+
+module memAndMul__pack (
+    input isPack,
+    
+    input [64-1:0] in,
+    input in_isReady,
+    output in_canReceive,
+    input in_isLast,
+    output [64-1:0] out,
+    output out_isReady,
+    input out_canReceive,
+    output out_isLast,
+
+    input [`MemCONF_lenSec_size-1:0] config_lenSec,
+
+    input rst,
+    input clk
+  );
+  wire isP15 = isPack & config_lenSec[0];
+  
+  wire [64-1:0] p16_out;
+  memAndMul__pack16 p16(in, p16_out);
+  wire [64-1:0] p15_out;
+  wire p15_in_isReady = in_isReady & isP15;
+  wire p15_in_canReceive;
+  wire p15_out_isReady;
+  wire p15_out_canReceive = out_canReceive & isP15;
+  memAndMul__pack15 p15(
+    .in(in),
+    .in_isReady(p15_in_isReady),
+    .in_canReceive(p15_in_canReceive),
+    .out(p15_out),
+    .out_isReady(p15_out_isReady),
+    .out_canReceive(p15_out_canReceive),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  assign out = ~isPack          ? in
+             : config_lenSec[0] ? p15_out
+                                : p16_out;
+  assign in_canReceive = isP15 ? p15_in_canReceive
+                               : out_canReceive;
+  assign out_isReady = isP15 ? p15_out_isReady
+                             : in_isReady;
+  wire in_isLast__d1;
+  delay in_isLast__ff(in_isLast, in_isLast__d1, rst, clk);
+  assign out_isLast = isP15 ? in_isLast__d1
+                            : in_isLast;
 endmodule
 
 
@@ -845,15 +1056,15 @@ module memAndMul(
     input cmd_isReady,
     output cmd_canReceive,
 
-    input in_isReady,
     input [64-1:0] in,
+    input in_isReady,
     output in_canReceive,
     output in_isLast,
 
-    output out_isReady,
-    output out_isLast,
     output [64-1:0] out,
+    output out_isReady,
     input out_canReceive,
+    output out_isLast,
 
     input [`MemCONF_matrixNumBlocks_size-1:0] config_matrixNumBlocks, // how many 8x8 matrixes are in B and S. The FrodoKEM parameter/8.
     input config_SUseHalfByte,
@@ -942,26 +1153,53 @@ module memAndMul(
   wire currentCMD__isOut = | (currentCmd & `MemAndMulCMD_mask_out);
   
   wire [64-1:0] o__out;
+  wire o__out_isReady;
+  wire o__out_canReceive;
+  wire o__out_isLast;
   memAndMul__outAdapter o(
     .currentCMD__isOut(currentCMD__isOut),
     .currentCmd_out_isLastCycle(currentCmd_out_isLastCycle),
     .bus_in_canReceive(core__bus_out_canReceive),
     .bus_in__d2(core__bus_out__d2),
 
-    .bus_out_isReady(out_isReady),
-    .bus_out_isLast(out_isLast),
+    .bus_out_isReady(o__out_isReady),
+    .bus_out_isLast(o__out_isLast),
     .bus_out(o__out),
-    .bus_out_canReceive(out_canReceive),
+    .bus_out_canReceive(o__out_canReceive),
 
     .rst(rst),
     .clk(clk)
   );
-  memAndMul__pack pack (out_isPack, o__out, out);
 
-  assign in_canReceive = core__bus_in_canReceive;
-  assign in_isLast = core__bus_in_isLast;
-  assign core__bus_in_isReady = in_isReady;
-  memAndMul__unpack unpack(in_isPack, in, core__bus_in);
+  memAndMul__pack pack (
+    .isPack(out_isPack),
+    .in(o__out),
+    .in_isReady(o__out_isReady),
+    .in_canReceive(o__out_canReceive),
+    .in_isLast(o__out_isLast),
+    .out(out),
+    .out_isReady(out_isReady),
+    .out_canReceive(out_canReceive),
+    .out_isLast(out_isLast),
+    .config_lenSec(config_lenSec),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  memAndMul__unpack unpack(
+    .isPack(in_isPack),
+    .in(in),
+    .in_isReady(in_isReady),
+    .in_canReceive(in_canReceive),
+    .in_isLast(in_isLast),
+    .out(core__bus_in),
+    .out_isReady(core__bus_in_isReady),
+    .out_canReceive(core__bus_in_canReceive),
+    .out_isLast(core__bus_in_isLast),
+    .config_lenSec(config_lenSec),
+    .rst(rst),
+    .clk(clk)
+  );
 endmodule
 
 

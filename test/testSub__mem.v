@@ -1147,5 +1147,93 @@
     join
 `endif
 
+//-----------------------------------------------------------------------------------
 
+`ifdef TEST_VARS
+    integer test__mem_pack15_i;
+    reg [1024-1:0] test__mem_pack15_in;
+    reg [960-1:0] test__mem_pack15_out;
+`endif
+
+`ifdef TEST
+    `DO_RST("test__mem_pack15", 16, 0)    
+    for (test__mem_pack15_i = 0; test__mem_pack15_i < 64; test__mem_pack15_i=test__mem_pack15_i+1) begin
+      test__mem_pack15_in [test__mem_pack15_i*16+:16] = {test__mem_pack15_i[0+:6], 10'b0};
+      test__mem_pack15_out[test__mem_pack15_i*15+:15] = {test__mem_pack15_i[0+:5], 10'b0};
+    end
+    fork : test__mem_pack15__p1  
+      begin  
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+      end
+
+      begin
+        for (test__mem_pack15_i = 0; test__mem_pack15_i < 16; test__mem_pack15_i=test__mem_pack15_i+1) begin
+          `TEST_UTIL__SEND(test__mem_pack15_in[test__mem_pack15_i*64+:64])
+        end
+        `TEST_UTIL__SEND_CANT
+      end
+    join
+
+    fork : test__mem_pack15__p2
+      begin
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b1, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for (test__mem_pack15_i = 0; test__mem_pack15_i < 15; test__mem_pack15_i=test__mem_pack15_i+1) begin
+          `TEST_UTIL__RECEIVE(test__mem_pack15_out[test__mem_pack15_i*64+:64])
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST_VARS
+    integer test__mem_unpack15_i;
+    reg [960-1:0] test__mem_unpack15_in;
+    reg [1024-1:0] test__mem_unpack15_out;
+`endif
+
+`ifdef TEST
+    `DO_RST("test__mem_unpack15", 16, 0)
+    for (test__mem_unpack15_i = 0; test__mem_unpack15_i < 64; test__mem_unpack15_i=test__mem_unpack15_i+1) begin
+      test__mem_unpack15_in [test__mem_unpack15_i*15+:15] = {      test__mem_unpack15_i[0+:5], 10'b0};
+      test__mem_unpack15_out[test__mem_unpack15_i*16+:16] = {1'b0, test__mem_unpack15_i[0+:5], 10'b0};
+    end
+    fork : test__mem_unpack15__p1
+      begin
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b1, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+      end
+
+      begin
+        for (test__mem_unpack15_i = 0; test__mem_unpack15_i < 15; test__mem_unpack15_i=test__mem_unpack15_i+1) begin
+          `TEST_UTIL__SEND(test__mem_unpack15_in[test__mem_unpack15_i*64+:64])
+        end
+       `TEST_UTIL__SEND_CANT
+      end
+    join
+
+    fork : test__mem_unpack15__p2
+      begin
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for (test__mem_unpack15_i = 0; test__mem_unpack15_i < 16; test__mem_unpack15_i=test__mem_unpack15_i+1) begin
+          `TEST_UTIL__RECEIVE(test__mem_unpack15_out[test__mem_unpack15_i*64+:64])
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
 
