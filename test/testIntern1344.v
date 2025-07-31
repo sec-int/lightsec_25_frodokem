@@ -171,6 +171,9 @@ module testIntern1344();
   integer testNum = 0;
   integer j = 0;
   initial begin : body
+  
+    #5;
+    `TEST_UTIL__CMD_SEND(`MainCMD_setParam1344)
     test_name = "keygen";
     for(testNum = 0; testNum < 1; testNum = testNum+1) begin
       #5;
