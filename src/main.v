@@ -750,7 +750,7 @@ module main(
   ff_en_imm #(3) frodoParam__ff(frodoParam__en, frodoParam__set, frodoParam, rst, clk);
 
 
-  wire [64-1:0] cmdC = cmdB;
+  wire [`MainCMD_SIZE-1:0] cmdC = cmdB;
   wire cmdC_isReady = cmdB_isReady & ~frodoParam__en;
   wire cmdC_canReceive;
   assign cmdB_canReceive = cmdC_canReceive;
@@ -782,7 +782,7 @@ module main(
   wire [`MainFltCMD_SIZE-1:0] flt_cmd;
   wire flt_hasAny;
   wire flt_consume;
-  bus_delay_unstd #(.BusSize(`MainFltCMD_SIZE), .N(1)) cmdmDelay (
+  bus_delay_unstd #(.BusSize(`MainFltCMD_SIZE), .N(0)) cmdmDelay (
     .i(cmdmDelay_cmd),
     .i_hasAny(cmdmDelay_hasAny),
     .i_consume(cmdmDelay_consume),
@@ -839,21 +839,43 @@ module main(
     .rst(rst__d1),
     .clk(clk)
   );
+  
+  wire [`MainExpCMD_SIZE-1:0] expB_cmd;
+  wire expB__k_isLast;
+  wire expB__k_isSampled;
+  wire [9-1:0] expB__param;
+  wire [6-1:0] expB__m_cmd;
+  wire expB__m_isPack;
+  wire [4-1:0] expB__h_dst;
+  wire [4-1:0] expB__h_src;
+  wire expB_hasAny;
+  wire expB_consume;  
+  bus_delay_unstd #(.BusSize(`MainExpCMD_SIZE+2+9+6+1+4+4), .N(1)) expDelay (
+    .i({exp_cmd,  exp__k_isLast,  exp__k_isSampled,  exp__param,  exp__m_cmd,  exp__m_isPack,  exp__h_dst,  exp__h_src}),
+    .i_hasAny(exp_hasAny),
+    .i_consume(exp_consume),
+    .o({expB_cmd, expB__k_isLast, expB__k_isSampled, expB__param, expB__m_cmd, expB__m_isPack, expB__h_dst, expB__h_src}),
+    .o_hasAny(expB_hasAny),
+    .o_consume(expB_consume),
+    .rst(rst__d1),
+    .clk(clk)
+  );
+  
 
   wire [`MainCoreCMD_SIZE-1:0] core__cmd;
   wire [`MainCoreCMD_which_SIZE-1:0] core__cmd_hasAny;
   wire core__cmd_consume;
   command_expansion exp(
-    .o(exp_cmd),
-    .o__k_isLast(exp__k_isLast),
-    .o__k_isSampled(exp__k_isSampled),
-    .o__param(exp__param),
-    .o__m_cmd(exp__m_cmd),
-    .o__m_isPack(exp__m_isPack),
-    .o__h_dst(exp__h_dst),
-    .o__h_src(exp__h_src),
-    .o_hasAny(exp_hasAny),
-    .o_consume(exp_consume),
+    .o(expB_cmd),
+    .o__k_isLast(expB__k_isLast),
+    .o__k_isSampled(expB__k_isSampled),
+    .o__param(expB__param),
+    .o__m_cmd(expB__m_cmd),
+    .o__m_isPack(expB__m_isPack),
+    .o__h_dst(expB__h_dst),
+    .o__h_src(expB__h_src),
+    .o_hasAny(expB_hasAny),
+    .o_consume(expB_consume),
     .i(core__cmd),
     .i_hasAny(core__cmd_hasAny),
     .i_consume(core__cmd_consume),

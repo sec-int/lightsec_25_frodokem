@@ -423,12 +423,12 @@ module mainMem_readConnector(
                                                                : mergeHalfRow__d2
                                          : mergeRow__d2;
 
-  wire o_SBus_shift = o_index[0];
+  wire o_SBus_shift__d2 = o_index__d2__0;
   wire [8*8-1:0] mergeByteCol__d2;
   generate
     for (row = 0; row < 8; row=row+1) begin
       assign mergeByteCol__d2[row*8+:8] = mergeCol__d2[row*16+:8] | mergeCol__d2[row*16+8+:8];
-      assign o_SBus__d2[row*5+:5] = config_SUseHalfByte ? mergeByteCol__d2[row*8+o_SBus_shift*4+:4] : mergeByteCol__d2[row*8+:5];
+      assign o_SBus__d2[row*5+:5] = config_SUseHalfByte ? mergeByteCol__d2[row*8+o_SBus_shift__d2*4+:4] : mergeByteCol__d2[row*8+:5];
     end
   endgenerate
 endmodule

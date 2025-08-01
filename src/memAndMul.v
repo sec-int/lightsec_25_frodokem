@@ -157,13 +157,14 @@ module memAndMul__indexHandler(
   assign index1_has_next = index1_reset | (~index1_update ? index1_has_next__d1 : r_index_hasNext);
   assign index2_has_next = index2_reset | (~(currentCmd_updateFastAny ? index2_update__d1 : index2_update) ? index2_has_next__d1 : (currentCmd_in ? w_index_hasNext : r_index_hasNext));
 
-  wire currentCmd_op_isLastCycle__a2 = currentCmd_updateSyncMem & index1__toggle & ~index1_has_next
-                                     | currentCmd_updateSyncIn & bus_in_isReady & ~index1_has_next
-                                     | currentCmd_updateSync & ~index1_has_next
-                                     | currentCmd_updateFSAny & ~(index1_has_next | index1_has_next__d1 | index2_has_next | index2_has_next__d1); // TODO: do we need to check bus_in_isReady?
-  wire currentCmd_op_isLastCycle__a1;
-  delay currentCmd_op_isLastCycle__ff2 (currentCmd_op_isLastCycle__a2, currentCmd_op_isLastCycle__a1, rst, clk);
+  wire currentCmd_op_isLastCycle__a2_set = currentCmd_updateSyncMem & index1__toggle & ~index1_has_next
+                                         | currentCmd_updateSyncIn & bus_in_isReady & ~index1_has_next
+                                         | currentCmd_updateSync & ~index1_has_next
+                                         | currentCmd_updateFSAny & ~(index1_has_next | index1_has_next__d1 | index2_has_next | index2_has_next__d1); // TODO: do we need to check bus_in_isReady?
   wire currentCmd_op_isLastCycle;
+  wire currentCmd_op_isLastCycle__a1;
+  wire currentCmd_op_isLastCycle__a2 = currentCmd_op_isLastCycle__a2_set & ~currentCmd_op_isLastCycle__a1 & ~currentCmd_op_isLastCycle;
+  delay currentCmd_op_isLastCycle__ff2 (currentCmd_op_isLastCycle__a2, currentCmd_op_isLastCycle__a1, rst, clk);
   delay currentCmd_op_isLastCycle__ff1 (currentCmd_op_isLastCycle__a1, currentCmd_op_isLastCycle, rst, clk);
   assign currentCmd_in_isLastCycle = currentCmd_in ? bus_in_isReady & ~w_index_hasNext : currentCmd_op_isLastCycle;
   assign currentCmd_out_isLastCycle = currentCmd_out ? bus_out_canReceive & ~r_index_hasNext : currentCmd_op_isLastCycle;
@@ -1051,6 +1052,93 @@ module memAndMul__pack (
 endmodule
 
 
+
+module memAndMul_ctrl(
+    input [`MemAndMulCMD_SIZE-1:0] i, // { isPack: 1bit, main cmd : 6 bit }
+    input i_isReady,
+    output i_canReceive,
+
+    output [`MemAndMulCMD_FULLSIZE-1:0] o_cmd,
+    output o_in_isFirstCycle,
+    output o_out_isFirstCycle,
+    input o_in_isLastCycle,
+    input o_out_isLastCycle, // the bus_out__d2 can output after this is active as this is to start new commands
+    output o_in_isPack,
+    output o_out_isPack,
+    
+    input rst,
+    input clk
+  );
+
+  wire [`MemAndMulCMD_FULLSIZE-1:0] i__full = 1 << i[0+:`MemAndMulCMD_SIZE-1];
+  wire i_conflictIn = | (i__full & `MemAndMulCMD_mask_conflictIn);
+  wire i_conflictOut = | (i__full & `MemAndMulCMD_mask_conflictOut);
+
+
+  wire [`MemAndMulCMD_SIZE-1:0] cmdB;
+  wire cmdB_hasAny;
+  wire cmdB_consume;
+  wire cmdB_conflictIn;
+  wire cmdB_conflictOut;
+  bus_delay_fromstd #(.BusSize(`MemAndMulCMD_SIZE+2), .N(2)) cmdBuf (
+    .i({ i, i_conflictIn, i_conflictOut }),
+    .i_isReady(i_isReady),
+    .i_canReceive(i_canReceive),
+    .o({ cmdB, cmdB_conflictIn, cmdB_conflictOut }),
+    .o_hasAny(cmdB_hasAny),
+    .o_consume(cmdB_consume),
+    .rst(rst),
+    .clk(clk)
+  );
+  wire [`MemAndMulCMD_FULLSIZE-1:0] cmdB__full = 1 << cmdB[0+:`MemAndMulCMD_SIZE-1];
+  wire cmdB__isPack = cmdB[`MemAndMulCMD_SIZE-1];
+
+
+  wire [`MemAndMulCMD_FULLSIZE-1:0] prevCmd;
+  wire prevCmd_conflictIn;
+  wire prevCmd_conflictOut;
+  
+  assign cmdB_consume = cmdB_hasAny
+                      & ~(cmdB_conflictIn & prevCmd_conflictIn) 
+                      & ~(cmdB_conflictOut & prevCmd_conflictOut);
+  
+  wire [`MemAndMulCMD_FULLSIZE-1:0] currentCmd = prevCmd | (cmdB_consume ? cmdB__full : {`MemAndMulCMD_FULLSIZE{1'b0}});
+  wire currentCmd_in_isFirstCycle  = cmdB_consume & cmdB_conflictIn;
+  wire currentCmd_out_isFirstCycle = cmdB_consume & cmdB_conflictOut;
+  wire currentCmd_conflictIn  = prevCmd_conflictIn  | currentCmd_in_isFirstCycle;
+  wire currentCmd_conflictOut = prevCmd_conflictOut | currentCmd_out_isFirstCycle;
+  
+  wire [`MemAndMulCMD_FULLSIZE-1:0] nextCmd = currentCmd
+                                            & (o_in_isLastCycle ? ~`MemAndMulCMD_mask_conflictIn : ~`MemAndMulCMD_mask_zero)
+                                            & (o_out_isLastCycle ? ~`MemAndMulCMD_mask_conflictOut : ~`MemAndMulCMD_mask_zero);
+  wire nextCmd_conflictIn  = currentCmd_conflictIn  & ~o_in_isLastCycle;
+  wire nextCmd_conflictOut = currentCmd_conflictOut & ~o_out_isLastCycle;
+  delay #(`MemAndMulCMD_FULLSIZE+2) cmd__ff (
+    { nextCmd, nextCmd_conflictIn, nextCmd_conflictOut },
+    { prevCmd, prevCmd_conflictIn, prevCmd_conflictOut },
+    rst,
+    clk
+  );
+
+  wire currentCmd_in_isFirstCycle__d1;
+  delay currentCmd_in_isFirstCycle__ff(currentCmd_in_isFirstCycle, currentCmd_in_isFirstCycle__d1, rst, clk);
+  wire currentCmd_out_isFirstCycle__d1;
+  delay currentCmd_out_isFirstCycle__ff(currentCmd_out_isFirstCycle, currentCmd_out_isFirstCycle__d1, rst, clk);
+
+ /*  // no delay
+  assign o_cmd = currentCmd;
+  assign o_in_isFirstCycle  = currentCmd_in_isFirstCycle;
+  assign o_out_isFirstCycle = currentCmd_out_isFirstCycle;
+*/
+
+  assign o_cmd = prevCmd;
+  assign o_in_isFirstCycle  = currentCmd_in_isFirstCycle__d1;
+  assign o_out_isFirstCycle = currentCmd_out_isFirstCycle__d1;
+
+  ff_en_imm in_isPack__ff  (o_in_isFirstCycle,  cmdB__isPack, o_in_isPack,  rst, clk);
+  ff_en_imm out_isPack__ff (o_out_isFirstCycle, cmdB__isPack, o_out_isPack, rst, clk);
+endmodule
+
 module memAndMul(
     input [`MemAndMulCMD_SIZE-1:0] cmd, // { isPack: 1bit, main cmd : 6 bit }
     input cmd_isReady,
@@ -1076,45 +1164,28 @@ module memAndMul(
     input clk
   );
 
-  wire [`MemAndMulCMD_SIZE-1:0] cmdB__raw;
-  wire cmdB_hasAny;
-  wire cmdB_consume;
-  bus_delay_fromstd #(.BusSize(`MemAndMulCMD_SIZE), .N(2)) cmdBuf (
+  wire [`MemAndMulCMD_FULLSIZE-1:0] currentCmd;
+  wire currentCmd_in_isFirstCycle;
+  wire currentCmd_out_isFirstCycle;
+  wire currentCmd_in_isLastCycle;
+  wire currentCmd_out_isLastCycle;
+  wire in_isPack;
+  wire out_isPack;
+  memAndMul_ctrl ctrl(
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
-    .o(cmdB__raw),
-    .o_hasAny(cmdB_hasAny),
-    .o_consume(cmdB_consume),
+    .o_cmd(currentCmd),
+    .o_in_isFirstCycle(currentCmd_in_isFirstCycle),
+    .o_out_isFirstCycle(currentCmd_out_isFirstCycle),
+    .o_in_isLastCycle(currentCmd_in_isLastCycle),
+    .o_out_isLastCycle(currentCmd_out_isLastCycle),
+    .o_in_isPack(in_isPack),
+    .o_out_isPack(out_isPack),
     .rst(rst),
     .clk(clk)
   );
-  wire [`MemAndMulCMD_FULLSIZE-1:0] cmdB = 1 << cmdB__raw[0+:`MemAndMulCMD_SIZE-1];
-  wire cmdB__isPack = cmdB__raw[`MemAndMulCMD_SIZE-1];
-
-
-  wire currentCmd_in_isLastCycle;
-  wire currentCmd_out_isLastCycle;
-  wire [`MemAndMulCMD_FULLSIZE-1:0] currentCmd;
-
-  wire [`MemAndMulCMD_FULLSIZE-1:0] nextCmd = currentCmd
-           & ~(currentCmd_in_isLastCycle ? `MemAndMulCMD_mask_conflictIn : `MemAndMulCMD_mask_zero)
-           & ~(currentCmd_out_isLastCycle ? `MemAndMulCMD_mask_conflictOut : `MemAndMulCMD_mask_zero);
-  wire [`MemAndMulCMD_FULLSIZE-1:0] prevCmd;
-  delay #(`MemAndMulCMD_FULLSIZE) cmd__ff (nextCmd, prevCmd, rst, clk);
-  wire cmdB_conflictIn = | (cmdB & `MemAndMulCMD_mask_conflictIn);
-  wire cmdB_conflictOut = | (cmdB & `MemAndMulCMD_mask_conflictOut);
-  wire prevCmd_conflictIn = | (prevCmd & `MemAndMulCMD_mask_conflictIn);
-  wire prevCmd_conflictOut = | (prevCmd & `MemAndMulCMD_mask_conflictOut);
-  wire cmdB_wait = (cmdB_conflictIn & prevCmd_conflictIn)
-                 | (cmdB_conflictOut & prevCmd_conflictOut);
-  assign cmdB_consume = cmdB_hasAny & ~cmdB_wait;
-  assign currentCmd = prevCmd
-                    | (cmdB_consume ? cmdB : {`MemAndMulCMD_FULLSIZE{1'b0}});
-
-  wire currentCmd_in_isFirstCycle = | (currentCmd & ~prevCmd & `MemAndMulCMD_mask_conflictIn);
-  wire currentCmd_out_isFirstCycle = | (currentCmd & ~prevCmd & `MemAndMulCMD_mask_conflictOut);
-
+ 
   wire core__bus_in_isReady;
   wire [64-1:0] core__bus_in;
   wire core__bus_in_canReceive;
@@ -1141,11 +1212,6 @@ module memAndMul(
     .rst(rst),
     .clk(clk)
   );
-
-  wire in_isPack;
-  ff_en_imm in_isPack__ff (currentCmd_in_isFirstCycle, cmdB__isPack, in_isPack, rst, clk);
-  wire out_isPack;
-  ff_en_imm out_isPack__ff (currentCmd_out_isFirstCycle, cmdB__isPack, out_isPack, rst, clk);
 
   //wire currentCMD__isOp = | (currentCmd & `MemAndMulCMD_mask_op);
   //wire currentCMD__isInOp = | (currentCmd & `MemAndMulCMD_mask_inOp);

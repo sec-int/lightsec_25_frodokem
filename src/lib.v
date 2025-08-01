@@ -163,17 +163,22 @@ module counter_bus #(parameter N = 1) ( // N bits must be able to store the high
     input clk
   );
   wire [N-1:0] nextCounter;
-  assign canRestart = nextCounter == 0;
+  wire nextCounter_isNotZero;
+  
+  assign canRestart = ~nextCounter_isNotZero;
   wire doRestart = restart & canRestart;
 
   wire [N-1:0] counter = doRestart ? numSteps : nextCounter;
+  assign canReceive = nextCounter_isNotZero | doRestart & numSteps != 0;
+  
   wire [N-1:0] counter__min1 = counter - 1;
-  assign canReceive = counter != 0;
   assign canReceive_wouldBeLast = counter__min1 == 0;
-  assign canReceive_isLast = counter__min1 == 0 & isReady;
+  assign canReceive_isLast = canReceive_wouldBeLast & isReady;
 
   wire [N-1:0] nextCounter__a1 = isReady ? counter__min1 : counter;
   delay #(N) nextCounter__ff (nextCounter__a1, nextCounter, rst, clk);
+  wire nextCounter_isNotZero__a1 = nextCounter__a1 != 0;
+  delay nextCounter_isNotZero__ff (nextCounter_isNotZero__a1, nextCounter_isNotZero, rst, clk);
 endmodule
 
 
@@ -253,7 +258,6 @@ module counter_bus_state #(parameter MAX_NUM_STEPS = 1) (
   wire [MAX_NUM_STEPS-1:0] stateNext = consume ? (state << 1) & maskAllowedStates : state;
   assign isLast = hasAny & ~ ( | stateNext );
   delay #(MAX_NUM_STEPS) stateNext__ff (stateNext, stateNext__d1, rst, clk);
-  
 endmodule
 
 
@@ -306,6 +310,44 @@ module serdes #(parameter N = 1) ( // the startSer and startDes can be true toge
                                           : {buffer_read[64-1:0], buffer_read[64*N-1:64]};
 endmodule
 
+
+
+module bus_delayFull_std1 #(parameter BusSize = 1) (
+  input [BusSize-1:0] i,
+  input i_isReady,
+  output i_canReceive,
+
+  output [BusSize-1:0] o,
+  output o_isReady,
+  input o_canReceive,
+
+  input rst,
+  input clk
+);
+  wire buffer1_isUsed;
+  wire [BusSize-1:0] buffer1;
+  wire buffer2_isUsed;
+  wire [BusSize-1:0] buffer2;
+
+  wire buffer1_isUsed__aligned        = buffer1_isUsed & buffer2_isUsed;
+  wire [BusSize-1:0] buffer1__aligned = buffer1;
+  wire buffer2_isUsed__aligned        = buffer1_isUsed | buffer2_isUsed;
+  wire [BusSize-1:0] buffer2__aligned = buffer2_isUsed ? buffer2 : buffer1;
+
+  assign i_canReceive            = ~buffer1_isUsed__aligned;
+  assign o_isReady               = buffer2_isUsed__aligned & o_canReceive;  
+  assign o                       = buffer2__aligned;
+
+  wire buffer1_isUsed__a1        = buffer1_isUsed__aligned | i_isReady;
+  wire [BusSize-1:0] buffer1__a1 = buffer1_isUsed__aligned ? buffer1__aligned : i;
+  wire buffer2_isUsed__a1        = buffer2_isUsed__aligned & ~o_canReceive;
+  wire [BusSize-1:0] buffer2__a1 = buffer2__aligned;
+  
+  delay buffer1_isUsed__ff (buffer1_isUsed__a1, buffer1_isUsed, rst, clk);
+  delay #(BusSize) buffer1__ff (buffer1__a1, buffer1, rst, clk);
+  delay buffer2_isUsed__ff (buffer2_isUsed__a1, buffer2_isUsed, rst, clk);
+  delay #(BusSize) buffer2__ff (buffer2__a1, buffer2, rst, clk);
+endmodule
 
 module bus_delay_std1 #(parameter BusSize = 1) (
   input [BusSize-1:0] i,
@@ -418,6 +460,53 @@ module bus_delay_std #(parameter BusSize = 1, N = 0) (
     for (pos = 0; pos < N; pos=pos+1) begin
 
       bus_delay_std1 #(.BusSize(BusSize)) del (
+        .i(s[pos*BusSize+:BusSize]),
+        .i_isReady(s_isReady[pos]),
+        .i_canReceive(s_canReceive[pos]),
+
+        .o(s[(pos+1)*BusSize+:BusSize]),
+        .o_isReady(s_isReady[pos+1]),
+        .o_canReceive(s_canReceive[pos+1]),
+
+        .rst(rst),
+        .clk(clk)
+      );
+
+    end
+  endgenerate
+
+endmodule
+
+
+module bus_delayFull_std #(parameter BusSize = 1, N = 0) (
+  input [BusSize-1:0] i,
+  input i_isReady,
+  output i_canReceive,
+
+  output [BusSize-1:0] o,
+  output o_isReady,
+  input o_canReceive,
+
+  input rst,
+  input clk
+);
+
+  wire [BusSize*(N+1)-1:0] s;
+  wire [N+1-1:0] s_isReady;
+  wire [N+1-1:0] s_canReceive;
+
+  assign s[0+:BusSize] = i;
+  assign s_isReady[0] = i_isReady;
+  assign i_canReceive = s_canReceive[0];
+  assign o = s[BusSize*N+:BusSize];
+  assign o_isReady = s_isReady[N];
+  assign s_canReceive[N] = o_canReceive;
+
+  genvar pos;
+  generate
+    for (pos = 0; pos < N; pos=pos+1) begin
+
+      bus_delayFull_std1 #(.BusSize(BusSize)) del (
         .i(s[pos*BusSize+:BusSize]),
         .i_isReady(s_isReady[pos]),
         .i_canReceive(s_canReceive[pos]),

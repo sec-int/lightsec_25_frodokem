@@ -252,10 +252,10 @@ module keccak_iter(
   keccak_fn body(body__si, rc, body__so);
 `endif
 
-  wire [1600-1:0] statePost = isTransparent_merge ? body__si
-                            : isTransparent       ? in_data
-                            : counter__canReceive ? body__so
-                                                  : statePrev;
+  wire [1600-1:0] statePost = (isTransparent_merge ? body__si : 1600'b0)
+                            | (~isTransparent_merge & isTransparent ? in_data : 1600'b0)
+                            | (~isTransparent & counter__canReceive ? body__so : 1600'b0)
+                            | (~isTransparent & ~counter__canReceive ? statePrev : 1600'b0);
   delay #(1600) state__ff(statePost, statePrev, rst, clk);
 
   assign out_data__d1 = statePrev;
@@ -601,10 +601,7 @@ module keccak_busOutConverter(
   wire noMoreOut__reset = isState ? cStateDiff__canReceive_isLast : cDiff__canReceive_isLast;
   ff_rs_next noMoreOut__ff (noMoreOut__reset, out_isLast, noMoreOut, rst, clk);
 
-  assign in_canReceive = c256__canReceive & (out_canReceive | noMoreOut)
-                       | cDiff__canReceive & (is256else128 | out_canReceive | noMoreOut)
-                       | cStateDiff__canReceive & (out_canReceive | noMoreOut);
-
+  assign in_canReceive = (c256__canReceive | cDiff__canReceive | cStateDiff__canReceive) & (out_canReceive | noMoreOut) | cDiff__canReceive & is256else128;
   assign out_isReady = (c256__canReceive | cDiff__canReceive & ~is256else128 | cStateDiff__canReceive) & in_isReady & ~noMoreOut;
 endmodule
 
@@ -745,7 +742,7 @@ module keccak_block(
   wire inB_isLast;
   wire inB_isReady;
   wire inB_canReceive;
-  bus_delay_std #(.BusSize(64+2), .N(0)) inDelay (
+  bus_delayFull_std #(.BusSize(64+2), .N(1)) inDelay (
     .i({ in_isSingleByte, in_isLast, in }),
     .i_isReady(in_isReady),
     .i_canReceive(in_canReceive),
@@ -830,7 +827,7 @@ module keccak_block(
   wire [64-1:0] outC;
   wire outC_isReady;
   wire outC_canReceive;
-  bus_delay_std #(.BusSize(64), .N(0)) outDelay (
+  bus_delayFull_std #(.BusSize(64), .N(1)) outDelay (
     .i(outC),
     .i_isReady(outC_isReady),
     .i_canReceive(outC_canReceive),
@@ -867,11 +864,11 @@ module keccak_block(
   wire cmd_serState__d1;
   delay cmd_serState__ff (cmd_serState, cmd_serState__d1, rst, clk);
 
-  wire state__canReceive;
+  wire state__cmd_canReceive;
   wire [1600-1:0] state__buffer_write;
   wire [1600-1:0] state__buffer_read;
   serdes #(1600/64) state (
-    .cmd_canReceive(state__canReceive),
+    .cmd_canReceive(state__cmd_canReceive),
     .buffer_write(state__buffer_write),
     .buffer_read(state__buffer_read),
     .cmd_startDes(cmd_desState),
@@ -886,11 +883,11 @@ module keccak_block(
     .clk(clk)
   );
 
-  wire buff__canReceive;
+  wire buff__cmd_canReceive;
   wire [`SHAKE128_R64*64-1:0] buff__buffer_read;
   wire [`SHAKE128_R64*64-1:0] buff__buffer_write;
   serdes #(`SHAKE128_R64) buff (
-    .cmd_canReceive(buff__canReceive),
+    .cmd_canReceive(buff__cmd_canReceive),
     .buffer_write(buff__buffer_write),
     .buffer_read(buff__buffer_read),
     .cmd_startSer(cmd_serBuf),
@@ -935,8 +932,8 @@ module keccak_block(
                   : 1600'b0;
 
   assign cmd_canReceive = (~isKeccakAny__d1 | core__cmd_canReceive)
-                        & (~isAnyBuf__d1 | buff__canReceive)
-                        & (~isAnyState__d1 | state__canReceive)
+                        & (~isAnyBuf__d1 | buff__cmd_canReceive)
+                        & (~isAnyState__d1 | state__cmd_canReceive)
                         & (~isAnySer__d1 | outConv_canRestart);
 endmodule
 
@@ -1174,6 +1171,9 @@ module keccak(
 
 `else
 
+  wire rst__d1;
+  delay rst__ff (rst, rst__d1, 1'b0, clk);
+
   wire c__canReceive;
   wire c__des128;
   wire c__des256;
@@ -1200,7 +1200,7 @@ module keccak(
     .out_cmd_serState(c__serState),
     .out_cmd_keccakStart(c__keccakStart),
     .out_cmd_keccakContinue(c__keccakContinue),
-    .rst(rst),
+    .rst(rst__d1),
     .clk(clk)
   );
   wire c__isReady = c__des128 | c__des256 | c__desState | c__ser128 | c__ser256 | c__serState | c__keccakStart | c__keccakContinue;
@@ -1215,7 +1215,7 @@ module keccak(
     .o(d),
     .o_isReady(d__isReady),
     .o_canReceive(d__canReceive),
-    .rst(rst),
+    .rst(rst__d1),
     .clk(clk)
   );
 
@@ -1248,7 +1248,7 @@ module keccak(
     .out_isReady(out_isReady),
     .out_canReceive(out_canReceive),
     .out_isLast(out_isLast),
-    .rst(rst),
+    .rst(rst__d1),
     .clk(clk)
   );
 
