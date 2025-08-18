@@ -124,3 +124,69 @@
       end
     join
 `endif
+
+//-----------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__io_outNoCounterTerminates", 0, 2)
+    fork : test__io_outNoCounterTerminates
+      begin
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_outer})
+
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_outer})
+      end
+
+      begin
+        `TEST_UTIL__SEND(64'h5A5A_5A5A_5A5A_5A5A)
+        `TEST_UTIL__SEND(64'h4B1D_DEAD_F00D_BEEF)
+        `TEST_UTIL__SEND_CANT
+        `TEST_UTIL__SEND_CANT
+        `TEST_UTIL__SEND_CANT
+      end
+
+      begin
+        `TEST_UTIL__RECEIVE(64'h5A5A_5A5A_5A5A_5A5A)
+        `TEST_UTIL__RECEIVE(64'h4B1D_DEAD_F00D_BEEF)
+        `TEST_UTIL__RECEIVE_CANT
+        `TEST_UTIL__RECEIVE_CANT
+        `TEST_UTIL__RECEIVE_CANT
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__io_inNoCounterTerminates", 0, 2)
+    fork : test__io_inNoCounterTerminates
+      begin
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd2})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_outer})
+
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd1})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_outer})
+      end
+
+      begin
+        `TEST_UTIL__SEND(64'h5A5A_5A5A_5A5A_5A5A)
+        `TEST_UTIL__SEND(64'h4B1D_DEAD_F00D_BEEF)
+        `TEST_UTIL__SEND_CANT
+        `TEST_UTIL__SEND_CANT
+        `TEST_UTIL__SEND_CANT
+      end
+
+      begin
+        `TEST_UTIL__RECEIVE(64'h5A5A_5A5A_5A5A_5A5A)
+        `TEST_UTIL__RECEIVE(64'h4B1D_DEAD_F00D_BEEF)
+        `TEST_UTIL__RECEIVE_CANT
+        `TEST_UTIL__RECEIVE_CANT
+        `TEST_UTIL__RECEIVE_CANT
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif

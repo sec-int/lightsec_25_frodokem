@@ -173,7 +173,7 @@ module main_adapter_outer_out(
   ff_rs_next noCounterEnded__ff(h__out_isLast_out, cmd_forward, noCounterOngoing, rst, clk);
 
   assign cmd_canReceive = useCounter__d1 ? counter__canRestart : ~noCounterOngoing;
-  assign h__out_canReceive = o__out_canReceive & (~useCounter | counter__canReceive);
+  assign h__out_canReceive = o__out_canReceive & (useCounter ? counter__canReceive : noCounterOngoing);
   assign o__out_isReady = h__out_isReady;
 endmodule
 
@@ -231,7 +231,7 @@ module main_adapter_outer_in(
   ff_rs_next noCounterEnded__ff(h__in_isLast_out, cmd_forward, noCounterOngoing, rst, clk);
 
   assign cmd_canReceive = useCounter__d1 ? counter__canRestart : ~noCounterOngoing;
-  assign o__in_canReceive = h__in_canReceive & (~useCounter | counter__canReceive);
+  assign o__in_canReceive = h__in_canReceive & (useCounter ? counter__canReceive : noCounterOngoing);
   assign h__in_isReady = o__in_isReady;
 endmodule
 

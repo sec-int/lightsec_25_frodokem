@@ -104,9 +104,9 @@ module command_expansion(
 
   assign i = {
     // o_in
-    o__h_dst == `CmdHubCMD_keccak && o__h_src == `CmdHubCMD_outer ? 15'd16 : 15'd0,
+    o__h_dst == `CmdHubCMD_keccak && o__h_src == `CmdHubCMD_outer ?  { 6'd0, o__param } : 15'd0,
     // o_out
-    o__h_dst == `CmdHubCMD_outer && o__h_src == `CmdHubCMD_keccak ? 15'd4 : 15'd0,
+    o__h_dst == `CmdHubCMD_outer && o__h_src == `CmdHubCMD_keccak ? { 6'd0, o__param } : 15'd0,
     // k_in
     o__param[0+:8],
     ~o__k_isLast,
@@ -123,9 +123,9 @@ module command_expansion(
     o__m_isPack,
     o__m_cmd,
     //  k
-       (o == `MainExpCMD_genA_kOut   ? {4'b1000, 9'd16, 1'b1}    : 13'b0)
+       (o == `MainExpCMD_genA_kOut   ? {4'b1000, o__param, 1'b1}    : 13'b0)
 `ifdef OUTPUT_INTERNALS_FOR_TEST
-     | (o == `MainExpCMD_genA_kOut_DBG ? {4'b1000, 9'd16, 1'b1}    : 13'b0)
+     | (o == `MainExpCMD_genA_kOut_DBG ? {4'b1000, o__param, 1'b1}    : 13'b0)
 `endif
      | (o == `MainExpCMD_k_single    ? {config_useShake128, 3'b000, 9'd1, 1'b1}     : 13'b0)
      | (o == `MainExpCMD_k_longIn    ? {config_useShake128, 3'b001, o__param, 1'b1} : 13'b0)
@@ -221,7 +221,7 @@ module command_sequences(
     .clk(clk)
   );
 
-
+  wire [9-1:0] config_lenSec = config_frodoParam[2] ? 9'd4 : config_frodoParam[1] ? 9'd3 : 9'd2;
 
 
   reg [`MainExpCMD_SIZE-1:0] i__r;
@@ -268,20 +268,20 @@ module command_sequences(
 `define SET_CMD__K_OUTSTATE(numCycles)          `SET_CMD(`MainExpCMD_k_outState,  1'b0,     1'b0,      (numCycles),    5'b0,     1'b0,     4'b0,                                      4'b0)
 `define SET_CMD__K_INSTATE(numCycles)           `SET_CMD(`MainExpCMD_k_inState,   1'b0,     1'b0,      (numCycles),    5'b0,     1'b0,     4'b0,                                      4'b0)
 `define SET_CMD__K_NO_OVERLAP                   `SET_CMD(`MainExpCMD_k_noOverlap, 1'b0,     1'b0,      9'b0,           5'b0,     1'b0,     4'b0,                                      4'b0)
-`define SET_CMD__GENA__KOUT                     `SET_CMD(`MainExpCMD_genA_kOut,   1'b1,     1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_memAndMul,                      `CmdHubCMD_keccak)
-`define SET_CMD__GENA__KOUT_DBG                 `SET_CMD(`MainExpCMD_genA_kOut_DBG, 1'b1,   1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_memAndMul | `CmdHubCMD_outer,   `CmdHubCMD_keccak)
+`define SET_CMD__GENA__KOUT(numCycles)          `SET_CMD(`MainExpCMD_genA_kOut,   1'b1,     1'b0,      (numCycles),    5'b0,     1'b0,     `CmdHubCMD_memAndMul,                      `CmdHubCMD_keccak)
+`define SET_CMD__GENA__KOUT_DBG(numCycles)      `SET_CMD(`MainExpCMD_genA_kOut_DBG, 1'b1,   1'b0,      (numCycles),    5'b0,     1'b0,     `CmdHubCMD_memAndMul | `CmdHubCMD_outer,   `CmdHubCMD_keccak)
 `define SET_CMD__M(memCmd)                      `SET_CMD(`MainExpCMD_m,           1'b0,     1'b0,      9'b0,           (memCmd), 1'b0,     4'b0,                                      4'b0)
 `define SET_CMD__M2O(memCmd)                    `SET_CMD(`MainExpCMD_generic,     1'b0,     1'b0,      9'b0,           (memCmd), 1'b0,     `CmdHubCMD_outer,                          `CmdHubCMD_memAndMul)
 `define SET_CMD__M2K(memCmd, isLast)            `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           (memCmd), 1'b0,     `CmdHubCMD_keccak,                         `CmdHubCMD_memAndMul)
 `define SET_CMD__M2KO(memCmd, isPack, isLast)   `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           (memCmd), (isPack), `CmdHubCMD_keccak | `CmdHubCMD_outer,      `CmdHubCMD_memAndMul)
 `define SET_CMD__K2M(memCmd, sampled, isLast)   `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), 9'b0,           (memCmd), 1'b0,     `CmdHubCMD_memAndMul,                      `CmdHubCMD_keccak)
 `define SET_CMD__K2MO(memCmd, sampled, isLast)  `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), 9'b0,           (memCmd), 1'b0,     `CmdHubCMD_memAndMul | `CmdHubCMD_outer,   `CmdHubCMD_keccak)
-`define SET_CMD__K2O_4(sampled, isLast)         `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), 9'b0,           5'b0,     1'b0,     `CmdHubCMD_outer,                          `CmdHubCMD_keccak)
+`define SET_CMD__K2O(numWords, sampled, isLast) `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), (numWords),     5'b0,     1'b0,     `CmdHubCMD_outer,                          `CmdHubCMD_keccak)
 `define SET_CMD__K2S(isLast)                    `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_seedA,                          `CmdHubCMD_keccak)
 `define SET_CMD__K2SO(isLast)                   `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_seedA | `CmdHubCMD_outer,       `CmdHubCMD_keccak)
 `define SET_CMD__O2M(memCmd, isPack)            `SET_CMD(`MainExpCMD_generic,     1'b0,     1'b0,      9'b0,           (memCmd), (isPack), `CmdHubCMD_memAndMul,                      `CmdHubCMD_outer)
 `define SET_CMD__O2MK(memCmd, isPack, isLast)   `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           (memCmd), (isPack), `CmdHubCMD_memAndMul | `CmdHubCMD_keccak,  `CmdHubCMD_outer)
-`define SET_CMD__O2K_16(sampled, isLast)        `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), 9'b0,           5'b0,     1'b0,     `CmdHubCMD_keccak,                         `CmdHubCMD_outer)
+`define SET_CMD__O2K(numWords, sampled, isLast) `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), (numWords),     5'b0,     1'b0,     `CmdHubCMD_keccak,                         `CmdHubCMD_outer)
 `define SET_CMD__S2K(isLast)                    `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_keccak,                         `CmdHubCMD_seedA)
 `define SET_CMD__O2S                            `SET_CMD(`MainExpCMD_generic,     1'b0,     1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_seedA,                          `CmdHubCMD_outer)
 `define SET_CMD__O2SK(isLast)                   `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           5'b0,     1'b0,     `CmdHubCMD_seedA | `CmdHubCMD_keccak,      `CmdHubCMD_outer)
@@ -294,9 +294,9 @@ module command_sequences(
       if(state[ 1]) `SET_CMD__KI_BYTE(o__genA__counter[8+:8])
       if(state[ 2]) `SET_CMD__S2K(`SET_CMD__IS_LAST)
 `ifndef OUTPUT_INTERNALS_FOR_TEST
-      if(state[ 3]) `SET_CMD__GENA__KOUT
+      if(state[ 3]) `SET_CMD__GENA__KOUT(config_frodoParam[2] ? 9'd16 : config_frodoParam[1] ? 9'd12 : 9'd8)
 `else
-      if(state[ 3]) `SET_CMD__GENA__KOUT_DBG
+      if(state[ 3]) `SET_CMD__GENA__KOUT_DBG(config_frodoParam[2] ? 9'd16 : config_frodoParam[1] ? 9'd12 : 9'd8)
 `endif
     end
     //////////////////////////////////////////////////
@@ -305,7 +305,7 @@ module command_sequences(
       if(state[ 0]) `SET_CMD__KI_BYTE(8'h00)
       if(state[ 1]) `SET_CMD__M2K(`MemAndMulCMD_out_RNGState, `SET_CMD__IS_LAST)
       if(state[ 2]) `SET_CMD__K_SINGLE
-      if(state[ 3]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__NOT_LAST)
+      if(state[ 3]) `SET_CMD__K2O(config_lenSec, `SET_CMD__NOT_SAMPLED, `SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__K2M(`MemAndMulCMD_in_seedSE, `SET_CMD__NOT_SAMPLED, `SET_CMD__NOT_LAST)
       if(state[ 5]) `SET_CMD__K2S(`SET_CMD__IS_LAST)
 
@@ -353,7 +353,7 @@ module command_sequences(
       if(state[ 1]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd58)
       if(state[ 2]) `SET_CMD__S2K(`SET_CMD__NOT_LAST)
       if(state[ 3]) `SET_CMD__M2KO(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_PACKED, `SET_CMD__IS_LAST)
-      if(state[ 4]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      if(state[ 4]) `SET_CMD__K2O(config_lenSec, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
       
       //--// BRAM.S' = 0
       if(state[ 5]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
@@ -367,7 +367,7 @@ module command_sequences(
       if(state[ 2]) `SET_CMD__K_LONGIN(config_frodoParam[2] ? 9'd159 : config_frodoParam[1] ? 9'd115 : 9'd58)
       if(state[ 3]) `SET_CMD__S2K(`SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__M2KO(`MemAndMulCMD_out_BColFirst, `SET_CMD__IS_PACKED, `SET_CMD__IS_LAST)
-      if(state[ 5]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      if(state[ 5]) `SET_CMD__K2O(config_lenSec, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
       
       //--// BRAM.S' = 0
       if(state[ 6]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
@@ -439,7 +439,7 @@ module command_sequences(
       if(state[ 2]) `SET_CMD__M2KO(`MemAndMulCMD_out_CRowFirst, `SET_CMD__IS_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 3]) `SET_CMD__M2KO(`MemAndMulCMD_out_salt, `SET_CMD__NOT_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__M2K(`MemAndMulCMD_out_k, `SET_CMD__IS_LAST)
-      if(state[ 5]) `SET_CMD__K2O_4(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      if(state[ 5]) `SET_CMD__K2O(config_lenSec, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
 
       //--// BRAM.S' = 0
       if(state[ 6]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
@@ -553,7 +553,7 @@ module command_sequences(
       if(state[ 0]) `SET_CMD__K_SINGLE
       if(state[ 1]) `SET_CMD__KI_BYTE(8'h05)
       if(state[ 2]) `SET_CMD__M2K(`MemAndMulCMD_out_RNGState, `SET_CMD__NOT_LAST)
-      if(state[ 3]) `SET_CMD__O2K_16(`SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      if(state[ 3]) `SET_CMD__O2K(9'd16, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
       if(state[ 4]) `SET_CMD__K2M(`MemAndMulCMD_in_RNGState, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
     end
   end
@@ -590,6 +590,8 @@ module command_flattener(
     output i_isReady,
     input i_canReceive,
     output [16-1:0] i__genA__counter,
+
+    input [16-1:0] config_matrixASizeMin1,
     
     input rst,
     input clk
@@ -617,12 +619,12 @@ module command_flattener(
                    & (o_cmd != `MainFltCMD_decaps_PRNG | ~o_isTest);
 
   wire [16-1:0] genA__counter__d1;
-  assign genA__counter__canConsume = genA__counter__d1 == 16'd1343;
-  wire  [16-1:0] genA__counter = (o_cmd != `MainFltCMD_genA) || ~i_isReady ? genA__counter__d1
-                               : genA__counter__d1 == 16'd1343             ? 16'd0
-                                                                           : genA__counter__d1 + 16'b1;
+  wire  [16-1:0] genA__counter = (o_cmd != `MainFltCMD_genA) || ~i_isReady   ? genA__counter__d1
+                               : genA__counter__d1 == config_matrixASizeMin1 ? 16'd0
+                                                                             : genA__counter__d1 + 16'b1;
   delay #(16) genA__counter__ff (genA__counter, genA__counter__d1, rst, clk);
-  
+
+  assign genA__counter__canConsume = genA__counter__d1 == config_matrixASizeMin1;
   ff_en_imm #(16) i__genA__counter__ff (i_isReady, genA__counter__d1, i__genA__counter, rst, clk);
 endmodule
 
@@ -797,6 +799,9 @@ module main(
   wire seq_isReady;
   wire seq_canReceive;
   wire [16-1:0] seq_genA__counter;
+  wire [16-1:0] config_matrixASizeMin1 = frodoParam[0] ? 16'd639
+                                       : frodoParam[1] ? 16'd975
+                                                       : 16'd1343;
   command_flattener flt(
     .o_cmd(flt_cmd),
     .o_isTest(lastCmd_wasTest),
@@ -806,6 +811,7 @@ module main(
     .i_isReady(seq_isReady),
     .i_canReceive(seq_canReceive),
     .i__genA__counter(seq_genA__counter),
+    .config_matrixASizeMin1(config_matrixASizeMin1),
     .rst(rst__d1),
     .clk(clk)
   );

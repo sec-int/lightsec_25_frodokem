@@ -34,6 +34,11 @@ module testSub();
     swapBytes64[7*8+:8] = in[0*8+:8];
   end endfunction
 
+  function [16-1:0] swapBytes16(input [16-1:0] in); begin
+    swapBytes16[0*8+:8] = in[1*8+:8];
+    swapBytes16[1*8+:8] = in[0*8+:8];
+  end endfunction
+
   reg clk = 1'b1;
   initial forever #0.5 clk <= ~clk;
 
@@ -119,6 +124,15 @@ module testSub();
         in_isReady <= 1'b0; \
         in <= 64'b0;
 
+`define TEST_UTIL__FAKE_SEND(v) \
+        #0.1; \
+        in <= (v); \
+        #0.1; \
+        while(~in_canReceive) #1; \
+        #0.1; \
+        @(posedge clk); \
+        in <= 64'b0;
+
 `define TEST_UTIL__SEND_CANT \
         #0.2; \
         if(in_canReceive) begin \
@@ -169,7 +183,7 @@ module testSub();
 
 
 
-  reg [40*8-1:0] test_name = "";
+  reg [50*8-1:0] test_name = "";
   initial begin : body
 `include "testSub__io.v"
 `include "testSub__seedA.v"

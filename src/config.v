@@ -25,11 +25,12 @@
 
 // uncomment to enable:
 //
-//`define USE_BRAM_IP      // TODO: this is bugged
+//`define USE_BRAM_IP      /* TODO: this is bugged */
 //`define USE_NO_KECCAK
 //`define USE_NO_KECCAK_PERMUTATION
 //`define USE_DSP
 //`define OUTPUT_INTERNALS_FOR_TEST
+//`define STD_ELSE_TV  /* My understanding of the STanDard differs from the code that makes us pass the Test Vectors. Enable for STD else TV. */
 
 
 `endif // LIB_V
