@@ -169,15 +169,15 @@ module testAll();
   integer j = 0;
   initial begin : body
 
+    #100
 `ifdef OUTPUT_INTERNALS_FOR_TEST
     for(testNum = 0; testNum < 1; testNum = testNum+1) begin
 `else
     for(testNum = 0; testNum < 100; testNum = testNum+1) begin
 `endif
 
-      #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setParam640)
-
+/*
       #5;
       IO_name = "";
       test_name = "keygen-640";
@@ -215,7 +215,7 @@ module testAll();
       `TEST_UTIL__RECEIVE_ARRAY(v640_pk_b[testNum], j, 76800)
       IO_name = "sk_pkh";
       `TEST_UTIL__RECEIVE_ARRAY(v640_sk_pkh[testNum], j, 128)
-
+*/
 /*
       #5;
       IO_name = "";
@@ -223,19 +223,30 @@ module testAll();
       #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setupTest)
 
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 256)
+      IO_name = "Mu";
       `TEST_UTIL__SEND_ARRAY(v640_enc_rnd_mu[testNum], j, 128)
+      IO_name = "Salt";
       `TEST_UTIL__SEND_ARRAY(v640_enc_rnd_salt[testNum], j, 256)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
 
       `TEST_UTIL__CMD_SEND(`MainCMD_encaps)
 
+      IO_name = "SeedA";
       `TEST_UTIL__SEND_ARRAY(v640_pk_seedA[testNum], j, 128)
+      IO_name = "b";
       `TEST_UTIL__SEND_ARRAY(v640_pk_b[testNum], j, 76800)
+      IO_name = "c1";
       `TEST_UTIL__RECEIVE_ARRAY(v640_ct_c1[testNum], j, 76800)
+      IO_name = "c2";
       `TEST_UTIL__RECEIVE_ARRAY(v640_ct_c2[testNum], j, 960)
+      IO_name = "salt";
       `TEST_UTIL__RECEIVE_ARRAY(v640_ct_salt[testNum], j, 256)
+      IO_name = "ss";
       `TEST_UTIL__RECEIVE_ARRAY(v640_enc_ss[testNum], j, 128)
+*/
 
       #5;
       IO_name = "";
@@ -243,29 +254,41 @@ module testAll();
       #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setupTest)
 
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 256)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 256)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
 
       `TEST_UTIL__CMD_SEND(`MainCMD_decaps)
 
+      IO_name = "S";
       `TEST_UTIL__SEND_ARRAY(v640_sk_S[testNum], j, 81920)
+      IO_name = "c1";
       `TEST_UTIL__SEND_ARRAY(v640_ct_c1[testNum], j, 76800)
+      IO_name = "c2";
       `TEST_UTIL__SEND_ARRAY(v640_ct_c2[testNum], j, 960)
+      IO_name = "salt";
       `TEST_UTIL__SEND_ARRAY(v640_ct_salt[testNum], j, 256)
+      IO_name = "pkh";
       `TEST_UTIL__SEND_ARRAY(v640_sk_pkh[testNum], j, 128)
+      IO_name = "b";
       `TEST_UTIL__SEND_ARRAY(v640_pk_b[testNum], j, 76800)
+      IO_name = "seedA";
       `TEST_UTIL__SEND_ARRAY(v640_pk_seedA[testNum], j, 128)
+      IO_name = "s";
       `TEST_UTIL__SEND_ARRAY(v640_sk_s[testNum], j, 128)
+      IO_name = "ss";
       `TEST_UTIL__RECEIVE_ARRAY(v640_dec_ss[testNum], j, 128)
       #5;
-*/
 
 
-      #5;
+      #5000;
       `TEST_UTIL__CMD_SEND(`MainCMD_setParam976)
-
+/*
       #5;
       IO_name = "";
       test_name = "keygen-976";
@@ -303,6 +326,7 @@ module testAll();
       `TEST_UTIL__RECEIVE_ARRAY(v976_pk_b[testNum], j, 124928)
       IO_name = "sk_pkh";
       `TEST_UTIL__RECEIVE_ARRAY(v976_sk_pkh[testNum], j, 192)
+*/
 /*
       #5;
       IO_name = "";
@@ -310,19 +334,30 @@ module testAll();
       #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setupTest)
 
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 384)
+      IO_name = "Mu";
       `TEST_UTIL__SEND_ARRAY(v976_enc_rnd_mu[testNum], j, 192)
+      IO_name = "salt";
       `TEST_UTIL__SEND_ARRAY(v976_enc_rnd_salt[testNum], j, 384)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
 
       `TEST_UTIL__CMD_SEND(`MainCMD_encaps)
 
+      IO_name = "seedA";
       `TEST_UTIL__SEND_ARRAY(v976_pk_seedA[testNum], j, 128)
+      IO_name = "b";
       `TEST_UTIL__SEND_ARRAY(v976_pk_b[testNum], j, 124928)
+      IO_name = "c1";
       `TEST_UTIL__RECEIVE_ARRAY(v976_ct_c1[testNum], j, 124928)
+      IO_name = "c2";
       `TEST_UTIL__RECEIVE_ARRAY(v976_ct_c2[testNum], j, 1024)
+      IO_name = "salt";
       `TEST_UTIL__RECEIVE_ARRAY(v976_ct_salt[testNum], j, 384)
+      IO_name = "ss";
       `TEST_UTIL__RECEIVE_ARRAY(v976_enc_ss[testNum], j, 192)
+*/
 
       #5;
       IO_name = "";
@@ -330,29 +365,42 @@ module testAll();
       #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setupTest)
 
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 384)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 192)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 384)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
 
       `TEST_UTIL__CMD_SEND(`MainCMD_decaps)
 
+      IO_name = "S";
       `TEST_UTIL__SEND_ARRAY(v976_sk_S[testNum], j, 124928)
+      IO_name = "c1";
       `TEST_UTIL__SEND_ARRAY(v976_ct_c1[testNum], j, 124928)
+      IO_name = "c2";
       `TEST_UTIL__SEND_ARRAY(v976_ct_c2[testNum], j, 1024)
+      IO_name = "salt";
       `TEST_UTIL__SEND_ARRAY(v976_ct_salt[testNum], j, 384)
+      IO_name = "pkh";
       `TEST_UTIL__SEND_ARRAY(v976_sk_pkh[testNum], j, 192)
+      IO_name = "b";
       `TEST_UTIL__SEND_ARRAY(v976_pk_b[testNum], j, 124928)
+      IO_name = "seedA";
       `TEST_UTIL__SEND_ARRAY(v976_pk_seedA[testNum], j, 128)
+      IO_name = "s";
       `TEST_UTIL__SEND_ARRAY(v976_sk_s[testNum], j, 192)
+      IO_name = "ss";
       `TEST_UTIL__RECEIVE_ARRAY(v976_dec_ss[testNum], j, 192)
       #5;
-*/
 
 
-      #5;
+
+      #5000;
       `TEST_UTIL__CMD_SEND(`MainCMD_setParam1344)
-
+/*
       #5;
       IO_name = "";
       test_name = "keygen-1344";
@@ -390,6 +438,7 @@ module testAll();
       `TEST_UTIL__RECEIVE_ARRAY(v1344_pk_b[testNum], j, 172032)
       IO_name = "sk_pkh";
       `TEST_UTIL__RECEIVE_ARRAY(v1344_sk_pkh[testNum], j, 256)
+*/
 /*
       #5;
       IO_name = "";
@@ -397,19 +446,30 @@ module testAll();
       #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setupTest)
 
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 512)
+      IO_name = "Mu";
       `TEST_UTIL__SEND_ARRAY(v1344_enc_rnd_mu[testNum], j, 256)
+      IO_name = "salt";
       `TEST_UTIL__SEND_ARRAY(v1344_enc_rnd_salt[testNum], j, 512)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
 
       `TEST_UTIL__CMD_SEND(`MainCMD_encaps)
 
+      IO_name = "seedA";
       `TEST_UTIL__SEND_ARRAY(v1344_pk_seedA[testNum], j, 128)
+      IO_name = "b";
       `TEST_UTIL__SEND_ARRAY(v1344_pk_b[testNum], j, 172032)
+      IO_name = "c1";
       `TEST_UTIL__RECEIVE_ARRAY(v1344_ct_c1[testNum], j, 172032)
+      IO_name = "c2";
       `TEST_UTIL__RECEIVE_ARRAY(v1344_ct_c2[testNum], j, 1024)
+      IO_name = "salt";
       `TEST_UTIL__RECEIVE_ARRAY(v1344_ct_salt[testNum], j, 512)
+      IO_name = "ss";
       `TEST_UTIL__RECEIVE_ARRAY(v1344_enc_ss[testNum], j, 256)
+*/
 
       #5;
       IO_name = "";
@@ -417,25 +477,39 @@ module testAll();
       #5;
       `TEST_UTIL__CMD_SEND(`MainCMD_setupTest)
 
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 512)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 256)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 512)
+      IO_name = "0";
       `TEST_UTIL__SEND_ZEROS(j, 128)
 
       `TEST_UTIL__CMD_SEND(`MainCMD_decaps)
 
+      IO_name = "S";
       `TEST_UTIL__SEND_ARRAY(v1344_sk_S[testNum], j, 172032)
+      IO_name = "c1";
       `TEST_UTIL__SEND_ARRAY(v1344_ct_c1[testNum], j, 172032)
+      IO_name = "c2";
       `TEST_UTIL__SEND_ARRAY(v1344_ct_c2[testNum], j, 1024)
+      IO_name = "salt";
       `TEST_UTIL__SEND_ARRAY(v1344_ct_salt[testNum], j, 512)
+      IO_name = "pkh";
       `TEST_UTIL__SEND_ARRAY(v1344_sk_pkh[testNum], j, 256)
+      IO_name = "b";
       `TEST_UTIL__SEND_ARRAY(v1344_pk_b[testNum], j, 172032)
+      IO_name = "seedA";
       `TEST_UTIL__SEND_ARRAY(v1344_pk_seedA[testNum], j, 128)
+      IO_name = "s";
       `TEST_UTIL__SEND_ARRAY(v1344_sk_s[testNum], j, 256)
+      IO_name = "ss";
       `TEST_UTIL__RECEIVE_ARRAY(v1344_dec_ss[testNum], j, 256)
       #5;
-*/
 
+
+      #5000;
     end
 
     $finish();

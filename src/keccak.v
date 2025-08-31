@@ -262,8 +262,6 @@ module keccak_iter(
 endmodule
 
 
-// TODO make clear that:
-//   isReady can't be true unless canReceive isn't true
 
 module keccak_busInConverter_addTerminator(
   input [64-1:0] in, // the unused must be 0
@@ -274,33 +272,32 @@ module keccak_busInConverter_addTerminator(
 
   output [64-1:0] out,
   output out_isSingleByte,
-  output out_isLast,
+  output out_isLast__imm,
   output out_isReady,
   input out_canReceive,
 
   input rst,
   input clk
 );
-  wire out_isLast__set = in_isReady & in_isLast;
-  ff_sr_next out_isLast__ff(out_isLast__set, out_canReceive, out_isLast, rst, clk);
+  ff_sr_next out_isLast__ff(in_isLast, out_canReceive, out_isLast__imm, rst, clk);
 
-  assign in_canReceive = out_canReceive & ~out_isLast;
-  assign out = out_isLast ? 64'h1F : in;
-  assign out_isSingleByte = in_isSingleByte | out_isLast;
-  assign out_isReady = in_isReady | out_isLast & out_canReceive;
+  assign in_canReceive = out_canReceive & ~out_isLast__imm;
+  assign out = out_isLast__imm ? 64'h1F : in;
+  assign out_isSingleByte = in_isSingleByte | out_isLast__imm;
+  assign out_isReady = in_isReady | out_isLast__imm & out_canReceive;
 endmodule
 
 
 module keccak_busInConverter_align(
   input [64-1:0] in, // the unused must be 0
   input in_isSingleByte,
-  input in_isLast,
+  input in_isLast__imm,
   input in_isReady,
   output in_canReceive,
 
   output [64-1:0] out,
   output out_isReady,
-  output out_isLast,
+  output out_isLast__imm,
   input out_canReceive,
 
   input rst,
@@ -316,20 +313,20 @@ module keccak_busInConverter_align(
   wire composed_hasAnySecondWord = ~in_isSingleByte & usedBytes != 3'd0;
 
   wire needAddFrame;
-  wire needAddFrame__set = in_isReady & in_isLast & composed_hasAnySecondWord;
+  wire needAddFrame__set = in_isReady & in_isLast__imm & composed_hasAnySecondWord;
   ff_sr_next needAddFrame__ff (needAddFrame__set, out_canReceive, needAddFrame, rst, clk);
 
   assign out = composed[0+:64];
   assign in_canReceive = out_canReceive & ~needAddFrame;
 
-  assign out_isLast = in_isReady & in_isLast & ~composed_hasAnySecondWord
-                    | out_canReceive & needAddFrame;
-  assign out_isReady = in_isReady & composed_isFirstWordFull | out_isLast;
+  assign out_isLast__imm = in_isReady & in_isLast__imm & ~composed_hasAnySecondWord
+                         | out_canReceive & needAddFrame;
+  assign out_isReady = in_isReady & composed_isFirstWordFull | out_isLast__imm;
 
   assign excess__a1 = out_isReady ? composed[64+:64]
                     : in_isReady  ? composed[ 0+:64]
                                   : excess;
-  assign usedBytes__a1 = out_isLast                   ? 3'd0
+  assign usedBytes__a1 = out_isLast__imm              ? 3'd0
                        : in_isReady & in_isSingleByte ? usedBytes + 3'd1
                                                       : usedBytes;
 endmodule
@@ -338,7 +335,7 @@ endmodule
 module keccak_busInConverter_padEndingAndEnd(
   input [64-1:0] in,
   input in_isReady,
-  input in_isLast,
+  input in_isLast__imm,
   output in_canReceive,
 
   output [64-1:0] out,
@@ -349,7 +346,7 @@ module keccak_busInConverter_padEndingAndEnd(
   input rst,
   input clk
 );
-  wire in_isEnded__set = in_isLast & in_isReady;
+  wire in_isEnded__set = in_isLast__imm & in_isReady;
   wire in_isEnded__reset = out_lastOfBlock & out_canReceive;
   wire in_isEnded;
   ff_rs_next in_isEnded__ff(in_isEnded__reset, in_isEnded__set, in_isEnded, rst, clk);
@@ -447,7 +444,7 @@ module keccak_busInConverter(
 
   wire [64-1:0] s1;
   wire s1_isSingleByte;
-  wire s1_isLast;
+  wire s1_isLast__imm;
   wire s1_isReady;
   wire s1_canReceive;
   keccak_busInConverter_addTerminator addTerm(
@@ -459,7 +456,7 @@ module keccak_busInConverter(
 
     .out(s1),
     .out_isSingleByte(s1_isSingleByte),
-    .out_isLast(s1_isLast),
+    .out_isLast__imm(s1_isLast__imm),
     .out_isReady(s1_isReady),
     .out_canReceive(s1_canReceive),
 
@@ -468,18 +465,18 @@ module keccak_busInConverter(
   );
 
   wire [64-1:0] s2;
-  wire s2_isLast;
+  wire s2_isLast__imm;
   wire s2_isReady;
   wire s2_canReceive;
   keccak_busInConverter_align align(
     .in(s1),
     .in_isSingleByte(s1_isSingleByte),
-    .in_isLast(s1_isLast),
+    .in_isLast__imm(s1_isLast__imm),
     .in_isReady(s1_isReady),
     .in_canReceive(s1_canReceive),
 
     .out(s2),
-    .out_isLast(s2_isLast),
+    .out_isLast__imm(s2_isLast__imm),
     .out_isReady(s2_isReady),
     .out_canReceive(s2_canReceive),
 
@@ -493,7 +490,7 @@ module keccak_busInConverter(
   wire s3_lastOfBlock;
   keccak_busInConverter_padEndingAndEnd paddingEnd(
     .in(s2),
-    .in_isLast(s2_isLast),
+    .in_isLast__imm(s2_isLast__imm),
     .in_isReady(s2_isReady),
     .in_canReceive(s2_canReceive),
 
@@ -739,16 +736,20 @@ module keccak_block(
 
   wire [64-1:0] inB;
   wire inB_isSingleByte;
+  wire inB_isLast__i;
+  wire inB_isReady__i;
+  wire inB_canReceive;
   wire inB_isLast;
   wire inB_isReady;
-  wire inB_canReceive;
-  bus_delayFull_std #(.BusSize(64+2), .N(1)) inDelay (
-    .i({ in_isSingleByte, in_isLast, in }),
+  bus_delayFull_std #(.BusSize(64+1), .N(1)) inDelay (
+    .i({ in_isSingleByte, in }),
     .i_isReady(in_isReady),
     .i_canReceive(in_canReceive),
-    .o({ inB_isSingleByte, inB_isLast, inB }),
+    .i_isLast(in_isLast),
+    .o({ inB_isSingleByte, inB }),
     .o_isReady(inB_isReady),
     .o_canReceive(inB_canReceive),
+    .o_isLast(inB_isLast),
     .rst(rst),
     .clk(clk)
   );
@@ -827,13 +828,16 @@ module keccak_block(
   wire [64-1:0] outC;
   wire outC_isReady;
   wire outC_canReceive;
+  wire ignore;
   bus_delayFull_std #(.BusSize(64), .N(1)) outDelay (
     .i(outC),
     .i_isReady(outC_isReady),
     .i_canReceive(outC_canReceive),
+    .i_isLast(1'b0),
     .o(outB),
     .o_isReady(outB_isReady),
     .o_canReceive(outB_canReceive),
+    .o_isLast(ignore),
     .rst(rst),
     .clk(clk)
   );

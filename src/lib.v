@@ -309,16 +309,18 @@ module serdes #(parameter N = 1) ( // the startSer and startDes can be true toge
 
   wire counter__canReceive;
   wire counter__isReady = counter__canReceive & (isDes ? des_isReady : ser_canReceive);
-  assign ser_isLast = des_isLast;
+  wire counter__isLast;
   counter_bus_fixed #(N) counter (
     .restart(cmd_startAny),
     .canRestart(cmd_canReceive),
     .canReceive(counter__canReceive),
-    .canReceive_isLast(des_isLast),
+    .canReceive_isLast(counter__isLast),
     .isReady(counter__isReady),
     .rst(rst),
     .clk(clk)
   );
+  assign ser_isLast = counter__isLast & isSer;
+  assign des_isLast = counter__isLast & isDes;
 
   assign des_canReceive = isDes & counter__canReceive & (isSer ? ser_canReceive : 1'b1);
   assign ser_isReady = isSer & counter__canReceive & (isDes ? des_isReady : ser_canReceive);
@@ -335,10 +337,12 @@ module bus_delayFull_std1 #(parameter BusSize = 1) (
   input [BusSize-1:0] i,
   input i_isReady,
   output i_canReceive,
+  input i_isLast,
 
   output [BusSize-1:0] o,
   output o_isReady,
   input o_canReceive,
+  output o_isLast,
 
   input rst,
   input clk
@@ -347,26 +351,36 @@ module bus_delayFull_std1 #(parameter BusSize = 1) (
   wire [BusSize-1:0] buffer1;
   wire buffer2_isUsed;
   wire [BusSize-1:0] buffer2;
+  wire in_enabled;
+  wire out_sendLast;
 
   wire buffer1_isUsed__aligned        = buffer1_isUsed & buffer2_isUsed;
   wire [BusSize-1:0] buffer1__aligned = buffer1;
   wire buffer2_isUsed__aligned        = buffer1_isUsed | buffer2_isUsed;
   wire [BusSize-1:0] buffer2__aligned = buffer2_isUsed ? buffer2 : buffer1;
 
-  assign i_canReceive            = ~buffer1_isUsed__aligned;
+  assign i_canReceive            = ~buffer1_isUsed__aligned & in_enabled;
   assign o_isReady               = buffer2_isUsed__aligned & o_canReceive;  
   assign o                       = buffer2__aligned;
+  assign o_isLast                = out_sendLast & (o_isReady & ~buffer1_isUsed__aligned | ~buffer2_isUsed__aligned);
+//  assign o_isLast                = out_sendLast & o_canReceive & ~o_isReady;
 
   wire buffer1_isUsed__a1        = buffer1_isUsed__aligned | i_isReady;
   wire [BusSize-1:0] buffer1__a1 = buffer1_isUsed__aligned ? buffer1__aligned : i;
   wire buffer2_isUsed__a1        = buffer2_isUsed__aligned & ~o_canReceive;
   wire [BusSize-1:0] buffer2__a1 = buffer2__aligned;
+  wire in_enabled__a1            = in_enabled & ~i_isLast | o_canReceive & ~o_isReady & ~o_isLast;
+  wire out_sendLast__a1          = out_sendLast & ~o_isLast | i_isLast;
   
   delay buffer1_isUsed__ff (buffer1_isUsed__a1, buffer1_isUsed, rst, clk);
   delay #(BusSize) buffer1__ff (buffer1__a1, buffer1, rst, clk);
   delay buffer2_isUsed__ff (buffer2_isUsed__a1, buffer2_isUsed, rst, clk);
   delay #(BusSize) buffer2__ff (buffer2__a1, buffer2, rst, clk);
+  delay in_enabled__ff (in_enabled__a1, in_enabled, rst, clk);
+  delay out_sendLast__ff (out_sendLast__a1, out_sendLast, rst, clk);
 endmodule
+
+
 
 module bus_delay_std1 #(parameter BusSize = 1) (
   input [BusSize-1:0] i,
@@ -422,7 +436,7 @@ module bus_delay_unstd1 #(parameter BusSize = 1) (
   delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
 endmodule
 
-module bus_delay_fromstd1 #(parameter BusSize = 1) (
+module bus_fromstd1 #(parameter BusSize = 1) (
   input [BusSize-1:0] i,
   input i_isReady,
   output i_canReceive,
@@ -437,13 +451,13 @@ module bus_delay_fromstd1 #(parameter BusSize = 1) (
   wire buffer_isUsed;
   wire [BusSize-1:0] buffer;
 
-  assign i_canReceive = ~buffer_isUsed;
+  assign i_canReceive = ~buffer_isUsed | o_consume;
   assign o_hasAny = buffer_isUsed;
 
   assign o = buffer;
 
-  wire buffer_isUsed__a1        = buffer_isUsed ? ~o_consume : i_isReady;
-  wire [BusSize-1:0] buffer__a1 = buffer_isUsed ? buffer     : i;
+  wire buffer_isUsed__a1        = buffer_isUsed & ~o_consume | i_isReady;
+  wire [BusSize-1:0] buffer__a1 = i_isReady ? i : buffer;
 
   delay #(BusSize) buffer__ff (buffer__a1, buffer, rst, clk);
   delay buffer_isUsed__ff (buffer_isUsed__a1, buffer_isUsed, rst, clk);
@@ -501,10 +515,12 @@ module bus_delayFull_std #(parameter BusSize = 1, N = 0) (
   input [BusSize-1:0] i,
   input i_isReady,
   output i_canReceive,
+  input i_isLast,
 
   output [BusSize-1:0] o,
   output o_isReady,
   input o_canReceive,
+  output o_isLast,
 
   input rst,
   input clk
@@ -513,13 +529,17 @@ module bus_delayFull_std #(parameter BusSize = 1, N = 0) (
   wire [BusSize*(N+1)-1:0] s;
   wire [N+1-1:0] s_isReady;
   wire [N+1-1:0] s_canReceive;
+  wire [N+1-1:0] s_isLast;
 
   assign s[0+:BusSize] = i;
   assign s_isReady[0] = i_isReady;
   assign i_canReceive = s_canReceive[0];
+  assign s_isLast[0] = i_isLast;
+
   assign o = s[BusSize*N+:BusSize];
   assign o_isReady = s_isReady[N];
   assign s_canReceive[N] = o_canReceive;
+  assign o_isLast = s_isLast[N];
 
   genvar pos;
   generate
@@ -529,10 +549,12 @@ module bus_delayFull_std #(parameter BusSize = 1, N = 0) (
         .i(s[pos*BusSize+:BusSize]),
         .i_isReady(s_isReady[pos]),
         .i_canReceive(s_canReceive[pos]),
+        .i_isLast(s_isLast[pos]),
 
         .o(s[(pos+1)*BusSize+:BusSize]),
         .o_isReady(s_isReady[pos+1]),
         .o_canReceive(s_canReceive[pos+1]),
+        .o_isLast(s_isLast[pos+1]),
 
         .rst(rst),
         .clk(clk)
@@ -604,32 +626,74 @@ module bus_delay_fromstd #(parameter BusSize = 1, N = 1) (
   input clk
 );
   wire [BusSize-1:0] m;
-  wire m_hasAny;
-  wire m_consume;
+  wire m_isReady;
+  wire m_canReceive;
 
-  bus_delay_fromstd1 #(.BusSize(BusSize)) adapter (
+  bus_delay_std #(.BusSize(BusSize), .N(N-1)) mainBuff (
     .i(i),
     .i_isReady(i_isReady),
     .i_canReceive(i_canReceive),
     .o(m),
-    .o_hasAny(m_hasAny),
-    .o_consume(m_consume),
+    .o_isReady(m_isReady),
+    .o_canReceive(m_canReceive),
     .rst(rst),
     .clk(clk)
   );
 
-  bus_delay_unstd #(.BusSize(BusSize), .N(N-1)) mainBuff (
+  bus_fromstd1 #(.BusSize(BusSize)) adapter (
     .i(m),
-    .i_hasAny(m_hasAny),
-    .i_consume(m_consume),
+    .i_isReady(m_isReady),
+    .i_canReceive(m_canReceive),
     .o(o),
     .o_hasAny(o_hasAny),
     .o_consume(o_consume),
     .rst(rst),
     .clk(clk)
   );
-
 endmodule
+
+module bus_delayFull_fromstd #(parameter BusSize = 1, N = 1) (
+  input [BusSize-1:0] i,
+  input i_isReady,
+  output i_canReceive,
+
+  output [BusSize-1:0] o,
+  output o_hasAny,
+  input o_consume,
+
+  input rst,
+  input clk
+);
+  wire [BusSize-1:0] m;
+  wire m_isReady;
+  wire m_canReceive;
+
+  wire ignore;
+  bus_delayFull_std #(.BusSize(BusSize), .N(N-1)) mainBuff (
+    .i(i),
+    .i_isReady(i_isReady),
+    .i_canReceive(i_canReceive),
+    .i_isLast(1'b0),
+    .o(m),
+    .o_isReady(m_isReady),
+    .o_canReceive(m_canReceive),
+    .o_isLast(ignore),
+    .rst(rst),
+    .clk(clk)
+  );
+
+  bus_fromstd1 #(.BusSize(BusSize)) adapter (
+    .i(m),
+    .i_isReady(m_isReady),
+    .i_canReceive(m_canReceive),
+    .o(o),
+    .o_hasAny(o_hasAny),
+    .o_consume(o_consume),
+    .rst(rst),
+    .clk(clk)
+  );
+endmodule
+
 
 module swapBits #(parameter N = 1) (
     input [N-1:0] in,

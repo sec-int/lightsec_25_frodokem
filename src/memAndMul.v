@@ -173,9 +173,10 @@ module memAndMul__indexHandler(
   assign bus_in_canReceive = currentCmd_in
                            | (currentCmd_updateSyncIn | currentCmd_updateFSAnyIn) & index1_has_val;
   assign bus_in_isLast = currentCmd_in              ? bus_in_isReady & ~w_index_hasNext
-                       : currentCmd_inOp_splitIn    ? ~index1_has_next
+                       : currentCmd_inOp_splitIn    ? index1_has_val & ~index1_has_next
                        : currentCmd_updateFastMemIn ? index1_has_val & ~index1_has_next & ~index2_has_next
-                                                    : currentCmd_op_isLastCycle__a2;
+                       : currentCmd_updateAnyIn     ? currentCmd_op_isLastCycle__a2
+                                                    : 1'b0;
 
   // r index
   assign r_index__useIndex1 = currentCmd_out | currentCmd_updateSyncAny | (currentCmd_updateFSAny & index1_has_val);
@@ -408,8 +409,10 @@ module memAndMul__core(
   wor indexHandler__bus_out_canReceive = bus_out_canReceive;
   wor indexHandler__currentCmd_inOp_splitIn;
   wire indexHandler__bus_in_canReceive;
+  wire indexHandler__bus_in_isLast;
   wor bus_in_canReceive__disable;
   assign bus_in_canReceive = indexHandler__bus_in_canReceive & ~ bus_in_canReceive__disable;
+  assign bus_in_isLast = indexHandler__bus_in_isLast & ~ bus_in_canReceive__disable;
   memAndMul__indexHandler indexHandler(
     .currentCmd(indexHandler__currentCmd),
     .currentCmd_in_isFirstCycle(indexHandler__currentCmd_in_isFirstCycle),
@@ -419,7 +422,7 @@ module memAndMul__core(
     .currentCmd_inOp_splitIn(indexHandler__currentCmd_inOp_splitIn),
 
     .bus_in_canReceive(indexHandler__bus_in_canReceive),
-    .bus_in_isLast(bus_in_isLast),
+    .bus_in_isLast(indexHandler__bus_in_isLast),
     .bus_in_isReady(indexHandler__bus_in_isReady),
     .bus_out_canReceive(indexHandler__bus_out_canReceive),
 
@@ -595,7 +598,7 @@ module memAndMul__core(
   delay #(64) bus_inOp__ff1 (bus_in, bus_in__d1, rst, clk);
   wire [64-1:0] bus_in__d2;
   delay #(64) bus_inOp__ff2 (bus_in__d1, bus_in__d2, rst, clk);
-  
+
   wire [64-1:0] mainMemory__r_bus__d3;
   delay #(64) mainMemory__r_bus__ff (mainMemory__r_bus__d2, mainMemory__r_bus__d3, rst, clk);
 
@@ -1067,8 +1070,7 @@ module memAndMul__unpack (
   
   wire out_isLast__d1;
   delay out_isLast__ff(out_isLast, out_isLast__d1, rst, clk);
-  assign in_isLast = isP15 ? out_isLast__d1
-                           : out_isLast;
+  assign in_isLast = out_isLast;
 endmodule
 
 module memAndMul__pack (

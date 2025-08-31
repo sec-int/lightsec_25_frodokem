@@ -48,7 +48,7 @@ module busSwitch #(parameter N = 1) (
   wire [N*2-1:0] cmdB;
   wire cmdB_hasAny;
   wire cmdB_consume;
-  bus_delay_fromstd1 #(.BusSize(N*2)) cmdBuf (
+  bus_delay_fromstd #(.BusSize(N*2), .N(1)) cmdBuf (
     .i(cmd),
     .i_isReady(cmd_isReady),
     .i_canReceive(cmd_canReceive),
@@ -101,12 +101,12 @@ module busSwitch #(parameter N = 1) (
   assign out_isLast_out = out_isLast_out__w;
   generate
     for(pos_from = 0; pos_from < N; pos_from=pos_from+1) begin
-      assign in_isLast_out__w[pos_from] = in_isLast_in[pos_from] & in_isReady[pos_from];
-      assign out_isLast_out__w[pos_from] = out_isLast_in[pos_from] & out_canReceive[pos_from];
+      assign in_isLast_out__w[pos_from] = in_isLast_in[pos_from];
+      assign out_isLast_out__w[pos_from] = out_isLast_in[pos_from];
 
       for(pos_to = 0; pos_to < N; pos_to=pos_to+1) begin
         assign inAny[pos_from] = p2p[pos_to*N + pos_from];
-        assign in_isLast_out__w[pos_from] = p2p[pos_to*N + pos_from] & out_isLast_in[pos_to] & out_canReceive[pos_to];
+        assign in_isLast_out__w[pos_from] = p2p[pos_to*N + pos_from] & out_isLast_in[pos_to];
         assign out_isLast_out__w[pos_to] = p2p[pos_to*N + pos_from] & in_isLast_out__w[pos_from];
         assign out__w[pos_to*64+:64] = p2p[pos_to*N + pos_from] ? in[pos_from*64+:64] : {64'b0};
         assign out_isReady__w[pos_to] = p2p[pos_to*N + pos_from] & in_isReady[pos_from];
