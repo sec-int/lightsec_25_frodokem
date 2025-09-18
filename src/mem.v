@@ -85,6 +85,7 @@ endmodule
 
 // two interfaces: Read, Write
 
+// TODO: improvement: move C's swap BRAM into here.
 module bram8(
   input [9-1:0] r_index, // 512 values
   input [8*8-1:0] r_enable,
@@ -108,7 +109,6 @@ module bram8(
 
   wire [8-1:0] r_bramEnable;
   wire [8-1:0] w_bramEnable;
-
 
   wire [9*8-1:0] r_indexes;
   wire [64*8-1:0] r_rawValue__d2;
@@ -204,6 +204,7 @@ module mainMem_readConnector(
     output [5*4*8-1:0] o_paralSBus__d2,
 
     input o_paral_B_mat, // 16b8x4
+    input o_paral_C_mat, // 16b8x4
     output [16*4*8-1:0] o_paral__d2,
 
     input o_SBus_S_col, // 5b8x1.
@@ -225,7 +226,7 @@ module mainMem_readConnector(
     input [14-1:0] config_lenSecMin1,
     input [14-1:0] config_lenSEMin1,
     input [14-1:0] config_lenSaltMin1,
-  
+
     input rst,
     input clk
 );
@@ -248,7 +249,7 @@ module mainMem_readConnector(
   wire [9-1:0] column_offset = (o_bus_B_row | o_bus_B_col | o_dubBus_B_col | o_paral_B_mat) ? `MainMem_OFF_B : 9'd0
                              | (o_bus_S_row_DBG | o_paralSBus_S_mat | o_SBus_S_col) ? `MainMem_OFF_S : 9'd0
                              | o_bus_SSState ? `MainMem_OFF_SSState : 9'd0
-                             | (o_bus_C_row | o_dubBus_C_col | o_dubBus_C_row) ? `MainMem_OFF_C : 9'd0
+                             | (o_bus_C_row | o_dubBus_C_col | o_dubBus_C_row | o_paral_C_mat) ? `MainMem_OFF_C : 9'd0
                              | o_bus_RNGState ? `MainMem_OFF_RNGState : 9'd0
                              | o_bus_salt ? `MainMem_OFF_salt : 9'd0
                              | o_bus_seedSE ? `MainMem_OFF_seedSE : 9'd0
@@ -271,6 +272,7 @@ module mainMem_readConnector(
                          | ((o_dubBus_B_col | o_SBus_S_col) ? o_index != config_matrixNumCellsTimes4Min1 : 1'b0)
                          | ((o_dubBus_C_col | o_dubBus_C_row) ? o_index != 14'd7 : 1'b0)
                          | (o_bus_u ? o_index != config_lenSecMin1 : 1'b0) 
+                         | (o_paral_C_mat ? o_index != 14'd1 : 1'b0)
                          | ((o_paral_B_mat | o_paralSBus_S_mat) ? o_index != {5'd0, config_matrixNumCellsMin1} : 1'b0);
 
 
@@ -290,7 +292,7 @@ module mainMem_readConnector(
   wire o_dubBus_anyTwoCol = o_paralSBus_S_mat & ~config_SUseHalfByte
                           | o_bus_S_row_DBG & ~config_SUseHalfByte;
 
-  wire [9-1:0] unoff_index_col = (o_bus_B_row | o_paral_B_mat) ? o_index[0+:9] : 9'b0
+  wire [9-1:0] unoff_index_col = (o_bus_B_row | o_paral_B_mat | o_paral_C_mat) ? o_index[0+:9] : 9'b0
                                | o_bus_C_row ? {8'b0, o_index[0+:1]} : 9'b0
                                | o_dubBus_anyCol ? (o_bus_S_row_DBG ? {2'b0, o_index[2+:7]} : o_index[2+:9]) : 9'b0
                                | o_dubBus_anyTwoCol ? (o_bus_S_row_DBG ? {1'b0, o_index[1+:8]} : o_index[1+:9]) : 9'b0
@@ -311,7 +313,7 @@ module mainMem_readConnector(
   wire [8-1:0] i_byteEnable_byte;
   mem_byteIndexToByteEnable i_byteEnable_byte__c (i_byteEnable_byteIndex, i_byteEnable_byte);
 
-  assign i_byteEnable = (o_bus_B_row | o_bus_C_row | o_paral_B_mat | o_bus_anyCell | o_dubBus_C_row) ? 8'hFF : 8'b0
+  assign i_byteEnable = (o_bus_B_row | o_bus_C_row | o_paral_B_mat | o_paral_C_mat | o_bus_anyCell | o_dubBus_C_row) ? 8'hFF : 8'b0
                       | (o_dubBus_anyCol | o_bus_B_col) ? i_byteEnable_elem : 8'b0
                       | o_dubBus_anyTwoCol ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
                       | o_SBus_S_col ? i_byteEnable_byte : 8'b0;
@@ -327,7 +329,7 @@ module mainMem_readConnector(
   wire [8-1:0] i_bramEnable_byte;
   mem_byteIndexToByteEnable i_bramEnable_byte__c (i_bramEnable_byteIndex, i_bramEnable_byte);
 
-  assign i_bramEnable = (o_SBus_S_col | o_dubBus_B_col | o_dubBus_C_col | o_paralSBus_S_mat | o_paral_B_mat) ? 8'b11111111 : 8'b0
+  assign i_bramEnable = (o_SBus_S_col | o_dubBus_B_col | o_dubBus_C_col | o_paralSBus_S_mat | o_paral_B_mat | o_paral_C_mat) ? 8'b11111111 : 8'b0
                       | o_bus_B_col ? (o_index[0] == 1'b0 ? 8'b00001111 : 8'b11110000) : 8'b0
                       | o_dubBus_C_row ? i_bramEnable_elem : 8'b0
                       | (o_bus_B_row | o_bus_C_row | o_bus_anyCell | o_bus_S_row_DBG) ? i_bramEnable_byte : 8'b0;
@@ -339,9 +341,12 @@ module mainMem_readConnector(
   assign i_enable__w = o_quarterBus_U_halfRow & config_lenSec[2] ? ( 64'b11 << (2*o_index) ) : 0;
 
 
-
-  assign o_paral__d2 = i_value__d2;
-
+  wire [64*8-1:0] i_value_swapped__d2;
+  generate
+    for (row = 0; row < 8; row=row+1) begin
+      assign i_value_swapped__d2[row*64+:64] = i_value__d2[(row^1)*64+:64];
+    end
+  endgenerate
 
   wor [32*8-1:0] mergeTwoCol__d2;
   wor [16*8-1:0] mergeCol__d2;
@@ -367,6 +372,11 @@ module mainMem_readConnector(
   delay o_dubBus_C_col__ff1 (o_dubBus_C_col, o_dubBus_C_col__d1, rst, clk);
   wire o_dubBus_C_col__d2;
   delay o_dubBus_C_col__ff2 (o_dubBus_C_col__d1, o_dubBus_C_col__d2, rst, clk);
+  wire o_paral_C_mat__d1;
+  delay o_paral_C_mat__ff1 (o_paral_C_mat, o_paral_C_mat__d1, rst, clk);
+  wire o_paral_C_mat__d2;
+  delay o_paral_C_mat__ff2 (o_paral_C_mat__d1, o_paral_C_mat__d2, rst, clk);
+  
   wire o_index__d1__0;
   wire o_index__d1__2;
   delay o_index__ff1__0 (o_index[0], o_index__d1__0, rst, clk);
@@ -375,6 +385,8 @@ module mainMem_readConnector(
   wire o_index__d2__2;
   delay o_index__ff2__0 (o_index__d1__0, o_index__d2__0, rst, clk);
   delay o_index__ff2__2 (o_index__d1__2, o_index__d2__2, rst, clk);
+
+  assign o_paral__d2 = (o_paral_C_mat__d2 & o_index__d2__0) ? i_value_swapped__d2 : i_value__d2;
 
   assign o_dubBus__d2 = o_dubBus_C_row__d2 & ~o_index__d2__0 ? mergeTwoRows__d2
                       : o_dubBus_C_row__d2                   ? {mergeTwoRows__d2[0+:64], mergeTwoRows__d2[64+:64]}
@@ -494,6 +506,7 @@ module mainMem_writeConnector(
     input [16*8-1:0] o_dubBus,
 
     input o_paral_B_mat, // 16b8x4
+    input o_paral_C_mat, // 16b8x4
     input [16*4*8-1:0] o_paral,
 
     input o_halfBus_U_row, // 2b1x8, 3b1x8, 4b1x8, each value 4 bit aligned
@@ -531,7 +544,7 @@ module mainMem_writeConnector(
   wire [9-1:0] column_offset = (o_bus_B_row | o_bus_B_col | o_dubBus_B_col | o_paral_B_mat) ? `MainMem_OFF_B : 9'd0
                              | o_bus_S_row ? `MainMem_OFF_S : 9'd0
                              | o_bus_SSState ? `MainMem_OFF_SSState : 9'd0
-                             | (o_bus_C_row | o_dubBus_C_col) ? `MainMem_OFF_C : 9'd0
+                             | (o_bus_C_row | o_dubBus_C_col | o_paral_C_mat) ? `MainMem_OFF_C : 9'd0
                              | o_bus_RNGState ? `MainMem_OFF_RNGState : 9'd0
                              | o_bus_salt ? `MainMem_OFF_salt : 9'd0
                              | o_bus_seedSE ? `MainMem_OFF_seedSE : 9'd0
@@ -554,6 +567,7 @@ module mainMem_writeConnector(
                          | (o_dubBus_B_col ? o_index != config_matrixNumCellsTimes4Min1 : 1'b0)
                          | ((o_dubBus_C_col | o_halfBus_U_row) ? o_index != 14'd7 : 1'b0)
                          | (o_bus_u ? o_index != config_lenSecMin1 : 1'b0) 
+                         | (o_paral_C_mat ? o_index != 14'd1 : 1'b0)
                          | (o_paral_B_mat ? o_index != {5'd0, config_matrixNumCellsMin1} : 1'b0);
 
   wire o_bus_anyCell = o_bus_SSState
@@ -567,7 +581,7 @@ module mainMem_writeConnector(
   wire o_dubBus_anyCol = o_dubBus_C_col
                        | o_dubBus_B_col;
 
-  wire [9-1:0] unoff_index_col = (o_bus_B_row | o_paral_B_mat) ? o_index[0+:9] : 9'b0
+  wire [9-1:0] unoff_index_col = (o_bus_B_row | o_paral_B_mat | o_paral_C_mat) ? o_index[0+:9] : 9'b0
                                | o_bus_C_row ? {8'b0, o_index[0+:1]} : 9'b0
                                | o_dubBus_anyCol ? o_index[2+:9] : 9'b0
                                | (o_bus_S_row & config_SUseHalfByte) ? {2'b0, o_index[2+:7]} : 9'b0
@@ -583,7 +597,7 @@ module mainMem_writeConnector(
   wire [8-1:0] i_byteEnable_elem;
   mem_elementIndexToByteEnable i_byteEnable_elem__c(i_byteEnable_elemIndex, i_byteEnable_elem);
   
-  assign i_byteEnable = (o_bus_B_row | o_bus_C_row | o_paral_B_mat | o_bus_anyCell) ? 8'hFF : 8'b0
+  assign i_byteEnable = (o_bus_B_row | o_bus_C_row | o_paral_B_mat | o_paral_C_mat | o_bus_anyCell) ? 8'hFF : 8'b0
                       | (o_bus_S_row & ~config_SUseHalfByte) ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
                       | (o_dubBus_anyCol | o_bus_S_row & config_SUseHalfByte | o_bus_B_col) ? i_byteEnable_elem : 8'b0;
 
@@ -594,7 +608,7 @@ module mainMem_writeConnector(
   wire [8-1:0] i_bramEnable_byte;
   mem_byteIndexToByteEnable i_bramEnable_byte__c(i_bramEnable_byteIndex, i_bramEnable_byte);
 
-  assign i_bramEnable = (o_dubBus_B_col | o_dubBus_C_col | o_paral_B_mat) ? 8'hFF : 8'b0
+  assign i_bramEnable = (o_dubBus_B_col | o_dubBus_C_col | o_paral_B_mat | o_paral_C_mat) ? 8'hFF : 8'b0
                       | o_bus_B_col ? (o_index[0] == 1'b0 ? 8'h0F : 8'hF0) : 8'b0
                       | (o_bus_B_row | o_bus_C_row | o_bus_anyCell | o_bus_S_row) ? i_bramEnable_byte : 8'b0;
 
@@ -610,6 +624,7 @@ module mainMem_writeConnector(
     for (row = 0; row < 8; row=row+1) begin
       assign i_value__w[row*64+:64] = o_dubBus_B_col ? {4{o_dubBus[row*16+:16]}} : 64'b0;
       assign i_value__w[row*64+:64] = o_dubBus_C_col ? (o_index[2] ? {4{o_dubBus[(row^1)*16+:16]}} : {4{o_dubBus[row*16+:16]}}) : 64'b0;
+      assign i_value__w[row*64+:64] = o_paral_C_mat ? (o_index[0] ? o_paral[(row^1)*64+:64] : o_paral[row*64+:64]) : 64'b0;
     end
   endgenerate
 
@@ -684,6 +699,7 @@ module mainMem(
     output [5*4*8-1:0] r_paralSBus__d2,
 
     input r_paral_B_mat, // 16b8x4
+    input r_paral_C_mat, // 16b8x4
     output [16*4*8-1:0] r_paral__d2,
 
     input r_SBus_S_col, // 5b8x1
@@ -705,6 +721,7 @@ module mainMem(
     input [16*8-1:0] w_dubBus,
 
     input w_paral_B_mat, // 16b8x4
+    input w_paral_C_mat, // 16b8x4
     input [16*4*8-1:0] w_paral,
 
     input w_halfBus_U_row, // 4b1x8
@@ -731,7 +748,6 @@ module mainMem(
   wire [14-1:0] config_lenSaltMin1 = config_lenSalt[0] ? 14'd3
                                    : config_lenSalt[1] ? 14'd5
                                                        : 14'd7;
-
 
 
   wire [9-1:0] b__r_index;
@@ -776,6 +792,7 @@ module mainMem(
     .o_paralSBus_S_mat(r_paralSBus_S_mat),
     .o_paralSBus__d2(r_paralSBus__d2),
     .o_paral_B_mat(r_paral_B_mat),
+    .o_paral_C_mat(r_paral_C_mat),
     .o_paral__d2(r_paral__d2),
     .o_SBus_S_col(r_SBus_S_col),
     .o_SBus__d2(r_SBus__d2),
@@ -817,6 +834,7 @@ module mainMem(
     .o_dubBus_C_col(w_dubBus_C_col),
     .o_dubBus(w_dubBus),
     .o_paral_B_mat(w_paral_B_mat),
+    .o_paral_C_mat(w_paral_C_mat),
     .o_paral(w_paral),
     .o_halfBus_U_row(w_halfBus_U_row),
     .o_halfBus(w_halfBus),

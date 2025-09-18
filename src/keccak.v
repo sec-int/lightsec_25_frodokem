@@ -1005,7 +1005,7 @@ module keccak_ctrl #(parameter BUFF=3) (
 
   wire ignore1;
   wire firstK__reset, firstK;
-  wire firstK__set = in_cmd_isReady & ~in_cmd_inState;
+  wire firstK__set = in_cmd_isReady & ~in_cmd_inState & (in_cmd_outState | (in_cmd_numInBlocks != 0) | (in_cmd_numOutBlocks != 0));
   ff_s_r firstK__ff(firstK__set, firstK__reset, firstK, ignore1, rst, clk);
 
   wire ignore2;
@@ -1013,7 +1013,7 @@ module keccak_ctrl #(parameter BUFF=3) (
   wire inState__set = in_cmd_isReady & in_cmd_inState;
   ff_s_r inState__ff(inState__set, inState__reset, inState, ignore2, rst, clk);
   wire inState__canNotRestart;
-  ff_sr_next inState__canNotRestart__ff(inState__set, inState__reset, inState__canNotRestart, rst, clk);
+  ff_rs_next inState__canNotRestart__ff(inState__reset, inState__set, inState__canNotRestart, rst, clk);
 
   wire ignore3;
   wire outState__reset, outState;
@@ -1148,7 +1148,7 @@ endmodule
 
 
 module keccak(
-    input [`KeccakCMD_SIZE-1:0] cmd, // { is128else256: 1bit, inState:1bit, outState:1bit, numInBlocks:16bits, numOutBlocks:16bits }
+    input [`KeccakCMD_SIZE-1:0] cmd, // { is128else256: 1bit, inState:1bit, outState:1bit, numInBlocks:9bits, numOutBlocks:9bits }
     input cmd_isReady,
     output cmd_canReceive,
 

@@ -1049,8 +1049,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_single1", 16, 2)
-    fork : test__memOp_CpleqStimesInB_single1
+    `DO_RST("test__memOp_CpleqStimesInBT_single1", 16, 2)
+    fork : test__memOp_CpleqStimesInBT_single1
       begin
         // store C
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
@@ -1063,7 +1063,7 @@
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
         // op, send B
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInB})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
@@ -1083,9 +1083,11 @@
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
         end
 
-        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
-        for(test__memOp__out_i = 1; test__memOp__out_i < 8; test__memOp__out_i = test__memOp__out_i+1) begin
-          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        for(test__memOp__out_i = 0; test__memOp__out_i < 4; test__memOp__out_i = test__memOp__out_i+1) begin
+          `TEST_UTIL__SEND(64'h0000_0000_0000_0001) `TEST_UTIL__SEND(64'h0000_0000_0000_0000)
+          for(test__memOp__in_i = 1; test__memOp__in_i < 4; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__SEND(64'h0000_0000_0000_0000) `TEST_UTIL__SEND(64'h0000_0000_0000_0000)
+          end
         end
        `TEST_UTIL__SEND_CANT
 
@@ -1105,8 +1107,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_all1", 16, 2)
-    fork : test__memOp_CpleqStimesInB_all1
+    `DO_RST("test__memOp_CpleqStimesInBT_0_single1", 16, 0)
+    fork : test__memOp_CpleqStimesInBT_0_single1
       begin
         // store C
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
@@ -1119,7 +1121,65 @@
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
         // op, send B
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInB})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // load C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND(64'h0000_0001_0000_0000)
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0001) end
+        for(test__memOp__out_i = 1; test__memOp__out_i < 8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin `TEST_UTIL__SEND(64'h0000_0000_0000_0000) end
+        end
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 4; test__memOp__out_i = test__memOp__out_i+1) begin
+          `TEST_UTIL__SEND(64'h0000_0000_0000_0001) `TEST_UTIL__SEND(64'h0000_0000_0000_0000)
+          for(test__memOp__in_i = 1; test__memOp__in_i < 4; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__SEND(64'h0000_0000_0000_0000) `TEST_UTIL__SEND(64'h0000_0000_0000_0000)
+          end
+        end
+       `TEST_UTIL__SEND_CANT
+
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0004) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000) `TEST_UTIL__RECEIVE(64'h0000_0001_0000_0000)
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__memOp_CpleqStimesInBT_all1", 16, 2)
+    fork : test__memOp_CpleqStimesInBT_all1
+      begin
+        // store C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // store S
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // op, send B
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
@@ -1161,8 +1221,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_all1_fakeSend", 16, 2)
-    fork : test__memOp_CpleqStimesInB_all1_fakeSend
+    `DO_RST("test__memOp_CpleqStimesInBT_0_all1", 16, 0)
+    fork : test__memOp_CpleqStimesInBT_0_all1
       begin
         // store C
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
@@ -1175,7 +1235,63 @@
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
         // op, send B
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInB})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // load C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND(64'h4000_3000_2000_1000 ^ {4{ {12'b0, test__memOp__in_i[0+:4]} }})
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND({4{ 16'b1 }})
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND({4{ 16'b1 }})
+        end
+       `TEST_UTIL__SEND_CANT
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__RECEIVE({
+              (16'h4000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h3000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h2000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h1000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16
+            })
+          end
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__memOp_CpleqStimesInBT_all1_fakeSend", 16, 2)
+    fork : test__memOp_CpleqStimesInBT_all1_fakeSend
+      begin
+        // store C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // store S
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // op, send B
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
@@ -1219,8 +1335,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_checkResultRowCol", 16, 2)
-    fork : test__memOp_CpleqStimesInB_checkResultRowCol
+    `DO_RST("test__memOp_CpleqStimesInBT_all1_0_fakeSend", 16, 0)
+    fork : test__memOp_CpleqStimesInBT_all1_0_fakeSend
       begin
         // store C
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
@@ -1233,7 +1349,130 @@
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
         // op, send B
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInB})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // load C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__FAKE_SEND(64'h1864)
+          `TEST_UTIL__SEND(64'h4000_3000_2000_1000 ^ {4{ {12'b0, test__memOp__in_i[0+:4]} }})
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND({4{ 16'b1 }})
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd32; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__FAKE_SEND(64'h1864)
+          `TEST_UTIL__SEND({4{ 16'b1 }})
+        end
+       `TEST_UTIL__SEND_CANT
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__RECEIVE({
+              (16'h4000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h3000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h2000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16,
+              (16'h1000 ^ {12'b0, test__memOp__out_i[0+:3], test__memOp__in_i[0]})  +  16'd16
+            })
+          end
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__memOp_CpleqStimesInBT_checkResultRowCol_simple", 16, 2)
+    fork : test__memOp_CpleqStimesInBT_checkResultRowCol_simple
+      begin
+        // store C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // store S
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // op, send B
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // load C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND(64'h0)
+        end
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__SEND({4{ {14'b0, test__memOp__out_i[0+:2]} }})
+          end
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2; test__memOp__out_i = test__memOp__out_i+1) begin
+            `TEST_UTIL__SEND({
+              {13'b10, test__memOp__out_i[0], 2'd3},
+              {13'b10, test__memOp__out_i[0], 2'd2},
+              {13'b10, test__memOp__out_i[0], 2'd1},
+              {13'b10, test__memOp__out_i[0], 2'd0}
+            })
+          end
+        end
+       `TEST_UTIL__SEND_CANT
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__RECEIVE({
+              16'd16 * {14'b0, test__memOp__out_i[0+:2]} * ({13'b10, test__memOp__in_i[0], 2'd3}),
+              16'd16 * {14'b0, test__memOp__out_i[0+:2]} * ({13'b10, test__memOp__in_i[0], 2'd2}),
+              16'd16 * {14'b0, test__memOp__out_i[0+:2]} * ({13'b10, test__memOp__in_i[0], 2'd1}),
+              16'd16 * {14'b0, test__memOp__out_i[0+:2]} * ({13'b10, test__memOp__in_i[0], 2'd0})
+            })
+          end
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__memOp_CpleqStimesInBT_checkResultRowCol", 16, 2)
+    fork : test__memOp_CpleqStimesInBT_checkResultRowCol
+      begin
+        // store C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // store S
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // op, send B
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
@@ -1254,9 +1493,79 @@
           end
         end
 
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2; test__memOp__out_i = test__memOp__out_i+1) begin
+            `TEST_UTIL__SEND({
+              {13'b10, test__memOp__out_i[0], 2'd3},
+              {13'b10, test__memOp__out_i[0], 2'd2},
+              {13'b10, test__memOp__out_i[0], 2'd1},
+              {13'b10, test__memOp__out_i[0], 2'd0}
+            })
+          end
+        end
+       `TEST_UTIL__SEND_CANT
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
+          for(test__memOp__in_i = 0; test__memOp__in_i < 15'd2; test__memOp__in_i = test__memOp__in_i+1) begin
+            `TEST_UTIL__RECEIVE({
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd3}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd2}),
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd1}), // - ...010101 0000 00  = ...101011 0000 00
+              16'd16 * ({12'b0, test__memOp__out_i[0+:4]} - 16'd4) * ({13'b10, test__memOp__in_i[0], 2'd0})  // - ...010100 0000 00  = ...101100 0000 00
+            })
+          end
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__memOp_CpleqStimesInBT_0_checkResultRowCol", 16, 0)
+    fork : test__memOp_CpleqStimesInBT_0_checkResultRowCol
+      begin
+        // store C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // store S
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // op, send B
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // load C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND(64'h0)
+        end
+
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
-            `TEST_UTIL__SEND({4{ {12'b1, test__memOp__out_i[0+:4]} }})
+            `TEST_UTIL__SEND({4{ {12'b0, test__memOp__out_i[0+:3]} - 16'd4 }})
+          end
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2; test__memOp__out_i = test__memOp__out_i+1) begin
+            `TEST_UTIL__SEND({
+              {13'b10, test__memOp__out_i[0], 2'd3},
+              {13'b10, test__memOp__out_i[0], 2'd2},
+              {13'b10, test__memOp__out_i[0], 2'd1},
+              {13'b10, test__memOp__out_i[0], 2'd0}
+            })
           end
         end
        `TEST_UTIL__SEND_CANT
@@ -1279,8 +1588,8 @@
 //-----------------------------------------------------------------------------------
 
 `ifdef TEST
-    `DO_RST("test__memOp_CpleqStimesInB_checkVectorMul", 16, 2)
-    fork : test__memOp_CpleqStimesInB_checkVectorMul
+    `DO_RST("test__memOp_CpleqStimesInBT_checkVectorMul", 16, 2)
+    fork : test__memOp_CpleqStimesInBT_checkVectorMul
       begin
         // store C
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
@@ -1293,7 +1602,7 @@
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
         // op, send B
-        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInB})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
         `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
 
@@ -1319,14 +1628,67 @@
           end
         end
 
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2; test__memOp__out_i = test__memOp__out_i+1) begin
+            `TEST_UTIL__SEND({4{ {1'b0, test__memOp__in_i[0+:15]} }})
+          end
+        end
+       `TEST_UTIL__SEND_CANT
+
+        for(test__memOp__out_i = 0; test__memOp__out_i < 15'd16; test__memOp__out_i = test__memOp__out_i+1) begin
+          `TEST_UTIL__RECEIVE(64'h0018_0018_0018_0018)
+        end
+        `TEST_UTIL__RECEIVE_CANT
+      end
+    join
+`endif
+
+//-----------------------------------------------------------------------------------
+
+`ifdef TEST
+    `DO_RST("test__memOp_CpleqStimesInBT_0_checkVectorMul", 16, 0)
+    fork : test__memOp_CpleqStimesInBT_0_checkVectorMul
+      begin
+        // store C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // store S
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_in_SRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // op, send B
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_inOp_CpleqStimesInBT})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_memAndMul, `CmdHubCMD_outer})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_in, 15'd0})
+
+        // load C
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_m, 1'b0, `MemAndMulCMD_out_CRowFirst})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_h, `CmdHubCMD_outer, `CmdHubCMD_memAndMul})
+        `TEST_UTIL__CMD_SEND({`MainCoreSerialCMD_wp_o_out, 15'd0})
+      end
+
+      begin
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          `TEST_UTIL__SEND(64'h0)
+        end
+
         for(test__memOp__out_i = 0; test__memOp__out_i < 15'd8; test__memOp__out_i = test__memOp__out_i+1) begin
           for(test__memOp__in_i = 0; test__memOp__in_i < 15'd4; test__memOp__in_i = test__memOp__in_i+1) begin
             `TEST_UTIL__SEND({
-              1'b0, test__memOp__in_i[0+:13], 2'd3,
-              1'b0, test__memOp__in_i[0+:13], 2'd2,
-              1'b0, test__memOp__in_i[0+:13], 2'd1,
-              1'b0, test__memOp__in_i[0+:13], 2'd0
-            })
+              ({12'b0, test__memOp__in_i[0], 2'd3} - 16'd4),
+              ({12'b0, test__memOp__in_i[0], 2'd2} - 16'd4),
+              ({12'b0, test__memOp__in_i[0], 2'd1} - 16'd4),
+              ({12'b0, test__memOp__in_i[0], 2'd0} - 16'd4)
+             })
+          end
+        end
+
+        for(test__memOp__in_i = 0; test__memOp__in_i < 15'd16; test__memOp__in_i = test__memOp__in_i+1) begin
+          for(test__memOp__out_i = 0; test__memOp__out_i < 15'd2; test__memOp__out_i = test__memOp__out_i+1) begin
+            `TEST_UTIL__SEND({4{ {1'b0, test__memOp__in_i[0+:15]} }})
           end
         end
        `TEST_UTIL__SEND_CANT
@@ -2805,5 +3167,3 @@
       end
     join
 `endif
-
-

@@ -160,6 +160,12 @@ endmodule
 
 // Inner Outer
 
+`ifndef OUTPUT_INTERNALS_FOR_TEST
+`define CMD_SEQ_NUM_STATES 26
+`else 
+`define CMD_SEQ_NUM_STATES 29
+`endif
+
 module command_sequences(
     input [`MainSeqCMD_SIZE-1:0] o,
     input o_isReady,
@@ -187,9 +193,9 @@ module command_sequences(
   wire [`MainSeqCMD_SIZE-1:0] oCurr = o_isReady ? o : oCurr__d1;
   delay #(`MainSeqCMD_SIZE) oCurr__ff (oCurr, oCurr__d1, rst, clk);
 
-  wire [26-1:0] state;
+  wire [`CMD_SEQ_NUM_STATES-1:0] state;
 
-  wire [5-1:0] state__numStates = (oCurr == `MainSeqCMD_genA_iter ? 4 : 0)
+  wire [$clog2(`CMD_SEQ_NUM_STATES+1)-1:0] state__numStates = (oCurr == `MainSeqCMD_genA_iter ? 4 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_PRNG ? 10 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_noPRNG ? 1 : 0)
                                 | (oCurr == `MainSeqCMD_keygen_mid ? 10 : 0)
@@ -202,13 +208,18 @@ module command_sequences(
                                 | (oCurr == `MainSeqCMD_encaps_PRNG ? 10 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_mid ? 17 : 0)
                                 | (oCurr == `MainSeqCMD_encaps_postGenA ? 9 : 0)
+`ifndef OUTPUT_INTERNALS_FOR_TEST
                                 | (oCurr == `MainSeqCMD_decaps_preGenA ? 26 : 0)
                                 | (oCurr == `MainSeqCMD_decaps_mid ? 7 : 0)
+`else
+                                | (oCurr == `MainSeqCMD_decaps_preGenA ? 29 : 0)
+                                | (oCurr == `MainSeqCMD_decaps_mid ? 9 : 0)
+`endif                                
                                 | (oCurr == `MainSeqCMD_decaps_PRNG ? 5 : 0)
                                 | (oCurr == `MainSeqCMD_decaps_postPRNG ? 3 : 0)
                                 | (oCurr == `MainSeqCMD_setupTest ? 4 : 0)
                                 | (oCurr == `MainSeqCMD_addEntropy ? 5 : 0);
-  counter_bus_state #(.MAX_NUM_STEPS(26)) state__counter (
+  counter_bus_state #(.MAX_NUM_STEPS(`CMD_SEQ_NUM_STATES)) state__counter (
     .restart(o_isReady),
     .numStates(state__numStates),
     .canRestart(o_canReceive),
@@ -271,7 +282,7 @@ module command_sequences(
 `define SET_CMD__GENA__KOUT(numCycles)          `SET_CMD(`MainExpCMD_genA_kOut,   1'b1,     1'b0,      (numCycles),    5'b0,     1'b0,     `CmdHubCMD_memAndMul,                      `CmdHubCMD_keccak)
 `define SET_CMD__GENA__KOUT_DBG(numCycles)      `SET_CMD(`MainExpCMD_genA_kOut_DBG, 1'b1,   1'b0,      (numCycles),    5'b0,     1'b0,     `CmdHubCMD_memAndMul | `CmdHubCMD_outer,   `CmdHubCMD_keccak)
 `define SET_CMD__M(memCmd)                      `SET_CMD(`MainExpCMD_m,           1'b0,     1'b0,      9'b0,           (memCmd), 1'b0,     4'b0,                                      4'b0)
-`define SET_CMD__M2O(memCmd)                    `SET_CMD(`MainExpCMD_generic,     1'b0,     1'b0,      9'b0,           (memCmd), 1'b0,     `CmdHubCMD_outer,                          `CmdHubCMD_memAndMul)
+`define SET_CMD__M2O(memCmd, isPack)            `SET_CMD(`MainExpCMD_generic,     1'b0,     1'b0,      9'b0,           (memCmd), (isPack), `CmdHubCMD_outer,                          `CmdHubCMD_memAndMul)
 `define SET_CMD__M2K(memCmd, isLast)            `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           (memCmd), 1'b0,     `CmdHubCMD_keccak,                         `CmdHubCMD_memAndMul)
 `define SET_CMD__M2KO(memCmd, isPack, isLast)   `SET_CMD(`MainExpCMD_generic,     (isLast), 1'b0,      9'b0,           (memCmd), (isPack), `CmdHubCMD_keccak | `CmdHubCMD_outer,      `CmdHubCMD_memAndMul)
 `define SET_CMD__K2M(memCmd, sampled, isLast)   `SET_CMD(`MainExpCMD_generic,     (isLast), (sampled), 9'b0,           (memCmd), 1'b0,     `CmdHubCMD_memAndMul,                      `CmdHubCMD_keccak)
@@ -317,7 +328,7 @@ module command_sequences(
     end
     if(oCurr == `MainSeqCMD_keygen_noPRNG) begin
       //--// OUT(sk.s) : 256b <- BRAM.u [=s]
-      if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_u)
+      if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_u, `SET_CMD__NOT_PACKED)
     end
     if(oCurr == `MainSeqCMD_keygen_mid) begin
       //--// _r <- SHAKE256(0x5F | BRAM.seedSE)
@@ -358,7 +369,7 @@ module command_sequences(
       //--// BRAM.S' = 0
       if(state[ 5]) `SET_CMD__M(`MemAndMulCMD_op_Erase1)
 `else
-      if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_BColFirst)
+      if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_BColFirst, `SET_CMD__NOT_PACKED)
 
       //--// _b <- pack( (BRAM.B' [=B^T])^T [=B] )
       //--// OUT(b) <- _b
@@ -459,8 +470,8 @@ module command_sequences(
       
       //--// _c1 <- IN(c.c1)
       //--// _c2 <- IN(c.c2)
-      //--// BRAM.B' <- unpack(_c1)
-      //--// BRAM.C <- unpack(_c2)
+      //--// BRAM.B' [=B'] <- unpack(_c1)
+      //--// BRAM.C [=C] <- unpack(_c2)
       //--// BRAM.salt <- IN(c.salt)
       //--// BRAM.ss_state = SHAKE_partial(_c1 | _c2 | BRAM.salt)
       if(state[ 1]) `SET_CMD__K_OUTSTATE(config_frodoParam[2] ? 9'd160 : config_frodoParam[1] ? 9'd117 : 9'd59)
@@ -468,7 +479,11 @@ module command_sequences(
       if(state[ 3]) `SET_CMD__O2MK(`MemAndMulCMD_in_CRowFirst, `SET_CMD__IS_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__O2MK(`MemAndMulCMD_in_salt, `SET_CMD__NOT_PACKED, `SET_CMD__NOT_LAST)
       if(state[ 5]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd8 : config_frodoParam[1] ? 8'd15 : 8'd20)
+`ifndef OUTPUT_INTERNALS_FOR_TEST
       if(state[ 6]) `SET_CMD__K2M(`MemAndMulCMD_in_SSState, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+`else
+      if(state[ 6]) `SET_CMD__K2MO(`MemAndMulCMD_in_SSState, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+`endif
       
       //--// BRAM.u = decode(( BRAM.C^T - BRAM.S' *' BRAM.B'^T )^T)
       if(state[ 7]) `SET_CMD__M(`MemAndMulCMD_op_UeqCminBtimesS)
@@ -479,35 +494,71 @@ module command_sequences(
       if(state[ 9]) `SET_CMD__O2MK(`MemAndMulCMD_in_pkh, `SET_CMD__NOT_PACKED, `SET_CMD__NOT_LAST)
       if(state[10]) `SET_CMD__M2K(`MemAndMulCMD_out_u, `SET_CMD__NOT_LAST)
       if(state[11]) `SET_CMD__M2K(`MemAndMulCMD_out_salt, `SET_CMD__IS_LAST)
+
+`ifndef OUTPUT_INTERNALS_FOR_TEST
       if(state[12]) `SET_CMD__K2M(`MemAndMulCMD_in_seedSE, `SET_CMD__NOT_SAMPLED, `SET_CMD__NOT_LAST)
       if(state[13]) `SET_CMD__K2M(`MemAndMulCMD_in_k, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
 
-      //--// BRAM.C = Encode(BRAM.u) - BRAM.C // end of u
+      //--// BRAM.C [=U-C] = Encode(BRAM.u) - BRAM.C // end of u
       if(state[14]) `SET_CMD__M(`MemAndMulCMD_op_CeqUminC)
-      
+
       if(state[15]) `SET_CMD__K_NO_OVERLAP
       //--// _r = SHAKE256(0x96 | BRAM.seedSE) // end of seedSE
       //--// BRAM.S' = SampleMatrix(_r)
       //--// _B : 16b x 1344 x 8 <- unpack(IN(sk.b))
-      //--// BRAM.C += BRAM.S' *' _B
-      //--//   BRAM.B' = SampleMatrix(_r) - BRAM.B'
-      //--// BRAM.C += SampleMatrix(_r)
+      //--// BRAM.C [=U-C+V-E''=C'-C-E''] = BRAM.C [=U-C] + BRAM.S' *' _B
+      //--//   BRAM.B' [=E'-B'] = SampleMatrix(_r) [=E] - BRAM.B'
+      //--// BRAM.C [=C'-C] = BRAM.C [=C'-C-E''] + SampleMatrix(_r) [=E'']
       if(state[16]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd318 : config_frodoParam[1] ? 9'd231 : 9'd123)
       if(state[17]) `SET_CMD__KI_BYTE(8'h96)
       if(state[18]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
       if(state[19]) `SET_CMD__K2M(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
-      if(state[20]) `SET_CMD__O2M(`MemAndMulCMD_inOp_CpleqStimesInB, `SET_CMD__IS_PACKED)
+      if(state[20]) `SET_CMD__O2M(`MemAndMulCMD_inOp_CpleqStimesInBT, `SET_CMD__IS_PACKED)
       if(state[21]) `SET_CMD__K2M(`MemAndMulCMD_inOp_BeqInMinB, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
       if(state[22]) `SET_CMD__K2M(`MemAndMulCMD_inOp_addCRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__IS_LAST)
-      
+
       //--// seedA : 128b <- IN(sk.seedA)
       if(state[23]) `SET_CMD__O2S
-      
+
       if(state[24]) `SET_CMD__K_NO_OVERLAP
-      //--// BRAM.B' += BRAM.S' *" _A
+      //--// BRAM.B' = BRAM.B' [=B''-B'] + BRAM.S' *" _A
       if(state[25]) `SET_CMD__M(`MemAndMulCMD_inOp_BpleqStimesInA)
+`else
+      if(state[12]) `SET_CMD__K2MO(`MemAndMulCMD_in_seedSE, `SET_CMD__NOT_SAMPLED, `SET_CMD__NOT_LAST)
+      if(state[13]) `SET_CMD__K2MO(`MemAndMulCMD_in_k, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+
+      //--// BRAM.C [=U-C] = Encode(BRAM.u) - BRAM.C // end of u
+      if(state[14]) `SET_CMD__M(`MemAndMulCMD_op_CeqUminC)
+
+      if(state[15]) `SET_CMD__K_NO_OVERLAP
+      //--// _r = SHAKE256(0x96 | BRAM.seedSE) // end of seedSE
+      //--// BRAM.S' = SampleMatrix(_r)
+      //--// _B : 16b x 1344 x 8 <- unpack(IN(sk.b))
+      //--// BRAM.C [=U-C+(V-E'')=C'-C-E'' ~-E''] = BRAM.C [=U-C] + BRAM.S' *' _B
+      //--//   BRAM.B' [=E'-B'] = SampleMatrix(_r) [=E] - BRAM.B'
+      //--// BRAM.C [=C'-C ~0] = BRAM.C [=C'-C-E'' ~-E''] + SampleMatrix(_r) [=E'']
+      if(state[16]) `SET_CMD__K_LONGOUT(config_frodoParam[2] ? 9'd318 : config_frodoParam[1] ? 9'd231 : 9'd123)
+      if(state[17]) `SET_CMD__KI_BYTE(8'h96)
+      if(state[18]) `SET_CMD__M2K(`MemAndMulCMD_out_seedSE, `SET_CMD__IS_LAST)
+      if(state[19]) `SET_CMD__K2MO(`MemAndMulCMD_in_SRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST)
+      if(state[20]) `SET_CMD__M2O(`MemAndMulCMD_out_CRowFirst, `SET_CMD__NOT_PACKED) // U-C  ~-V
+      if(state[21]) `SET_CMD__O2M(`MemAndMulCMD_inOp_CpleqStimesInBT, `SET_CMD__IS_PACKED)
+      if(state[22]) `SET_CMD__M2O(`MemAndMulCMD_out_CRowFirst, `SET_CMD__NOT_PACKED) // ~-E''
+      if(state[23]) `SET_CMD__K2MO(`MemAndMulCMD_inOp_BeqInMinB, `SET_CMD__IS_SAMPLED, `SET_CMD__NOT_LAST) // out E'
+      if(state[24]) `SET_CMD__K2MO(`MemAndMulCMD_inOp_addCRowFirst, `SET_CMD__IS_SAMPLED, `SET_CMD__IS_LAST) // out E''
+      if(state[25]) `SET_CMD__M2O(`MemAndMulCMD_out_CRowFirst, `SET_CMD__IS_PACKED) // C'-C ~0
+
+      //--// seedA : 128b <- IN(sk.seedA)
+      if(state[26]) `SET_CMD__O2S
+
+      if(state[27]) `SET_CMD__K_NO_OVERLAP
+      //--// BRAM.B' = BRAM.B' [=B''-B'] + BRAM.S' *" _A
+      if(state[28]) `SET_CMD__M(`MemAndMulCMD_inOp_BpleqStimesInA)
+`endif
+      
     end
-    if(oCurr == `MainSeqCMD_decaps_mid) begin
+   if(oCurr == `MainSeqCMD_decaps_mid) begin
+`ifndef OUTPUT_INTERNALS_FOR_TEST
       //--// _corr = BRAM.B' == 0 && BRAM.C == 0
       //--// _s : 256b <- IN(sk.s)
       //--// BRAM.k = _corr ? BRAM.k : _s
@@ -520,7 +571,25 @@ module command_sequences(
       if(state[ 3]) `SET_CMD__M2K(`MemAndMulCMD_out_SSState, `SET_CMD__NOT_LAST)
       if(state[ 4]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd9 : config_frodoParam[1] ? 8'd2 : 8'd1)
       if(state[ 5]) `SET_CMD__M2K(`MemAndMulCMD_out_k, `SET_CMD__IS_LAST)
-      if(state[ 6]) `SET_CMD__K2MO(`MemAndMulCMD_in_k, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)
+      if(state[ 6]) `SET_CMD__K2MO(`MemAndMulCMD_in_k, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST)  // ss
+`else
+      if(state[ 0]) `SET_CMD__M2O(`MemAndMulCMD_out_BRowFirst, `SET_CMD__IS_PACKED)
+      if(state[ 1]) `SET_CMD__M2O(`MemAndMulCMD_out_CRowFirst, `SET_CMD__IS_PACKED)
+
+      //--// _corr = BRAM.B' == 0 && BRAM.C == 0
+      //--// _s : 256b <- IN(sk.s)
+      //--// BRAM.k [=k'] = _corr ? BRAM.k : _s
+      if(state[ 2]) `SET_CMD__O2M(`MemAndMulCMD_inOp_selectKey, `SET_CMD__NOT_PACKED)
+      
+      if(state[ 3]) `SET_CMD__K_NO_OVERLAP
+      //--// BRAM.k [=ss] <- SHAKE_finish(ss_state, BRAM.k [=k'])
+      //--// OUT(ss) <- BRAM.k
+      if(state[ 4]) `SET_CMD__K_INSTATE(9'd1)
+      if(state[ 5]) `SET_CMD__M2K(`MemAndMulCMD_out_SSState, `SET_CMD__NOT_LAST)
+      if(state[ 6]) `SET_CMD__KI_ZEROS(config_frodoParam[2] ? 8'd9 : config_frodoParam[1] ? 8'd2 : 8'd1)
+      if(state[ 7]) `SET_CMD__M2KO(`MemAndMulCMD_out_k, `SET_CMD__NOT_PACKED, `SET_CMD__IS_LAST) // k'
+      if(state[ 8]) `SET_CMD__K2MO(`MemAndMulCMD_in_k, `SET_CMD__NOT_SAMPLED, `SET_CMD__IS_LAST) // ss
+`endif
     end
     if(oCurr == `MainSeqCMD_decaps_PRNG) begin
       //--// BRAM.RNG_state <- SHAKE256(4 : 8b | BRAM.RNG_state | BRAM.k [=ss])

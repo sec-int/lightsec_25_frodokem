@@ -39,20 +39,31 @@ module testSub();
     swapBytes16[1*8+:8] = in[0*8+:8];
   end endfunction
 
+  function [0:16-1] swapBits16(input [0:16-1] in); begin
+    swapBits16[0] = in[15];
+    swapBits16[1] = in[14];
+    swapBits16[2] = in[13];
+    swapBits16[3] = in[12];
+    swapBits16[4] = in[11];
+    swapBits16[5] = in[10];
+    swapBits16[6] = in[9];
+    swapBits16[7] = in[8];
+    swapBits16[8] = in[7];
+    swapBits16[9] = in[6];
+    swapBits16[10] = in[5];
+    swapBits16[11] = in[4];
+    swapBits16[12] = in[3];
+    swapBits16[13] = in[2];
+    swapBits16[14] = in[1];
+    swapBits16[15] = in[0];
+  end endfunction
+
   reg clk = 1'b1;
   initial forever #0.5 clk <= ~clk;
 
   reg done_fail = 1'b0;
   always @(posedge done_fail) $fatal(0, "ERROR! FAIL!");
 
-    // o_in:  { size:`Outer_MaxWordLen bits }
-    // o_out: { size:`Outer_MaxWordLen bits }
-    // k_in:  { byteVal:8bits, skipIsLast:1bit, CMD:2bit } 
-    // k_out: { skipIsLast:1bit, sample:1bit }
-    // h:     { destination:4bit, source:4bit }  each is: { outer:1bit, keccak:1bit, memAndMul:1bit, seedA:1bit }
-    // m:     { only command:5bit }
-    // k:     { is128else256:1bit, inState:1bit, outState:1bit, mainIsInElseOut:1bit, mainNumBlocks:9bits, secondaryNumBlocks:1bits }
-    // s:     { cmd_startIn:1bit, cmd_startOut:1bit }
   reg [`MainCoreCMD_which_SIZE+`MainCoreSerialCMD_SIZE-1:0] cmd = {`MainCoreCMD_which_SIZE+`MainCoreSerialCMD_SIZE{1'b0}};
   reg cmd_hasAny = 1'b0;
   wire cmd_consume;
@@ -87,6 +98,7 @@ module testSub();
 `include "testSub__mem.v"
 `include "testSub__memOp.v"
 `undef TEST_VARS
+
 
 
 `define TEST
@@ -156,9 +168,26 @@ module testSub();
         #0.25; \
         while(~out_isReady) #1; \
         if(out !== (v)) begin \
-          $display("%t-%s:\nReceived word: %h\ninstead of:    %h!", $time, test_name, out, (v)); \
+          $display("%t-%s:\nReceived word: %h  %b\ninstead of:    %h  %b!", $time, test_name, out, out, (v), (v)); \
           done_fail <= 1'b1; \
         end \
+        @(posedge clk); \
+        out_canReceive <= 1'b0;
+
+`define TEST_UTIL__RECEIVE_DONT \
+        #0.4; \
+        if(out_isReady) begin \
+          $display("%t-%s: Must not say it's ready if it can't be received!", $time, test_name); \
+          done_fail <= 1'b1; \
+        end \
+        @(posedge clk);
+
+`define TEST_UTIL__RECEIVE_SAVE(v) \
+        #0.15; \
+        out_canReceive <= 1'b1; \
+        #0.25; \
+        while(~out_isReady) #1; \
+        v = out; \
         @(posedge clk); \
         out_canReceive <= 1'b0;
 
