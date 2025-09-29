@@ -16,9 +16,6 @@
 `ifndef LIB_V
 `define LIB_V
 
-`include "config.v"
-
-
 
 module delay #(parameter N = 1) (
   input [N-1:0] in,

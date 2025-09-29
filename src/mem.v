@@ -31,25 +31,6 @@ module bram(
 
   input clk
 );
-`ifdef USE_BRAM_IP
-
-  // simple dual port bram. witdth 64. depth 512. with write byte enable, 8 bits. with primitives output register, for a total read delay of two clock cycles
-  blk_mem_gen_0 ip (
-    // a is write
-    .ena(doWrite),
-    .wea(write_byteEnable),
-    .addra(write_index),
-    .dina(write_value),
-    .clka(clk),
-    // b is read
-    .enb(doRead),
-    .addrb(read_index),
-    .doutb(read_value__d2),
-    .clkb(clk)
-  );
-
-`else
-
   reg [64-1:0] mem [512-1:0];
   reg [64-1:0] out__d1;
   reg [64-1:0] out__d2;
@@ -72,8 +53,6 @@ module bram(
     out__d2 <= out__d1;
 
   assign read_value__d2 = out__d2;
-
-`endif
 endmodule
 
 // two interfaces: Read, Write

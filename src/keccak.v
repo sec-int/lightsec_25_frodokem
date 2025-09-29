@@ -239,12 +239,8 @@ module keccak_iter(
   wire [1600-1:0] body__si = {1600{~cmd_start}} & statePrev  // TODO
                            ^ {1600{cmd_isFirst}} & in_data;
 
-`ifdef USE_NO_KECCAK_PERMUTATION
-  wire [1600-1:0] body__so = body__si;
-`else
   wire [1600-1:0] body__so;
   keccak_fn body(body__si, rc, body__so);
-`endif
 
   wire [1600-1:0] statePost = (isTransparent_merge ? body__si : 1600'b0)
                             | (~isTransparent_merge & isTransparent ? in_data : 1600'b0)
@@ -1160,15 +1156,6 @@ module keccak(
     input rst,
     input clk
   );
-`ifdef USE_NO_KECCAK
-
-  assign cmd_canReceive = 1'b1;
-  assign in_canReceive = out_canReceive;
-  assign out = in;
-  assign out_isReady = in_isReady;
-
-`else
-
   wire rst__d1;
   delay rst__ff (rst, rst__d1, 1'b0, clk);
 
@@ -1249,8 +1236,6 @@ module keccak(
     .rst(rst__d1),
     .clk(clk)
   );
-
-`endif
 endmodule
 
 

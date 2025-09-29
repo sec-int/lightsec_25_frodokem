@@ -830,34 +830,20 @@ module memAndMul__unpack16 (
     input [64-1:0] in,
     output [64-1:0] out
   );
-`ifdef STD_ELSE_TV
-  swapBits #(16) s0 (in[0*16+:16], out[0*16+:16]);
-  swapBits #(16) s1 (in[1*16+:16], out[1*16+:16]);
-  swapBits #(16) s2 (in[2*16+:16], out[2*16+:16]);
-  swapBits #(16) s3 (in[3*16+:16], out[3*16+:16]);
-`else
   assign out[0*16+:8] = in[0*16+8+:8]; assign out[0*16+8+:8] = in[0*16+:8];
   assign out[1*16+:8] = in[1*16+8+:8]; assign out[1*16+8+:8] = in[1*16+:8];
   assign out[2*16+:8] = in[2*16+8+:8]; assign out[2*16+8+:8] = in[2*16+:8];
   assign out[3*16+:8] = in[3*16+8+:8]; assign out[3*16+8+:8] = in[3*16+:8];
-`endif
 endmodule
 
 module memAndMul__pack16 (
     input [64-1:0] in,
     output [64-1:0] out
   );
-`ifdef STD_ELSE_TV
-  swapBits #(16) s0 (in[0*16+:16], out[0*16+:16]);
-  swapBits #(16) s1 (in[1*16+:16], out[1*16+:16]);
-  swapBits #(16) s2 (in[2*16+:16], out[2*16+:16]);
-  swapBits #(16) s3 (in[3*16+:16], out[3*16+:16]);
-`else
   assign out[0*16+:8] = in[0*16+8+:8]; assign out[0*16+8+:8] = in[0*16+:8];
   assign out[1*16+:8] = in[1*16+8+:8]; assign out[1*16+8+:8] = in[1*16+:8];
   assign out[2*16+:8] = in[2*16+8+:8]; assign out[2*16+8+:8] = in[2*16+:8];
   assign out[3*16+:8] = in[3*16+8+:8]; assign out[3*16+8+:8] = in[3*16+:8];
-`endif
 endmodule
 
 
@@ -918,9 +904,6 @@ module memAndMul__unpack15 (
   );
   wire [64-1:0] in_w;
 
-`ifdef STD_ELSE_TV
-  assign in_w = in;
-`else
   swapBits #(8) si0 (in[0*8+:8], in_w[0*8+:8]);
   swapBits #(8) si1 (in[1*8+:8], in_w[1*8+:8]);
   swapBits #(8) si2 (in[2*8+:8], in_w[2*8+:8]);
@@ -930,7 +913,6 @@ module memAndMul__unpack15 (
   swapBits #(8) si5 (in[5*8+:8], in_w[5*8+:8]);
   swapBits #(8) si6 (in[6*8+:8], in_w[6*8+:8]);
   swapBits #(8) si7 (in[7*8+:8], in_w[7*8+:8]);
-`endif
 
   wire [64-1:0] store__a1;
   wire [64-1:0] store;
@@ -953,15 +935,10 @@ module memAndMul__unpack15 (
     .out_buff_size(store_size__a1)
   );
 
-`ifdef STD_ELSE_TV
-  assign out = {1'b0, out_w[3*15+:15], 1'b0, out_w[2*15+:15], 1'b0, out_w[1*15+:15], 1'b0, out_w[0*15+:15]};  
-`else
   swapBits #(16) so0 ({out_w[0*15+:15], 1'b0}, out[0*16+:16]);
   swapBits #(16) so1 ({out_w[1*15+:15], 1'b0}, out[1*16+:16]);
   swapBits #(16) so2 ({out_w[2*15+:15], 1'b0}, out[2*16+:16]);
   swapBits #(16) so3 ({out_w[3*15+:15], 1'b0}, out[3*16+:16]);
-`endif
-  
 endmodule
 
 module memAndMul__pack15 (
@@ -976,15 +953,10 @@ module memAndMul__pack15 (
   );
   wire [60-1:0] in_w;
 
-`ifdef STD_ELSE_TV
-  assign in_w = {in[3*16+:15], in[2*16+:15], in[1*16+:15], in[0*16+:15]};
-  wire [4-1:0] ignore = {in[3*16+15], in[2*16+15], in[1*16+15], in[0*16+15]};
-`else
   swapBits #(15) si0 (in[0*16+:15], in_w[0*15+:15]);
   swapBits #(15) si1 (in[1*16+:15], in_w[1*15+:15]);
   swapBits #(15) si2 (in[2*16+:15], in_w[2*15+:15]);
   swapBits #(15) si3 (in[3*16+:15], in_w[3*15+:15]);
-`endif
 
   wire [64-1:0] store__a1;
   wire [64-1:0] store;
@@ -1007,9 +979,6 @@ module memAndMul__pack15 (
     .out_buff_size(store_size__a1)
   );
 
-`ifdef STD_ELSE_TV
-  assign out = out_w;
-`else
   swapBits #(8) so0 (out_w[0*8+:8], out[0*8+:8]);
   swapBits #(8) so1 (out_w[1*8+:8], out[1*8+:8]);
   swapBits #(8) so2 (out_w[2*8+:8], out[2*8+:8]);
@@ -1019,7 +988,6 @@ module memAndMul__pack15 (
   swapBits #(8) so5 (out_w[5*8+:8], out[5*8+:8]);
   swapBits #(8) so6 (out_w[6*8+:8], out[6*8+:8]);
   swapBits #(8) so7 (out_w[7*8+:8], out[7*8+:8]);
-`endif
 endmodule
 
 
