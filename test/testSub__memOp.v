@@ -1,3 +1,15 @@
+////    ////////////    Copyright (C) 2025 Giuseppe Manzoni, Barkhausen Institut
+////    ////////////    
+////                    This source describes Open Hardware and is licensed under the
+////                    CERN-OHL-W v2 (https://cern.ch/cern-ohl)
+////////////    ////    
+////////////    ////    
+////    ////    ////    
+////    ////    ////    
+////////////            Authors:
+////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
+
+
 `ifdef TEST_VARS
     integer test__memOp__in_i;
     integer test__memOp__out_i;

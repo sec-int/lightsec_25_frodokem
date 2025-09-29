@@ -1,3 +1,15 @@
+////    ////////////    Copyright (C) 2025 Giuseppe Manzoni, Barkhausen Institut
+////    ////////////    
+////                    This source describes Open Hardware and is licensed under the
+////                    CERN-OHL-W v2 (https://cern.ch/cern-ohl)
+////////////    ////    
+////////////    ////    
+////    ////    ////    
+////    ////    ////    
+////////////            Authors:
+////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
+
+
 `ifdef TEST
     `DO_RST("test__seedA_simple", 0, 2)
     fork : test__seedA_simple

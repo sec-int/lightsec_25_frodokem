@@ -1,23 +1,16 @@
+////    ////////////    Copyright (C) 2025 Giuseppe Manzoni, Barkhausen Institut
+////    ////////////    
+////                    This source describes Open Hardware and is licensed under the
+////                    CERN-OHL-W v2 (https://cern.ch/cern-ohl)
+////////////    ////    
+////////////    ////    
+////    ////    ////    
+////    ////    ////    
+////////////            Authors:
+////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
+
+
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 01/08/2025 04:12:12 PM
-// Design Name: 
-// Module Name: main
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
 
 
 `include "main_core.v"
