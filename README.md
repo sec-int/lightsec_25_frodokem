@@ -7,3 +7,22 @@ It has a single module (in src/main.v) that can be configured to run the three F
 
 See the related paper (at TODO) for more information.
 
+## Implementation
+
+The code targets the AMD/Xilinx FPGA xc7a35Tcsg324-3. It currently produces 12438 LUTs, 4060 FFs, 8 BRAMs, 0 DSPs. The current timing analysis has a slack of 0.217ns for the Setup, 0.076ns for Hold, and 4.500ns for PW.
+
+
+TODO: the following numbers (keygen, encaps) need update.
+
+algorithm | parameter | clock cycles
+--- | ---: | ---:
+keygen | 640 | 134008
+keygen | 976 | 299242
+keygen | 1344 | 541000
+encaps | 640 | 137074
+encaps | 976 | 304492
+encaps | 1344 | 548226
+decaps | 640 | 139106
+decaps | 976 | 305454
+decaps | 1344 | 549491
+
