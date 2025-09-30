@@ -9,7 +9,22 @@ See the related paper (at TODO) for more information.
 
 ## Implementation
 
-The code targets the AMD/Xilinx FPGA xc7a35Tcsg324-3. It currently produces 12438 LUTs, 4060 FFs, 8 BRAMs, 0 DSPs. The current timing analysis has a slack of 0.217ns for the Setup, 0.076ns for Hold, and 4.500ns for PW.
+The code targets the AMD/Xilinx FPGA xc7a35Tcsg324-3. It currently produces
+
+Element | #
+--- | ---:
+LUTs | 12438
+FFs | 4060
+BRAMs | 8
+DSPs | 0
+
+The current timing analysis has a slack of
+
+Slack type | time (ns)
+--- | ---:
+Setup | 0.217
+Hold | 0.076
+PW | 4.500
 
 
 TODO: the following numbers (keygen, encaps) need update.
