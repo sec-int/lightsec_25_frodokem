@@ -33,17 +33,15 @@ Hold | 0.076
 PW | 4.500
 
 
-TODO: the following numbers (keygen, encaps) need update.
-
 algorithm | parameter | clock cycles
 --- | ---: | ---:
-keygen | 640 | 134008
-encaps | 640 | 137074
-decaps | 640 | 139106
-keygen | 976 | 299242
-encaps | 976 | 304492
-decaps | 976 | 305454
-keygen | 1344 | 541000
-encaps | 1344 | 548226
-decaps | 1344 | 549491
+keygen | 640 | 132221
+encaps | 640 | 135152
+decaps | 640 | 137846
+keygen | 976 | 296318
+encaps | 976 | 301562
+decaps | 976 | 305444
+keygen | 1344 | 536007
+encaps | 1344 | 544191
+decaps | 1344 | 546776
 
