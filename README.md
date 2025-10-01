@@ -15,7 +15,7 @@ See the main test file (at test/testAll.v) for information on the usage.
 
 ## Implementation
 
-The code targets the AMD/Xilinx FPGA xc7a35Tcsg324-3. It currently produces
+The code targets the AMD/Xilinx Artix-7 FPGA xc7a35Tcsg324-3, and a clock cycle of 100 MHz. It uses the following resources:
 
 Element | #
 --- | ---:
@@ -24,7 +24,7 @@ FFs | 4060
 BRAMs | 8
 DSPs | 0
 
-The current timing analysis has a slack of
+The current timing analysis has the following slack times:
 
 Slack type | time (ns)
 --- | ---:
@@ -32,6 +32,7 @@ Setup | 0.217
 Hold | 0.076
 PW | 4.500
 
+The execution time of the supported run-time configurations are:
 
 algorithm | parameter | clock cycles
 --- | ---: | ---:
