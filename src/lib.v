@@ -10,11 +10,12 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
-
-
 `ifndef LIB_V
 `define LIB_V
+
+
+// This file is a library of utility modules
+// registers, delays, serializations and deserializations, counters, ...
 
 
 module delay #(parameter N = 1) (
@@ -141,29 +142,11 @@ module ff_s_r ( // set immediate, reset while going into the next cycle
 endmodule
 
 
-module mergeWaitPulse ( // one pair at a time
-  input mainPulse,
-  input secondPulse,
-  input mergeSecondElseOnlyMain,
-  output outPulse,
-  input rst,
-  input clk
-);
-  wire oneAlreadyReceived;
-
-  wire eitherPulse = mainPulse | secondPulse;
-  wire bothPulse = mainPulse & secondPulse;
-  assign outPulse = oneAlreadyReceived & eitherPulse
-                  | ~mergeSecondElseOnlyMain & mainPulse
-                  | bothPulse;
-  wire oneAlreadyReceived__a1 = mergeSecondElseOnlyMain & ~oneAlreadyReceived & eitherPulse & ~bothPulse;
-  delay oneAlreadyReceived__ff(oneAlreadyReceived__a1, oneAlreadyReceived, rst, clk);
-endmodule
-
 module counter_bus #(parameter N = 1) ( // N bits must be able to store the highest 'numSteps', and at least 1.
     input restart,  // can't interupt
     input [N-1:0] numSteps,
     output canRestart,
+
     output canReceive,
     output canReceive_wouldBeLast,
     output canReceive_isLast,
@@ -196,6 +179,7 @@ endmodule
 module counter_bus_fixed #(parameter NUM_STEPS = 1) ( // N bits must be able to store the highest  restart_steps+1
     input restart,  // can't interupt
     output canRestart,
+
     output canReceive,
     output canReceive_wouldBeLast,
     output canReceive_isLast,

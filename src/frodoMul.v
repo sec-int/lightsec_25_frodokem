@@ -10,7 +10,18 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef FRODOMUL_V
+`define FRODOMUL_V
+
+
+// This file provides the module: frodoMul
+// It contains the module to do the multiplication.
+// it has two configurations of how to use the multipliers:
+//   mul1: *'  outVec = accVec + \sum_i sMat_i * a_i
+//   mul2: *"  outMat_i = accMat_i + sCol * a_i.
+
+
+`include "lib.v"
 
 
 module frodoMulSingle(
@@ -27,9 +38,6 @@ module frodoMulSingle(
   assign z = s[0] ? -r : r;
 endmodule
 
-
-// mul1: *'  outVec = accVec + \sum_i sMat_i * a_i
-// mul2: *"  outMat_i = accMat_i + sCol * a_i.
 
 module frodoMul #(
     parameter A=4,
@@ -108,3 +116,5 @@ module frodoMul #(
   endgenerate
 endmodule
 
+
+`endif // FRODOMUL_V

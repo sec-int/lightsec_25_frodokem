@@ -10,10 +10,16 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef ADAPTED_KECCAK_V
+`define ADAPTED_KECCAK_V
+
+
+// This file provides the module: adapted_keccak
+// It contains the keccak implementation, with the additional option to inject bytes/zeros into the input of the keccak, and do the sampling on the output.
 
 
 `include "keccak.v"
+
 
 `define KeccakInCMD_sendByte  2'b00
 `define KeccakInCMD_sendZeros 2'b01
@@ -391,3 +397,6 @@ module adapted_keccak (
   );
 
 endmodule
+
+
+`endif // ADAPTED_KECCAK_V

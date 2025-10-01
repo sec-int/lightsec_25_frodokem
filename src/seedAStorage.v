@@ -10,10 +10,16 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef SEED_A_STORAGE_V
+`define SEED_A_STORAGE_V
+
+
+// This file provides the module: seedAStorage
+// It contains the storage for the variable seed_A
 
 
 `include "lib.v"
+
 
 `define SeedAStorageCMD_SIZE 1
 
@@ -86,3 +92,4 @@ endmodule
 
 
 
+`endif // SEED_A_STORAGE_V

@@ -10,7 +10,12 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef BUS_HUB_AND_ADAPT_V
+`define BUS_HUB_AND_ADAPT_V
+
+
+// This file provides the module: busSwitch, main_adapter_outer_out, main_adapter_outer_in
+// It provides the hub to organize the p2p connections, and the adapters from the internal bus to the one used outside the module
 
 
 `include "lib.v"
@@ -230,5 +235,5 @@ module main_adapter_outer_in(
 endmodule
 
 
-
+`endif // BUS_HUB_AND_ADAPT_V
 

@@ -524,6 +524,4 @@
 `endif
 
 
-// TODO: test sampling for distribution 1 and 0
-
 

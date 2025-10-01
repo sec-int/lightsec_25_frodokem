@@ -10,7 +10,12 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef KECCAK_V
+`define KECCAK_V
+
+
+// This file provides the module: keccak
+// It contains the keccak implementation
 
 
 `include "lib.v"
@@ -236,7 +241,7 @@ module keccak_iter(
   keccak_rc rcGenerator(cmd_isFirst, rc, rst, clk);
 
   wire [1600-1:0] statePrev;
-  wire [1600-1:0] body__si = {1600{~cmd_start}} & statePrev  // TODO
+  wire [1600-1:0] body__si = {1600{~cmd_start}} & statePrev
                            ^ {1600{cmd_isFirst}} & in_data;
 
   wire [1600-1:0] body__so;
@@ -298,7 +303,7 @@ module keccak_busInConverter_align(
   delay #(64) excess__ff (excess__a1, excess, rst, clk);
   delay #(3) usedBytes__ff (usedBytes__a1, usedBytes, rst, clk);
 
-  wire [128-1:0] composed = in << 8*usedBytes | excess; // TODO: invert the storage to save LUTs
+  wire [128-1:0] composed = in << 8*usedBytes | excess;
   wire composed_isFirstWordFull = ~in_isSingleByte | usedBytes == 3'd7;
   wire composed_hasAnySecondWord = ~in_isSingleByte & usedBytes != 3'd0;
 
@@ -1239,3 +1244,4 @@ module keccak(
 endmodule
 
 
+`endif // KECCAK_V

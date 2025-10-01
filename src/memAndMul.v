@@ -10,10 +10,15 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef MEMANDMUL_V
+`define MEMANDMUL_V
 
 
-`include "lib.v"
+// This file provides the module: memAndMul
+// It carries out all the memory and operations outside the keccak module and the seed_A storage
+// In the paper it's called Memory-Integrated Computational Block (MICB)
+
+
 `include "frodoMul.v"
 `include "mem.v"
 
@@ -1315,5 +1320,4 @@ endmodule
 
 
 
-
-
+`endif // MEMANDMUL_V

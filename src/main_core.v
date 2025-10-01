@@ -10,7 +10,12 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef MAIN_CORE_V
+`define MAIN_CORE_V
+
+
+// This file provides the module: main_core
+// It contains the main module, with the exception of the controller, which is handled separately to ease the testing.
 
 
 `include "adapted_keccak.v"
@@ -266,3 +271,5 @@ module main_core(
   );
 endmodule
 
+
+`endif // MAIN_CORE_V

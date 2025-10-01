@@ -10,7 +10,12 @@
 ////////////            Giuseppe Manzoni (giuseppe.manzoni@barkhauseninstitut.org)
 
 
-`timescale 1ns / 1ps
+`ifndef MAIN_V
+`define MAIN_V
+
+
+// This file provides the module: main
+// It's the main module that contains the whole implementation
 
 
 `include "main_core.v"
@@ -873,3 +878,5 @@ module main(
   );
 endmodule
 
+
+`endif // MAIN_V
