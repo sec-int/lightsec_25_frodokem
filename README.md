@@ -1,3 +1,4 @@
+-- This repository is moved to https://github.com/bi-tud-sds/lightsec_25_frodokem --
 
 # LightSEC 2025 FrodoKEM
 
